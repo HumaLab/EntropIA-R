@@ -514,12 +514,13 @@ starts. Parallelizable groups noted per phase.
   - Verified 2026-08-06 with R 4.5.2: `load_all()` OK, `devtools::test()` 1 file green, `R CMD build` → `entropiaR_0.0.0.9000.tar.gz` with expected contents. Name check: no `entropiaR` on CRAN (404); GitHub has only `Snikerso/EntropiaR` (2019 entropy-calculation scripts, not a package) — Risk 1 still pending user confirm at release.
 
 ### Task 2: R environment + local check gate
-- [ ] document and verify R invocation for the local machine (add `C:\Program Files\R\R-4.5.2\bin` guidance in README dev section or `renv` bootstrap)
-- [ ] install dev deps (devtools, roxygen2, testthat, usethis, lintr, styler, covr)
-- [ ] create `.github/workflows/R-CMD-check.yaml` (r-lib/actions, 3-OS × release matrix, vignettes + examples on)
-- [ ] create `.github/workflows/lint.yaml` + `style.yaml` (lintr tidyverse config committed as `.lintr`)
-- [ ] write tests: no R code in v1 — verify CI workflow *syntax* only (dry-run of actionlint or manual review)
+- [x] document and verify R invocation for the local machine (add `C:\Program Files\R\R-4.5.2\bin` guidance in README dev section or `renv` bootstrap)
+- [x] install dev deps (devtools, roxygen2, testthat, usethis, lintr, styler, covr)
+- [x] create `.github/workflows/R-CMD-check.yaml` (r-lib/actions, 3-OS × release matrix, vignettes + examples on)
+- [x] create `.github/workflows/lint.yaml` + `style.yaml` (lintr tidyverse config committed as `.lintr`)
+- [x] write tests: no R code in v1 — verify CI workflow *syntax* only (dry-run of actionlint or manual review) (actionlint unavailable; all 3 workflows validated via `yaml::read_yaml()` parse)
 - **Acceptance:** `devtools::check()` runs end-to-end with 0 errors on the empty package; workflow files parse.
+  - Verified 2026-08-06 with R 4.5.2: `devtools::check()` → 0 errors | 0 warnings | 2 notes (env clock note; "Imports not imported from" — expected for the empty scaffold, resolves as code lands). lintr 3.4.0 / styler 1.11.0 / covr 3.6.5 installed.
 
 ### Task 3: Fixture infrastructure
 - [ ] write `data-raw/make_fixtures.R` generating the 6 fixture DBs (mini, full, legacy-pre0019, legacy-seconds, unknown-version, corrupt) from embedded DDL strings (source: `runner.ts` migrations, distilled — see Context)
