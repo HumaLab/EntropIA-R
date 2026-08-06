@@ -19,7 +19,7 @@ v1 the analysis layer is experimental: \code{\link[=entropia_temporal_profile]{e
 \code{\link[=entropia_analysis_dataset]{entropia_analysis_dataset()}} carry the experimental badge and are expected
 to stabilise in v2.
 
-Deprecations use \code{\link[lifecycle:deprecate_warn]{lifecycle::deprecate_warn()}} with a one-release grace
+Deprecations use \code{\link[lifecycle:deprecate_soft]{lifecycle::deprecate_warn()}} with a one-release grace
 period: a function deprecated in release N keeps working (with a warning)
 through release N+1 and is removed in N+2. Deprecation warnings carry a
 stable condition class so tests and user code can catch them.

@@ -301,7 +301,9 @@ ent_export_rds <- function(x, path) {
 ent_export_arrow <- function(x, path, format) {
   ent_require_arrow()
   df <- if (inherits(x, "tbl_sql")) dplyr::collect(x) else x
-  df <- as.data.frame(ent_prepare_delimited(tibble::as_tibble(df)))
+  # Don't flatten list/raw columns for arrow/parquet: the format handles them
+  # natively (embeddings round-trip as binary arrays, not character strings).
+  df <- tibble::as_tibble(df)
   if (identical(format, "parquet")) {
     arrow::write_parquet(df, path)
   } else {

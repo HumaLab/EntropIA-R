@@ -49,7 +49,7 @@ ent_validate_text_flag <- function(x, arg) {
 #   lazy tbl_sql  -> used as-is (must carry an `id` column holding asset ids)
 ent_resolve_text_base <- function(con, assets) {
   if (is.null(assets)) {
-    return(ent_tbl(con, "assets"))
+    return(ent_tbl(con, "assets", required = ent_manifest_required_gated(con, "assets")))
   }
   if (inherits(assets, "tbl_sql")) {
     cols <- dplyr::tbl_vars(assets)
@@ -71,7 +71,8 @@ ent_resolve_text_base <- function(con, assets) {
         "{.arg assets} must not contain {.code NA} or empty strings."
       )
     }
-    return(dplyr::filter(ent_tbl(con, "assets"), .data$id %in% !!assets))
+    tbl <- ent_tbl(con, "assets", required = ent_manifest_required_gated(con, "assets"))
+    return(dplyr::filter(tbl, .data$id %in% !!assets))
   }
   ent_abort(
     "entropia_error_invalid_argument",

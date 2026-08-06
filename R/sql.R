@@ -101,7 +101,7 @@ ent_strip_markers_sql <- function(cols, sub_sql) {
   # violates the assumption fails fast rather than silently misaligning columns.
   stopifnot(
     "text" %in% cols,
-    identical(tail(cols, 1L), "text"),
+    identical(cols[length(cols)], "text"),
     length(cols) >= 2L
   )
   strip_cols <- paste0('"', cols, '"', collapse = ", ")

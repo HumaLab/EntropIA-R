@@ -40,7 +40,7 @@ ent_validate_choice <- function(x, choices, arg) {
 # them with == 1 / == 0.
 ent_ocr_base <- function(con) {
   assets <- dplyr::select(
-    ent_tbl(con, "assets"),
+    ent_tbl(con, "assets", required = ent_manifest_required_gated(con, "assets")),
     asset_id = "id", item_id = "item_id", asset_type = "type"
   )
   items <- dplyr::select(
@@ -218,7 +218,7 @@ ent_text_layer_base <- function(con) {
     )
   }
   assets <- dplyr::select(
-    ent_tbl(con, "assets"),
+    ent_tbl(con, "assets", required = ent_manifest_required_gated(con, "assets")),
     asset_id = "id", item_id = "item_id", asset_type = "type"
   )
   items <- dplyr::select(
