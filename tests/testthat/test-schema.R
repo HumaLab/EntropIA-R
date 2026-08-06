@@ -37,7 +37,11 @@ test_that("entropia_schema_version is NA without _migrations", {
 })
 
 test_that("entropia_schema_version rejects a closed connection", {
-  con <- entropia_connect(ent_fixture("mini"))
+  # allow policy: this test checks the closed-connection error, not schema compat.
+  con <- withr::with_options(
+    list(entropiaR.schema_policy = "allow"),
+    entropia_connect(ent_fixture("mini"))
+  )
   entropia_disconnect(con)
   expect_error(
     entropia_schema_version(con),
@@ -230,15 +234,20 @@ test_that("ent_schema_gaps flags a genuinely missing required column", {
   )
   DBI::dbDisconnect(db)
 
-  con <- entropia_connect(tmp)
-  on.exit(entropia_disconnect(con), add = TRUE)
-  g <- ent_schema_gaps(con)
-  title <- g[g$table == "items" & g$column == "title", ]
-  expect_equal(nrow(title), 1L)
-  expect_true(title$required)
-  expect_true(title$expected) # version 0001_initial >= min_version 0001_initial
-  # The gap is absent from the live schema_info column set but present in the
-  # manifest surface with source = manifest.
-  info <- entropia_schema_info(con)
-  expect_true("title" %in% info$column[info$table == "items"])
+  # The connect-time policy (Task 6) aborts on missing required columns, so
+  # this test opens under the allow policy: it exercises ent_schema_gaps, not
+  # the connect guard.
+  withr::with_options(list(entropiaR.schema_policy = "allow"), {
+    con <- entropia_connect(tmp)
+    on.exit(entropia_disconnect(con), add = TRUE)
+    g <- ent_schema_gaps(con)
+    title <- g[g$table == "items" & g$column == "title", ]
+    expect_equal(nrow(title), 1L)
+    expect_true(title$required)
+    expect_true(title$expected) # version 0001_initial >= min_version 0001_initial
+    # The gap is absent from the live schema_info column set but present in the
+    # manifest surface with source = manifest.
+    info <- entropia_schema_info(con)
+    expect_true("title" %in% info$column[info$table == "items"])
+  })
 })

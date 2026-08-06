@@ -36,10 +36,13 @@ NULL
 #' @param path Path to the EntropIA SQLite database, or `":memory:"`.
 #' @param write Must be `FALSE` in v1 (read-only). Passing `TRUE` errors with
 #'   class `entropia_error_write_disabled` and v2 guidance.
-#' @param validate Logical. When `TRUE` (default) a lightweight sanity query is
-#'   run on open to detect files that are not readable SQLite databases.
-#' @param quiet Logical. Reserved for schema-policy messages (Task 6); ignored
-#'   for now.
+#' @param validate Logical. When `TRUE` (default) the connection runs a
+#'   lightweight sanity query (rejecting files that are not readable SQLite
+#'   databases) and applies the schema compatibility policy controlled by
+#'   `options(entropiaR.schema_policy)`.
+#' @param quiet Logical. When `TRUE`, suppresses the schema-policy warning
+#'   emitted on open (only affects the default `"warn"` policy; errors are
+#'   never silenced).
 #'
 #' @return An `entropia_conn` object (S4, `SQLiteConnection` subclass).
 #' @export
@@ -136,6 +139,25 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
         ),
         path = path
       )
+    }
+  }
+
+  # Schema compatibility policy (options(entropiaR.schema_policy)). Runs on
+  # open so callers learn about older/newer schemas immediately; aborts close
+  # the connection so nothing leaks.
+  if (validate) {
+    policy <- getOption("entropiaR.schema_policy", "warn")
+    policy <- match.arg(policy, c("warn", "error", "allow"))
+    compat_err <- tryCatch(
+      {
+        ent_compat_check(con, policy, quiet = quiet)
+        NULL
+      },
+      error = function(e) e
+    )
+    if (!is.null(compat_err)) {
+      DBI::dbDisconnect(con)
+      stop(compat_err)
     }
   }
 

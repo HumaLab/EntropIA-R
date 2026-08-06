@@ -72,12 +72,17 @@ ent_fixture <- function(name) {
 #' fixture infrastructure is testable in isolation.
 #'
 #' @param name One of the fixture names (see [ent_fixture_files()]).
-#' @return A DBI connection (or `entropia_conn` once Task 4 lands).
+#' @param policy Schema policy for the connection. Defaults to `"allow"` so
+#'   fixture tests stay quiet about older/unknown fixture schemas; tests that
+#'   exercise the compatibility layer pass the policy they mean to test.
+#' @return A DBI connection (or `entropia_conn`).
 #' @keywords internal
-ent_connect_fixture <- function(name) {
+ent_connect_fixture <- function(name, policy = "allow", ...) {
   path <- ent_fixture(name)
   if (exists("entropia_connect", mode = "function")) {
-    return(entropiaR::entropia_connect(path))
+    old <- options(entropiaR.schema_policy = policy)
+    on.exit(options(old), add = TRUE)
+    return(entropiaR::entropia_connect(path, ...))
   }
   DBI::dbConnect(RSQLite::SQLite(), path, flags = RSQLite::SQLITE_RO)
 }

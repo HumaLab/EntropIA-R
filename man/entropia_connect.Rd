@@ -12,11 +12,14 @@ entropia_connect(path, write = FALSE, validate = TRUE, quiet = FALSE)
 \item{write}{Must be \code{FALSE} in v1 (read-only). Passing \code{TRUE} errors with
 class \code{entropia_error_write_disabled} and v2 guidance.}
 
-\item{validate}{Logical. When \code{TRUE} (default) a lightweight sanity query is
-run on open to detect files that are not readable SQLite databases.}
+\item{validate}{Logical. When \code{TRUE} (default) the connection runs a
+lightweight sanity query (rejecting files that are not readable SQLite
+databases) and applies the schema compatibility policy controlled by
+\code{options(entropiaR.schema_policy)}.}
 
-\item{quiet}{Logical. Reserved for schema-policy messages (Task 6); ignored
-for now.}
+\item{quiet}{Logical. When \code{TRUE}, suppresses the schema-policy warning
+emitted on open (only affects the default \code{"warn"} policy; errors are
+never silenced).}
 }
 \value{
 An \code{entropia_conn} object (S4, \code{SQLiteConnection} subclass).

@@ -552,13 +552,13 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** `entropia_schema_info(entropia_connect("data-test/entropia.sqlite"))` lists every table in the Context with correct types. (Verified 2026-08-06 on the 29 MB reference DB: 30 tables, all Context tables present, `entities.created_at`→`datetime_auto`, `items.metadata`→`json`, `vec_assets.embedding`→`blob_f32`, `collections.created_at`→`datetime_ms`; `ent_schema_gaps()` = 0.)
 
 ### Task 6: Compatibility layer + policies
-- [ ] implement `entropia_schema_compat(con)` returning `known/unknown/older/newer` + required-column check
-- [ ] wire `options(entropiaR.schema_policy = "warn"|"error"|"allow")` into `entropia_connect(validate = TRUE)`
-- [ ] implement versioned SQL selector `ent_sql(version, id)` with `R/sql/` fragments
-- [ ] write tests: unknown-version fixture → warn by default, error under `"error"`, silent under `"allow"`; missing required column → error; missing optional column → warn+proceed
-- [ ] write tests: policy option scoping (withr::with_options), messages contain actionable text (snapshot via testthat snapshots)
-- [ ] run tests — must pass before Task 7
-- **Acceptance:** every policy × fixture pair behaves per the table in Robustness.
+- [x] implement `entropia_schema_compat(con)` returning `known/unknown/older/newer` + required-column check
+- [x] wire `options(entropiaR.schema_policy = "warn"|"error"|"allow")` into `entropia_connect(validate = TRUE)`
+- [x] implement versioned SQL selector `ent_sql(version, id)` with `R/sql/` fragments (embedded in `R/sql.R` as a fragment registry instead of `.sql` files under `R/sql/` — non-R files in `R/` are not shipped in installed packages, so file-based fragments would break after install; the registry keeps the plan's version-selection design)
+- [x] write tests: unknown-version fixture → warn by default, error under `"error"`, silent under `"allow"`; missing required column → error; missing optional column → warn+proceed
+- [x] write tests: policy option scoping (withr::with_options), messages contain actionable text (snapshot via testthat snapshots)
+- [x] run tests — must pass before Task 7 (54 compat tests + full suite green; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes; lint-clean apart from the pre-existing cross-file `object_usage` artifact on this machine)
+- **Acceptance:** every policy × fixture pair behaves per the table in Robustness. (Verified 2026-08-06: `entropia_schema_compat` classifies full/legacy-seconds as `known`, unknown-version as `newer`, mini/legacy-pre0019 as `older`, `:memory:` as `unknown`; policy matrix warn/error/allow × newer/older/missing-required/missing-optional all behave per the Robustness table, incl. `quiet = TRUE` and an `allow` escape hatch for missing-required columns.)
 
 ### Task 7: Diagnostics — validate, status, orphans groundwork
 - [ ] implement `entropia_validate()`: core-table presence, required-column presence, per-table row counts, empty-DB detection, `EXPLAIN`-free structural checks

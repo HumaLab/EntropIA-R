@@ -4,8 +4,18 @@
 # S3/S4 methods, idempotent disconnect, WAL-aware copy and the error paths.
 # All fixtures come from ent_fixture() (temp copies); never data-test/.
 
+# These tests exercise the connection contract, not the schema-policy layer
+# (Task 6); connect to older fixtures under the allow policy so they don't
+# warn.
+connect_quiet <- function(path, ...) {
+  withr::with_options(
+    list(entropiaR.schema_policy = "allow"),
+    entropia_connect(path, ...)
+  )
+}
+
 test_that("entropia_connect returns a typed read-only connection", {
-  con <- entropia_connect(ent_fixture("mini"))
+  con <- connect_quiet(ent_fixture("mini"))
   expect_s4_class(con, "entropia_conn")
   expect_true(methods::is(con, "SQLiteConnection"))
   expect_identical(attr(con, "mode"), "read-only")
@@ -16,7 +26,7 @@ test_that("entropia_connect returns a typed read-only connection", {
 })
 
 test_that("entropia_connect enforces read-only", {
-  con <- entropia_connect(ent_fixture("mini"))
+  con <- connect_quiet(ent_fixture("mini"))
   expect_error(
     DBI::dbWriteTable(con, "x", data.frame(a = 1)),
     "readonly"
@@ -45,7 +55,7 @@ test_that("entropia_connect supports :memory:", {
 })
 
 test_that("entropia_conn methods behave", {
-  con <- entropia_connect(ent_fixture("mini"))
+  con <- connect_quiet(ent_fixture("mini"))
   expect_output(print(con), "entropiaR connection")
   expect_type(format(con), "character")
   expect_match(format(con), "read-only")
@@ -62,7 +72,7 @@ test_that("entropia_conn methods behave", {
 })
 
 test_that("entropia_disconnect is idempotent", {
-  con <- entropia_connect(ent_fixture("mini"))
+  con <- connect_quiet(ent_fixture("mini"))
   expect_true(DBI::dbIsValid(con))
   entropia_disconnect(con)
   expect_false(DBI::dbIsValid(con))
@@ -70,12 +80,12 @@ test_that("entropia_disconnect is idempotent", {
 })
 
 test_that("entropia_copy snapshots a plain file DB", {
-  con <- entropia_connect(ent_fixture("mini"))
+  con <- connect_quiet(ent_fixture("mini"))
   dest <- tempfile(fileext = ".sqlite")
   entropia_copy(con, dest)
   expect_true(file.exists(dest))
 
-  con2 <- entropia_connect(dest)
+  con2 <- connect_quiet(dest)
   expect_identical(
     DBI::dbListTables(con2),
     DBI::dbListTables(con)
@@ -111,7 +121,7 @@ test_that("entropia_copy is WAL-aware with live sidecars", {
 })
 
 test_that("entropia_copy refuses to overwrite an existing dest", {
-  con <- entropia_connect(ent_fixture("mini"))
+  con <- connect_quiet(ent_fixture("mini"))
   dest <- tempfile(fileext = ".sqlite")
   writeLines("x", dest)
   expect_error(entropia_copy(con, dest), class = "entropia_error_dest_exists")

@@ -200,3 +200,188 @@ entropia_schema_info <- function(con) {
   }
   tibble::as_tibble(out)
 }
+
+# Compatibility layer + schema policies ---------------------------------------
+#
+# entropia_schema_compat() classifies a database against the shipped manifest;
+# ent_compat_check() applies options(entropiaR.schema_policy) on connect. The
+# manifest is the reference, the live schema is the ground truth, and the
+# policy decides how loudly the difference is reported.
+
+# Classify a version against the manifest head. Migration names are zero-padded
+# fixed-width ("0029_rag_chunks"), so lexicographic comparison is correct.
+ent_compat_status <- function(ver, head) {
+  if (is.null(ver) || is.na(ver)) return("unknown")
+  if (ver == head) return("known")
+  if (ver > head) return("newer")
+  "older"
+}
+
+#' Schema compatibility status of an EntropIA database
+#'
+#' Classifies a database against the shipped column contract
+#' (`inst/schemas/manifest.json`). The status is one of:
+#'
+#' - `"known"`: the schema version matches the manifest head (`0029_rag_chunks`).
+#' - `"newer"`: the database version is lexicographically ahead of the manifest
+#'   head -- a future EntropIA wrote it.
+#' - `"older"`: the database version predates the manifest head.
+#' - `"unknown"`: no `_migrations` table (or an empty one); version undetectable.
+#'
+#' The required-column check uses the manifest contract: columns tagged
+#' `required = TRUE` whose `min_version` is already reached by the database
+#' version must exist in the live schema. Missing ones are listed in
+#' `required_missing` and make the database incompatible.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A list of class `entropia_schema_compat` with elements `status`,
+#'   `version`, `manifest_head`, `gaps` (the full expected-but-absent column
+#'   table), `required_missing`, `optional_missing` and `compatible`.
+#' @export
+entropia_schema_compat <- function(con) {
+  ent_require_conn(con)
+  mf <- ent_manifest()
+  ver <- ent_current_version(con)
+  head <- mf$schema_head
+
+  status <- ent_compat_status(ver, head)
+  gaps <- ent_schema_gaps(con)
+  expected <- gaps[!is.na(gaps$expected) & gaps$expected, , drop = FALSE]
+  required_missing <- expected[expected$required, , drop = FALSE]
+  optional_missing <- expected[!expected$required, , drop = FALSE]
+
+  out <- list(
+    status = status,
+    version = ver,
+    manifest_head = head,
+    gaps = gaps,
+    required_missing = required_missing,
+    optional_missing = optional_missing,
+    compatible = nrow(required_missing) == 0L
+  )
+  class(out) <- "entropia_schema_compat"
+  out
+}
+
+# Abort for a genuinely incompatible database (missing required columns, or a
+# hard policy stop). Message is cli-formatted and actionable. Interpolated
+# values (version, missing, manifest_head) are provided through an explicit
+# message environment: cli evaluates `{}` expressions against .envir, not the
+# call's named arguments, so the values must be in scope there.
+ent_abort_schema_incompatible <- function(compat) {
+  if (nrow(compat$required_missing) > 0L) {
+    msg_env <- rlang::env(
+      version = compat$version,
+      missing = paste0(
+        compat$required_missing$table, ".",
+        compat$required_missing$column, collapse = ", "
+      )
+    )
+    ent_abort(
+      "entropia_error_schema_incompatible",
+      c(
+        paste0(
+          "Database at schema version {.val {version}} is missing required ",
+          "column(s): {missing}."
+        ),
+        i = "The database does not satisfy the {.pkg entropiaR} column contract.",
+        i = paste0(
+          "If it is a valid EntropIA database, update {.pkg entropiaR}; ",
+          "otherwise the file may be partial or corrupt. To proceed anyway, ",
+          "set {.code options(entropiaR.schema_policy = 'allow')}."
+        )
+      ),
+      .envir = msg_env
+    )
+  }
+  msg_env <- rlang::env(
+    version = compat$version,
+    manifest_head = compat$manifest_head
+  )
+  ent_abort(
+    "entropia_error_schema_incompatible",
+    c(
+      "Schema policy is {.val error} and this database is not at the reference schema.",
+      paste0(
+        "Database schema version: {.val {version}} ",
+        "(reference {.val {manifest_head}})."
+      ),
+      i = paste0(
+        "Set {.code options(entropiaR.schema_policy = 'warn')} to proceed ",
+        "read-only with a warning, or {.code 'allow'} to proceed silently."
+      )
+    ),
+    .envir = msg_env
+  )
+}
+
+# Warning for a tolerable schema deviation (older/newer/unknown version, or a
+# known version with optional columns missing). Silent under `allow`; the
+# message is cli-formatted and actionable.
+ent_warn_schema_compat <- function(compat) {
+  msg_env <- rlang::env(
+    version = compat$version,
+    manifest_head = compat$manifest_head
+  )
+  bullets <- switch(compat$status,
+    newer = c(
+      paste0(
+        "Database schema version {.val {version}} is newer than the latest ",
+        "{.pkg entropiaR} understands ({.val {manifest_head}})."
+      ),
+      i = "Read-only access continues, but new columns may not be typed."
+    ),
+    older = c(
+      paste0(
+        "Database schema version {.val {version}} is older than the ",
+        "reference {.val {manifest_head}}."
+      ),
+      i = "Required columns are present; proceeding read-only."
+    ),
+    unknown = c(
+      "Database schema version is unknown (no {.code _migrations} table).",
+      i = "Proceeding read-only."
+    ),
+    c("Database schema version {.val {version}} matches the reference schema.")
+  )
+  if (nrow(compat$optional_missing) > 0L) {
+    msg_env$missing <- paste0(
+      compat$optional_missing$table, ".",
+      compat$optional_missing$column, collapse = ", "
+    )
+    bullets <- c(bullets, i = "Optional columns absent: {missing}.")
+  }
+  bullets <- c(
+    bullets,
+    i = "Set {.code options(entropiaR.schema_policy = 'allow')} to silence this."
+  )
+  cli::cli_warn(bullets, class = "entropia_warn_schema", .envir = msg_env)
+}
+
+# Apply the schema policy to a freshly opened connection. Databases without a
+# _migrations table are not EntropIA databases (or are empty); they are left
+# alone -- the version contract only exists once migrations do. `allow` is
+# fully silent; missing required columns abort unless `allow`; the `error`
+# policy hard-stops on any deviation; the default `warn` reports tolerably.
+ent_compat_check <- function(con, policy, quiet = FALSE) {
+  if (!DBI::dbExistsTable(con, "_migrations")) {
+    return(invisible(NULL))
+  }
+  compat <- entropia_schema_compat(con)
+  if (identical(policy, "allow")) {
+    return(invisible(compat))
+  }
+  if (!compat$compatible) {
+    ent_abort_schema_incompatible(compat)
+  }
+  if (identical(policy, "error")) {
+    ent_abort_schema_incompatible(compat)
+  }
+  if (identical(compat$status, "known") && nrow(compat$optional_missing) == 0L) {
+    return(invisible(compat))
+  }
+  if (!quiet) {
+    ent_warn_schema_compat(compat)
+  }
+  invisible(compat)
+}
