@@ -12,6 +12,25 @@ ent_abort <- function(class, message, ..., .envir = parent.frame()) {
   cli::cli_abort(message, class = class, ..., .envir = .envir)
 }
 
+# Deprecation scaffolding: the package-wide call site for lifecycle
+# deprecations, so future deprecations share one consistent wrapper instead of
+# each function reaching for lifecycle directly. Not called in v1 (nothing is
+# deprecated yet) but provided and documented so the mechanism is in place
+# before the first deprecation lands. The env/user_env pair attributes the
+# warning to the deprecated function's caller, per the lifecycle custom-wrapper
+# guidance; the policy (one-release grace) is documented in the package help.
+ent_deprecate <- function(when, what, with = NULL, details = NULL, id = NULL) {
+  lifecycle::deprecate_warn(
+    when = when,
+    what = what,
+    with = with,
+    details = details,
+    id = id,
+    env = rlang::caller_env(),
+    user_env = rlang::caller_env(2)
+  )
+}
+
 # NULL-defaulting operator (rlang::`%||%` without the dependency).
 `%||%` <- function(x, y) if (is.null(x)) y else x
 

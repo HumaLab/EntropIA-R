@@ -24,14 +24,16 @@ A tibble with the bucket column, the \code{by} columns (when given), and
 a count column \code{n}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\details{
 Counts the rows of a collected tibble by a date/time column, bucketed to a
 chosen time unit. This is an R-side analysis helper: pass a materialised
 tibble (e.g. the output of \code{\link[=entropia_collect]{entropia_collect()}}, where timestamps are
 \code{POSIXct}). \code{NA} timestamps are excluded -- a row with an unknown date
 cannot be placed in time; grouping columns from \code{by} keep \code{NA} as their own
 group, following \code{dplyr} semantics.
-}
-\details{
+
 The returned bucket column carries the name of \code{date_var} and holds the
 start of each unit (\code{POSIXct}, e.g. midnight for \code{unit = "day"}). Rows are
 ordered by the \code{by} columns then the bucket, deterministically. Weeks start

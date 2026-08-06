@@ -162,7 +162,7 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
     )
     if (!is.null(compat_err)) {
       DBI::dbDisconnect(con)
-      stop(compat_err)
+      rlang::cnd_signal(compat_err)
     }
   }
 

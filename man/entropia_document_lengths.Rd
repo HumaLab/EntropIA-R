@@ -17,6 +17,9 @@ entropia_document_lengths(x, text_var = "text")
 (whitespace-separated tokens).
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\details{
 Appends character and word counts per row of a collected tibble. Each row
 is treated as one document. \code{NA} text yields \code{NA} counts; empty or
 whitespace-only text yields 0 chars and 0 words. Words are

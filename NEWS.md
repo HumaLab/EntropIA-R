@@ -27,3 +27,9 @@ databases and never writes to them.
   lazy inputs), `entropia_provenance()` / `entropia_write_provenance()`.
 * Write API: v1 stubs (`entropia_insert/update/upsert/delete`) error with clear
   v2 guidance.
+* Lifecycle & messages: the analysis layer carries the `experimental` lifecycle
+  badge; the deprecation policy (`lifecycle::deprecate_warn()`, one-release
+  grace) is documented in the package help. Every exported error and warning
+  is cli-formatted with a stable condition class — including a new
+  `entropia_warn_malformed_json` class for tolerant JSON reads — and no bare
+  `stop()`/`warning()` remains in `R/`.

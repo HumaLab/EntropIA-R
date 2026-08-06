@@ -63,7 +63,7 @@ ent_require_columns <- function(con, table, columns) {
   # A missing table surfaces as entropia_error_table_missing (from ent_columns);
   # re-raise it rather than reporting every requested column as missing, which
   # would hide the more fundamental failure.
-  if (inherits(cols, "condition")) stop(cols)
+  if (inherits(cols, "condition")) rlang::cnd_signal(cols)
   missing <- setdiff(columns, cols)
   if (length(missing) > 0L) {
     ent_abort(

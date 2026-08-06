@@ -20,14 +20,15 @@ A \code{\link[tibble:tibble]{tibble::tibble()}} of class \code{entropia_dataset}
 with the \code{entropia_prov} attribute.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\details{
 The dataset boundary of the package: assembles the lazy corpus
 (\code{\link[=entropia_corpus]{entropia_corpus()}}), applies any filter expressions passed in \code{...}, and
 materialises the result with a deterministic row order (arranged by
 \code{asset_id}). The returned tibble carries class \code{entropia_dataset} and an
 \code{entropia_prov} attribute recording everything needed to reconstruct the
 dataset:
-}
-\details{
 \itemize{
 \item \code{name}: the human label passed to \code{name} (\code{NULL} for unnamed);
 \item \code{schema_version}: the database schema head (e.g. \code{"0029_rag_chunks"});

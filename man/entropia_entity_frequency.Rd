@@ -20,6 +20,9 @@ and \code{n} (row count), ordered by \code{entity_type} then \code{n} descending
 \code{value}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\details{
 Counts entity occurrences from a collected entities tibble: for every
 distinct \code{entity_type} x \code{value} pair, the number of rows carrying it. The
 result is ordered by \code{entity_type} then descending count, so the top

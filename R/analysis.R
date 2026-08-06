@@ -77,6 +77,8 @@ ent_floor_date <- function(d, unit) {
 
 #' Temporal profile (counts by time bucket)
 #'
+#' `r lifecycle::badge("experimental")`
+#'
 #' Counts the rows of a collected tibble by a date/time column, bucketed to a
 #' chosen time unit. This is an R-side analysis helper: pass a materialised
 #' tibble (e.g. the output of [entropia_collect()], where timestamps are
@@ -171,6 +173,8 @@ ent_n_words <- function(z) {
 
 #' Document lengths (chars/words per row)
 #'
+#' `r lifecycle::badge("experimental")`
+#'
 #' Appends character and word counts per row of a collected tibble. Each row
 #' is treated as one document. `NA` text yields `NA` counts; empty or
 #' whitespace-only text yields 0 chars and 0 words. Words are
@@ -247,6 +251,8 @@ ent_require_analysis_cols <- function(x, cols, fn) {
 
 #' Entity frequency (top entities by type)
 #'
+#' `r lifecycle::badge("experimental")`
+#'
 #' Counts entity occurrences from a collected entities tibble: for every
 #' distinct `entity_type` x `value` pair, the number of rows carrying it. The
 #' result is ordered by `entity_type` then descending count, so the top
@@ -301,6 +307,8 @@ entropia_entity_frequency <- function(x, by = NULL) {
 
 #' Topic frequency (items per topic)
 #'
+#' `r lifecycle::badge("experimental")`
+#'
 #' Counts rows per topic from a collected tibble carrying a topic `name`
 #' column. The natural input is `item_topics` joined to `topics` (e.g.
 #' `dplyr::left_join(entropia_collect(entropia_item_topics(con)),
@@ -346,6 +354,8 @@ entropia_topic_frequency <- function(x, by = NULL) {
 }
 
 #' Compare collections (per-collection summary)
+#'
+#' `r lifecycle::badge("experimental")`
 #'
 #' Summarises a collected tibble one row per collection. The natural input is
 #' the collected corpus (`dplyr::collect(entropia_corpus(con))`), which carries
@@ -442,6 +452,8 @@ ent_validate_dataset_name <- function(name) {
 }
 
 #' Build a reproducible analysis dataset
+#'
+#' `r lifecycle::badge("experimental")`
 #'
 #' The dataset boundary of the package: assembles the lazy corpus
 #' ([entropia_corpus()]), applies any filter expressions passed in `...`, and

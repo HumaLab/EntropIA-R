@@ -147,9 +147,9 @@ ent_parse_json_col <- function(x) {
       error = function(e) e
     )
     if (inherits(parsed, "condition")) {
-      warning(
-        sprintf("Malformed JSON, returning NA: %s", conditionMessage(parsed)),
-        call. = FALSE
+      cli::cli_warn(
+        "Malformed JSON, returning NA: {conditionMessage(parsed)}",
+        class = "entropia_warn_malformed_json"
       )
       return(NA_character_)
     }

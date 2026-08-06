@@ -17,6 +17,9 @@ A tibble with the \code{by} columns (when given), \code{name} and \code{n} (item
 count), ordered by \code{n} descending then \code{name}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\details{
 Counts rows per topic from a collected tibble carrying a topic \code{name}
 column. The natural input is \code{item_topics} joined to \code{topics} (e.g.
 \code{dplyr::left_join(entropia_collect(entropia_item_topics(con)), entropia_collect(entropia_topics(con)), by = c("topic_id" = "id"))}).

@@ -17,12 +17,14 @@ A tibble with the \code{by} column, \code{n_items}/\code{n_assets} (when \code{x
 those id columns) and \code{n}, ordered by the collection column.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+}
+\details{
 Summarises a collected tibble one row per collection. The natural input is
 the collected corpus (\code{dplyr::collect(entropia_corpus(con))}), which carries
 \code{collection_name}, \code{item_id} and \code{asset_id}; pass \code{by} to group by a
 different collection column (e.g. \code{collection_id}).
-}
-\details{
+
 Each row reports \code{n} (rows of \code{x} in that collection) plus \code{n_items} and
 \code{n_assets} (distinct \code{item_id} / \code{asset_id} values, \code{NA} excluded) when the
 input carries those columns. On the collected corpus \code{n} equals the number
