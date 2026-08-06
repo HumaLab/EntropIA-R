@@ -561,12 +561,12 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** every policy × fixture pair behaves per the table in Robustness. (Verified 2026-08-06: `entropia_schema_compat` classifies full/legacy-seconds as `known`, unknown-version as `newer`, mini/legacy-pre0019 as `older`, `:memory:` as `unknown`; policy matrix warn/error/allow × newer/older/missing-required/missing-optional all behave per the Robustness table, incl. `quiet = TRUE` and an `allow` escape hatch for missing-required columns.)
 
 ### Task 7: Diagnostics — validate, status, orphans groundwork
-- [ ] implement `entropia_validate()`: core-table presence, required-column presence, per-table row counts, empty-DB detection, `EXPLAIN`-free structural checks
-- [ ] implement `entropia_status()`: path, mode, schema version, top row counts, sync freshness from `sync_meta.last_sync_at`, WAL sidecar presence
-- [ ] write tests: validate on healthy vs corrupt vs empty fixtures; status fields correct on mini/full fixtures
-- [ ] write tests: error classes stable (`entropia_error_table_missing`, `entropia_error_column_missing`)
-- [ ] run tests — must pass before Task 8
-- **Acceptance:** `entropia_validate(con)` on the real test DB returns a useful findings tibble with zero false "broken" reports on healthy tables.
+- [x] implement `entropia_validate()`: core-table presence, required-column presence, per-table row counts, empty-DB detection, `EXPLAIN`-free structural checks (findings tibble with `severity`/`kind`/`table`/`column`/`message`; `row_counts` + `schema_version` attributes; version-gated so older-but-complete schemas report nothing; `unreadable` error finding for corrupt files; never raises `table_missing`/`column_missing` — those stay accessor classes)
+- [x] implement `entropia_status()`: path, mode, schema version, top row counts, sync freshness from `sync_meta.last_sync_at`, WAL sidecar presence (S3 `entropia_status` list + `print.entropia_status`; sync_meta read as key/value, last_sync_at ms→POSIXct; journal_mode + `-wal`/`-shm` sidecar detection)
+- [x] write tests: validate on healthy vs corrupt vs empty fixtures; status fields correct on mini/full fixtures (`test-validate.R`, 60 assertions: healthy fixtures 0 findings, mini tolerated with warnings, missing core table / required column as error findings, empty DB warning, corrupt unreadable, no-tables DB, closed-connection rejection, WAL sidecars, raw DBI path fallback, print output)
+- [x] write tests: error classes stable (`entropia_error_table_missing` from `ent_columns`, `entropia_error_column_missing` from new `ent_require_columns` primitive, while validate reports findings instead of raising)
+- [x] run tests — must pass before Task 8 (320 pass, 0 fail; lint-clean apart from the known cross-file `object_usage` local artifact; `devtools::check()` 0 errors / 0 warnings / 1 baseline note)
+- **Acceptance:** `entropia_validate(con)` on the real test DB returns a useful findings tibble with zero false "broken" reports on healthy tables. (Verified 2026-08-06 on the 29 MB reference DB: 1 warning — `rag_asset_embedding_state`, a Rust repair table the app creates lazily, absent — zero errors; `entropia_status` reports path/mode/`0029_rag_chunks`/row counts/sync `2026-08-04 03:23:25`/journal `wal`/`-wal` sidecar present.)
 
 ### Task 8: sync-metadata surface
 - [ ] implement `entropia_sync_info(con)`: whitelisted `sync_meta` keys as a tibble (device_id, account_email, server_url, last_sync_at→POSIXct, server_epoch, triggers_version, capture_enabled)

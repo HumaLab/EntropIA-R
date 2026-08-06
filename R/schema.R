@@ -53,6 +53,27 @@ ent_columns <- function(con, table) {
   )
 }
 
+# Verify that every column in `columns` exists on `table`; abort with
+# entropia_error_column_missing listing the columns that are actually present.
+# A missing table surfaces as entropia_error_table_missing (from ent_columns),
+# which is the more fundamental failure. Accessors (Task 9+) call this before
+# querying a table so failures stay stable and actionable.
+ent_require_columns <- function(con, table, columns) {
+  cols <- tryCatch(ent_columns(con, table)$name, error = function(e) character())
+  missing <- setdiff(columns, cols)
+  if (length(missing) > 0L) {
+    ent_abort(
+      "entropia_error_column_missing",
+      c(
+        "Column(s) not found on table {.val {table}}: {.val {missing}}.",
+        i = "Available columns: {.val {cols}}."
+      ),
+      table = table, columns = missing
+    )
+  }
+  invisible(TRUE)
+}
+
 # Path to the bundled schema manifest inside the installed package.
 ent_manifest_path <- function() {
   system.file("schemas", "manifest.json", package = "entropiaR")
