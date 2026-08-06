@@ -587,11 +587,12 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** `entropia_items(con) %>% filter(collection_id == X) %>% collect()` returns expected rows (SQL pushed down, verified via `dbplyr::sql_render`). (Verified 2026-08-06 on the full fixture: filter renders a WHERE collection_id clause, 3 rows returned; assets accessor exposes parent/page columns, 2 PDF pages join to the pdf parent with `parent_type == "pdf"`, partial UNIQUE `(parent_asset_id, page_number)` held; legacy mini schema degrades gracefully without page columns.)
 
 ### Task 10: Text accessors (extractions, transcriptions, layouts)
-- [ ] implement `entropia_extractions()`, `entropia_transcriptions()`, `entropia_layouts()`
-- [ ] write tests: deterministic ID formats (`ext-*`, `trx-*`, `lay-*`) derivable from asset_id; UNIQUE(asset_id) reflected
-- [ ] write tests: JSON columns recognized by `entropia_collect` (segments → list-column of `{start_ms,end_ms,text}`)
-- [ ] run tests — must pass before Task 11
+- [x] implement `entropia_extractions()`, `entropia_transcriptions()`, `entropia_layouts()` (added to `R/tables.R` on the shared `ent_tbl` pattern with manifest required-column checks and roxygen docs)
+- [x] write tests: deterministic ID formats (`ext-*`, `trx-*`, `lay-*`) derivable from asset_id; UNIQUE(asset_id) reflected (`test-tables.R`: `id == paste0("ext-", asset_id)` etc., no duplicated `asset_id`, and 1:1 inner joins to assets keyed by `assets.id` keep row counts)
+- [x] write tests: JSON columns recognized by `entropia_collect` (segments → list-column of `{start_ms,end_ms,text}`) (`entropia_collect()` implemented in `R/collect.R` — applies the manifest column contract: datetime_ms/datetime_auto → POSIXct, json → list-columns, BLOB raw passthrough; base-table resolved via `dbplyr::remote_name()` with a single-table FROM-clause fallback for filtered/selected queries)
+- [x] run tests — must pass before Task 11 (457 pass, 0 fail; lint-clean apart from the known cross-file `object_usage` local artifact; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes)
 - **Acceptance:** extractions/transcriptions/layouts join 1:1 to assets on full fixture.
+  - Verified 2026-08-06 with R 4.5.2 on the full fixture: 2 extractions (`ext-*`), 1 transcription (`trx-*`), 1 layout (`lay-*`), all ids derivable from `asset_id`, all `asset_id` values resolve to existing assets, inner joins keep row counts (no fan-out). `entropia_collect()` turns `transcriptions.segments` into a list-column of `{start_ms,end_ms,text}` data.frames and `created_at` into `POSIXct`; mini schema (no text tables) raises `entropia_error_table_missing`.
 
 ### Task 11: Research accessors (entities, triples, topics, notes, annotations)
 - [ ] implement `entropia_entities()` with `include_deleted`/`min_confidence`; soft-delete filter `source != 'manual_deleted'` by default
