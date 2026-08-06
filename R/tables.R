@@ -109,7 +109,7 @@ entropia_items <- function(con) {
 #' entropia_disconnect(con)
 #' @export
 entropia_assets <- function(con) {
-  ent_tbl(con, "assets")
+  ent_tbl(con, "assets", required = ent_manifest_required_gated(con, "assets"))
 }
 
 #' Extractions (lazy)
@@ -227,7 +227,7 @@ entropia_entities <- function(con, include_deleted = FALSE, min_confidence = NUL
       )
     }
   }
-  tbl <- ent_tbl(con, "entities")
+  tbl <- ent_tbl(con, "entities", required = ent_manifest_required_gated(con, "entities"))
   if (!include_deleted && ent_has_columns(con, "entities", "source")) {
     tbl <- dplyr::filter(tbl, is.na(.data$source) | .data$source != "manual_deleted")
   }

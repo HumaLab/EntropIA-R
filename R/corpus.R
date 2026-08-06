@@ -516,6 +516,13 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
       )
       return(list())
     }
+    if (!is.list(p)) {
+      cli::cli_warn(
+        "Non-object JSON in items.metadata, returning NA",
+        class = "entropia_warn_malformed_json"
+      )
+      return(list())
+    }
     p
   })
   fm <- lapply(parsed, function(p) p[["__entropia_file_metadata"]])
@@ -551,7 +558,11 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   # it yields NA (the raw value remains reachable via parse = FALSE).
   out$imported_at <- suppressWarnings(ent_datetime_iso(iso))
 
-  keys <- unique(unlist(lapply(parsed, function(p) setdiff(names(p), "__entropia_file_metadata"))))
+  reserved <- c("item_id", "original_name", "original_path", "imported_at")
+  keys <- setdiff(
+    unique(unlist(lapply(parsed, function(p) setdiff(names(p), "__entropia_file_metadata")))),
+    reserved
+  )
   for (k in keys) {
     out[[k]] <- lapply(seq_along(parsed), function(i) {
       p <- parsed[[i]]

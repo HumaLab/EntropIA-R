@@ -62,22 +62,28 @@ test_that("analysis dataset supports multiple filters applied in SQL", {
 # --- reproducibility: identical inputs -> identical datasets --------------------
 
 test_that("building the same dataset twice yields identical data and stable provenance", {
-  with_dataset_con("full", function(con) {
-    ds1 <- entropia_analysis_dataset(con, asset_type == "image", name = "img")
-    ds2 <- entropia_analysis_dataset(con, asset_type == "image", name = "img")
-    # byte-identical rows (deterministic arrange on asset_id); the entropia_prov
-    # attribute differs only in built_at, so compare the data alone
-    expect_equal(as.data.frame(ds1), as.data.frame(ds2), ignore_attr = "entropia_prov")
-    p1 <- entropia_provenance(ds1)
-    p2 <- entropia_provenance(ds2)
-    # stable fields identical; only the build timestamp differs
-    expect_identical(p1$schema_version, p2$schema_version)
-    expect_identical(p1$content_hash, p2$content_hash)
-    expect_identical(p1$source_path, p2$source_path)
-    expect_identical(p1$filters, p2$filters)
-    expect_identical(p1$package_version, p2$package_version)
-    expect_identical(p1$r_version, p2$r_version)
-  })
+  # Open two independent copies of the same fixture so the content hash is
+  # computed independently on each connection — if ent_content_hash() were
+  # non-deterministic or data-dependent the hashes would differ.
+  con1 <- ent_connect_fixture("full")
+  on.exit(try(entropia_disconnect(con1), silent = TRUE), add = TRUE)
+  con2 <- ent_connect_fixture("full")
+  on.exit(try(entropia_disconnect(con2), silent = TRUE), add = TRUE)
+
+  ds1 <- entropia_analysis_dataset(con1, asset_type == "image", name = "img")
+  ds2 <- entropia_analysis_dataset(con2, asset_type == "image", name = "img")
+  # byte-identical rows (deterministic arrange on asset_id); the entropia_prov
+  # attribute differs only in built_at, so compare the data alone
+  expect_equal(as.data.frame(ds1), as.data.frame(ds2), ignore_attr = "entropia_prov")
+  p1 <- entropia_provenance(ds1)
+  p2 <- entropia_provenance(ds2)
+  # stable fields identical across independent connections; only the build
+  # timestamp and source (temp) path differ
+  expect_identical(p1$schema_version, p2$schema_version)
+  expect_identical(p1$content_hash, p2$content_hash)
+  expect_identical(p1$filters, p2$filters)
+  expect_identical(p1$package_version, p2$package_version)
+  expect_identical(p1$r_version, p2$r_version)
 })
 
 # --- entropia_provenance --------------------------------------------------------

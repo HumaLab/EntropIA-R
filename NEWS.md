@@ -20,6 +20,9 @@ databases and never writes to them.
   `entropia_orphans()`.
 * Research layer: `entropia_entity_relations()`,
   `entropia_reconstruct_analysis()`, `entropia_conversation()`.
+* Sync metadata: `entropia_sync_info()` (whitelisted `sync_meta` keys typed to
+  their R types, never raw `app_settings` secrets), `entropia_sync_versions()`,
+  `entropia_conflicts()` (`reason` enum documented).
 * Analysis & visualization: temporal/entity/topic/collection helpers,
   reproducible `entropia_analysis_dataset()` with provenance,
   ggplot2 helpers.

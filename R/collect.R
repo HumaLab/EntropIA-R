@@ -45,6 +45,7 @@ ent_datetime_ms <- function(x) {
     return(x)
   }
   if (inherits(x, "integer64")) x <- as.numeric(x)
+  if (is.character(x)) x <- as.numeric(x)
   as.POSIXct(x / 1000, origin = "1970-01-01", tz = "UTC")
 }
 
@@ -54,6 +55,7 @@ ent_datetime_s <- function(x) {
     return(x)
   }
   if (inherits(x, "integer64")) x <- as.numeric(x)
+  if (is.character(x)) x <- as.numeric(x)
   as.POSIXct(x, origin = "1970-01-01", tz = "UTC")
 }
 
@@ -64,6 +66,7 @@ ent_datetime_auto <- function(x) {
     return(x)
   }
   if (inherits(x, "integer64")) x <- as.numeric(x)
+  if (is.character(x)) x <- as.numeric(x)
   x <- ifelse(x < 1e12, x, x / 1000)
   as.POSIXct(x, origin = "1970-01-01", tz = "UTC")
 }
@@ -185,6 +188,7 @@ ent_apply_contract <- function(out, columns) {
     if (is.null(contract)) next
     out[[nm]] <- switch(contract,
       datetime_ms = ent_datetime_ms(out[[nm]]),
+      datetime_s = ent_datetime_s(out[[nm]]),
       datetime_auto = ent_datetime_auto(out[[nm]]),
       json = ent_parse_json_col(out[[nm]]),
       out[[nm]] # int/dbl/enum/blob_f32 need no conversion in v1

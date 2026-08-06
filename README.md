@@ -39,7 +39,8 @@ API is designed and stubbed with clear errors; full implementation is v2.
   to your PATH, or invoke R by full path, e.g.
   `"C:\Program Files\R\R-4.5.2\bin\Rscript.exe" -e "..."`.
 - Install development dependencies:
-  `install.packages(c("devtools", "roxygen2", "testthat", "usethis", "lintr", "styler", "covr"))`
+  `install.packages(c("devtools", "roxygen2", "testthat", "usethis", "lintr", "styler", "covr", "pkgdown", "rmarkdown", "knitr", "spelling"))`
+  The full test suite also needs optional Suggests: `install.packages(c("ggplot2", "arrow", "bit64", "vdiffr", "tidyr", "lubridate", "forcats"))`
 - Common commands:
   - `devtools::load_all()` — load the package in the current session
   - `devtools::test()` — run the testthat suite

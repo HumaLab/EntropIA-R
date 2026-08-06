@@ -111,12 +111,15 @@ monolithic functions.
 ### Dependencies (decided)
 
 **Imports** (hard, minimal): `DBI`, `RSQLite`, `dbplyr`, `dplyr`, `tibble`,
-`rlang`, `cli`, `lifecycle`, `jsonlite`, `tidyselect`, `stringr`.
+`rlang`, `cli`, `lifecycle`, `jsonlite`, `tidyselect`, `digest`, `methods`.
 
 Justification: DBI/RSQLite/dbplyr/dplyr/tibble are the core; rlang+cli for
 errors; lifecycle for the API contract; jsonlite for the JSON-in-TEXT columns
-(non-negotiable domain need); tidyselect for column-selection verbs; stringr
-for the text layer (marker stripping, search-term hygiene).
+(non-negotiable domain need); tidyselect for column-selection verbs; digest
+for SHA-256 content hashing (reproducibility); methods for the S4
+`entropia_conn` connection subclass. Marker stripping runs in SQL (recursive
+CTE) and search-term hygiene is `DBI::dbQuoteString`, so `stringr` was
+designed into the plan but ultimately not needed.
 
 **Suggests**: `testthat`, `ggplot2`, `tidyr`, `lubridate`, `forcats`, `arrow`,
 `duckdb`, `knitr`, `rmarkdown`, `pkgdown`, `covr`, `lintr`, `styler`, `spelling`,
@@ -196,9 +199,6 @@ on accessor results. tidyselect is supported natively (e.g.
 - `entropia_datetime(x)` / `entropia_datetime_s(x)` — pure helpers converting
   ms / seconds integer vectors to `POSIXct`; `entropia_datetime_auto(x)` uses
   the `< 1e12` magnitude guard (used for `entities`/`triples`).
-- `entropia_typed(tbl)` — convenience: given a `tbl_sql` tagged with the column
-  contract, returns a query that pre-translates only the cheap columns
-  (documented as best-effort; the reliable path is `entropia_collect`).
 
 **6. Domain layer** (high-level, research-oriented)
 - `entropia_corpus(con, collections = NULL, asset_types = NULL, text = "auto",
@@ -234,7 +234,7 @@ on accessor results. tidyselect is supported natively (e.g.
   parsed `sources` citations.
 
 **8. Analysis** (operate on collected tibbles — separated from access)
-- `entropia_temporal_profile(x, date_var, by = NULL)` → counts by time unit.
+- `entropia_temporal_profile(x, date_var, unit = "month", by = NULL)` → counts by time unit.
 - `entropia_document_lengths(x, text_var = "text")` → chars/words per document.
 - `entropia_entity_frequency(x)` → top entities by type/collection.
 - `entropia_topic_frequency(x)` → items per topic.
@@ -244,7 +244,7 @@ on accessor results. tidyselect is supported natively (e.g.
   (see Reproducibility) and returns a tibble with class `entropia_dataset`.
 
 **9. Export / interoperability**
-- `entropia_export(x, path, format = c("csv", "tsv", "json", "rds", "parquet", "arrow"))`
+- `entropia_export(x, path, format = c("csv", "tsv", "json", "rds", "parquet", "arrow"), chunk_size = 1000L)`
   — csv/tsv/json/rds always available; parquet/arrow require the `arrow`
   Suggests. Streams large lazy queries in chunks (never `collect()` unbounded).
 - `entropia_provenance(x)` / `entropia_write_provenance(x, path)` — JSON sidecar
@@ -394,7 +394,7 @@ Unknown columns are a warning, not an error (forward compatibility).
 ```
 EntropIA-R/
 ├── DESCRIPTION, NAMESPACE, LICENSE, LICENSE.md, README.md, NEWS.md
-├── _pkgdown.yml, .Rbuildignore, .gitignore, .editorconfig
+├── _pkgdown.yml, .Rbuildignore, .gitignore
 ├── R/
 │   ├── entropiaR-package.R     # package doc + reexports (|> , .data)
 │   ├── connect.R               # connect/disconnect, S3 class, print/summary/format
@@ -409,24 +409,23 @@ EntropIA-R/
 │   ├── plot.R                  # ggplot helpers (Suggests)
 │   ├── export.R                # entropia_export, streaming, provenance I/O
 │   ├── write.R                 # v2 stubs (error classes + documented signatures)
-│   ├── sql.R                   # versioned SQL (R/sql/), FTS MATCH builder
+│   ├── sql.R                   # versioned SQL fragments (embedded), FTS MATCH builder
+│   ├── sync.R                  # sync-metadata surface
 │   ├── utils.R                 # ent_* internals
 │   └── zzz.R                   # .onLoad: options, package-level defaults
-├── R/sql/                      # versioned SQL fragments (pre-0019 etc.)
 ├── inst/schemas/manifest.json  # column contract
 ├── inst/extdata/               # small example fixtures for docs
 ├── data-raw/                   # fixture/sample-DB builder scripts (never the user DB)
 ├── tests/testthat/
 │   ├── fixtures/               # minimal SQLite fixtures (generated, gitignored artifacts)
 │   ├── helper-fixtures.R       # builders: mini schema, full schema, legacy variants
-│   ├── helper-expect.R         # expect_entropia_* matchers
 │   └── test-*.R                # one file per module
 ├── man/                        # roxygen2
 ├── vignettes/                  # see Documentation
 └── .github/workflows/          # R-CMD-check.yaml, lint.yaml, pkgdown.yaml, coverage.yaml
 ```
 
-Granularity rule: one file per module (13 source files), no file over ~400
+Granularity rule: one file per module (14 source files), no file over ~600
 lines; a module is a concern, not a function.
 
 ## Testing Strategy

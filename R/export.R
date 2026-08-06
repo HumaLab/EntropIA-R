@@ -165,7 +165,7 @@ ent_validate_export_path <- function(path) {
 # Validate chunk_size: a single positive whole number.
 ent_validate_chunk_size <- function(x) {
   ok <- is.numeric(x) && length(x) == 1L && !is.na(x) &&
-    x >= 1L && x == as.integer(x)
+    x >= 1L && x <= .Machine$integer.max && x == as.integer(x)
   if (!ok) {
     ent_abort(
       "entropia_error_invalid_argument",

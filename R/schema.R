@@ -433,7 +433,8 @@ ent_compat_check <- function(con, policy, quiet = FALSE) {
   if (!compat$compatible) {
     ent_abort_schema_incompatible(compat)
   }
-  if (identical(policy, "error")) {
+  if (identical(policy, "error") &&
+      !(identical(compat$status, "known") && nrow(compat$optional_missing) == 0L)) {
     ent_abort_schema_incompatible(compat)
   }
   if (identical(compat$status, "known") && nrow(compat$optional_missing) == 0L) {

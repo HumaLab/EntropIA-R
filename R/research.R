@@ -26,7 +26,8 @@ ent_validate_search_query <- function(query) {
 # A single positive integer (numeric or integer), or NULL for no limit.
 ent_validate_search_limit <- function(limit) {
   ok <- is.numeric(limit) && length(limit) == 1L && !is.na(limit) &&
-    limit >= 1 && limit == floor(limit) && is.finite(limit)
+    limit >= 1 && limit == floor(limit) && is.finite(limit) &&
+    limit <= .Machine$integer.max
   if (!ok) {
     ent_abort(
       "entropia_error_invalid_argument",

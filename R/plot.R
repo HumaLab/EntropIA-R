@@ -143,7 +143,7 @@ entropia_plot_entities <- function(x, top = 10, fill = "entity_type") {
   fill_col <- ent_select_cols(x, rlang::enquo(fill), "fill", exactly = 1L)
   if (
     !is.numeric(top) || length(top) != 1L || is.na(top) ||
-      top < 1 || top != as.integer(top)
+      top < 1 || top > .Machine$integer.max || top != as.integer(top)
   ) {
     ent_abort(
       "entropia_error_invalid_argument",
