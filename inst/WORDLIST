@@ -33,6 +33,7 @@ dplyr
 embeddings
 entropia
 enum
+formatter
 ggplot
 honour
 journaling
@@ -46,6 +47,8 @@ natively
 normalised
 normalises
 oplog
+parseable
+pkgdown
 profiler
 rds
 rowid

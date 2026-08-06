@@ -74,6 +74,29 @@ test_that("datetime helpers pass POSIXct through and reject bad input", {
   )
 })
 
+test_that("datetime helpers accept numeric character strings", {
+  ms <- "1768478400000"
+  s <- "1768478400"
+  expect_equal(entropia_datetime(ms), entropia_datetime(as.numeric(ms)))
+  expect_equal(entropia_datetime_s(s), entropia_datetime_s(as.numeric(s)))
+  expect_equal(entropia_datetime_auto(s), entropia_datetime_auto(as.numeric(s)))
+  expect_equal(entropia_datetime_auto(ms), entropia_datetime_auto(as.numeric(ms)))
+})
+
+test_that("datetime_s and datetime_auto pass POSIXct through", {
+  dt <- as.POSIXct("2026-01-15 12:00:00", tz = "UTC")
+  expect_equal(entropia_datetime_s(dt), dt)
+  expect_equal(entropia_datetime_auto(dt), dt)
+})
+
+test_that("entropia_collect rejects non-lazy inputs", {
+  expect_error(entropia_collect(1:3), class = "entropia_error_invalid_argument")
+  expect_error(
+    entropia_collect(tibble::tibble(a = 1)),
+    class = "entropia_error_invalid_argument"
+  )
+})
+
 # --- ISO-8601 inside JSON metadata -------------------------------------------
 
 test_that("ISO-8601 strings inside metadata parse to POSIXct", {
