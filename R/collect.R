@@ -168,7 +168,7 @@ ent_parse_json_col <- function(x) {
     )
     if (inherits(parsed, "condition")) {
       cli::cli_warn(
-        "Malformed JSON, returning NA: {conditionMessage(parsed)}",
+        "Malformed JSON, returning NA: {ent_sanitize_msg(conditionMessage(parsed))}",
         class = "entropia_warn_malformed_json"
       )
       return(NA_character_)

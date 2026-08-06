@@ -5,7 +5,7 @@ template:
 
 articles:
 - title: Using entropiaR
-  desc: End-to-end workflows: connect, explore, extract, query, and analyze.
+  desc: "End-to-end workflows: connect, explore, extract, query, and analyze."
   contents:
   - connect
   - corpus

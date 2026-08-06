@@ -160,6 +160,36 @@ test_that("ent_parse_json_col is idempotent on already-parsed lists", {
   expect_equal(entropiaR:::ent_parse_json_col(list(a = 1)), list(a = 1))
 })
 
+test_that("malformed JSON with invalid UTF-8 bytes warns instead of crashing", {
+  # A malformed JSON cell carrying a byte that is not valid UTF-8 used to
+  # crash the cli warning formatter (ansi_strwrap) with "invalid multibyte
+  # string"; ent_sanitize_msg() replaces the bad byte so the tolerant
+  # warn-and-NA posture holds on real corpus content.
+  bad <- rawToChar(as.raw(c(0x7b, 0x22, 0x61, 0x22, 0x3a, 0x20, 0xe9, 0x7d)))
+  expect_warning(
+    out <- entropiaR:::ent_parse_json_col(bad),
+    "Malformed JSON"
+  )
+  expect_equal(out[[1]], NA_character_)
+  # a valid cell alongside the invalid one still parses
+  expect_warning(
+    out2 <- entropiaR:::ent_parse_json_col(c('{"ok": 1}', bad)),
+    "Malformed JSON"
+  )
+  expect_equal(out2[[1]]$ok, 1)
+  expect_equal(out2[[2]], NA_character_)
+})
+
+test_that("ent_sanitize_msg guards null, NA and clean input", {
+  expect_equal(entropiaR:::ent_sanitize_msg(NULL), "<unreadable JSON>")
+  expect_equal(entropiaR:::ent_sanitize_msg(NA_character_), "<unreadable JSON>")
+  expect_equal(entropiaR:::ent_sanitize_msg("plain"), "plain")
+  bad <- rawToChar(as.raw(c(0xe9)))
+  out <- entropiaR:::ent_sanitize_msg(bad)
+  expect_type(out, "character")
+  expect_false(is.na(out))
+})
+
 # --- BLOB passthrough ---------------------------------------------------------
 
 test_that("BLOB columns pass through as raw vectors", {

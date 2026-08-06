@@ -511,7 +511,7 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
     p <- tryCatch(jsonlite::fromJSON(z, simplifyVector = TRUE), error = function(e) e)
     if (inherits(p, "condition")) {
       cli::cli_warn(
-        "Malformed JSON in items.metadata, returning NA: {conditionMessage(p)}",
+        "Malformed JSON in items.metadata, returning NA: {ent_sanitize_msg(conditionMessage(p))}",
         class = "entropia_warn_malformed_json"
       )
       return(list())

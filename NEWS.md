@@ -40,3 +40,9 @@ databases and never writes to them.
   SQL (recursive CTE) and search-term hygiene is handled by `dbQuoteString`, so
   no string helper is needed — removing it also clears the last `R CMD check`
   note.
+* Bug fixes: malformed JSON cells carrying bytes that are not valid UTF-8
+  (real corpus newspaper text) no longer crash the cli warning formatter — a
+  new `ent_sanitize_msg()` helper replaces invalid bytes before interpolation,
+  so `entropia_collect()`/`entropia_metadata()` keep their tolerant warn-and-NA
+  posture. The pkgdown config is YAML-parseable again (an unquoted `desc:`
+  value was blocking `pkgdown::build_site()`).

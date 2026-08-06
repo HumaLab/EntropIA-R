@@ -34,6 +34,24 @@ ent_deprecate <- function(when, what, with = NULL, details = NULL, id = NULL) {
 # NULL-defaulting operator (rlang::`%||%` without the dependency).
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
+# Sanitize a diagnostic string pulled from database content before it is
+# interpolated into a cli message. The EntropIA corpus stores newspaper text
+# in JSON-in-TEXT columns that can hold bytes which are not valid UTF-8
+# (RSQLite returns them as-is); interpolating such a string into a cli message
+# crashes the cli formatter (ansi_strwrap) with "invalid multibyte string".
+# iconv() replaces the invalid bytes with "?", so the warning stays readable
+# and the tolerant warn-and-NA posture is preserved.
+ent_sanitize_msg <- function(m) {
+  if (is.null(m) || length(m) == 0L || is.na(m)) {
+    return("<unreadable JSON>")
+  }
+  out <- tryCatch(
+    iconv(m, from = "UTF-8", to = "UTF-8", sub = "?"),
+    error = function(e) NA_character_
+  )
+  if (is.na(out)) "<unreadable JSON>" else out
+}
+
 # Require a live entropiaR connection. Every exported function that takes a
 # connection starts with this so the error message is stable and actionable.
 ent_require_conn <- function(con) {
