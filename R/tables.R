@@ -1,4 +1,4 @@
-# Entity accessors (Task 9 core; Task 10 text).
+# Entity accessors (Task 9 core; Task 10 text; Task 12 AI/RAG).
 #
 # Every accessor returns a lazy tbl_sql over its raw table: no collect(), no
 # column narrowing, so dplyr/dbplyr verbs push down to SQLite and the result
@@ -18,12 +18,32 @@ ent_manifest_required <- function(table) {
   names(cols)[vapply(cols, function(c) isTRUE(c$required), logical(1))]
 }
 
+# Required columns of `table` that this database version must already have.
+# ent_manifest_required() demands every required column regardless of the
+# database's version, which is right for tables whose contract columns all
+# arrived with the migration that introduced the table. A few accessor tables
+# gained required columns later -- llm_results.target_type with migration 0019,
+# vec_assets.embedding_model/embedding_contract/dimensions with 0028 -- and
+# those must not be demanded from older schemas. Accessors whose contract
+# spans migrations use this gated set (the plan's version-specific SQL) so
+# legacy databases keep working without the late columns.
+ent_manifest_required_gated <- function(con, table) {
+  mentry <- ent_manifest()$tables[[table]]
+  cols <- mentry$columns
+  ver <- ent_current_version(con)
+  names(cols)[vapply(cols, function(c) {
+    isTRUE(c$required) && isTRUE(ent_min_version_applies(c$min_version %||% NULL, ver))
+  }, logical(1))]
+}
+
 # Open a lazy tbl_sql over `table`, verifying the manifest's required columns
 # first. Shared by all entity accessors so the typing surface stays in one
-# place and failures are consistent.
-ent_tbl <- function(con, table) {
+# place and failures are consistent. `required` defaults to the full required
+# set; accessors with version-gated contracts pass ent_manifest_required_gated()
+# so legacy schemas are not asked for columns they never had.
+ent_tbl <- function(con, table, required = ent_manifest_required(table)) {
   ent_require_conn(con)
-  ent_require_columns(con, table, ent_manifest_required(table))
+  ent_require_columns(con, table, required)
   dplyr::tbl(con, table)
 }
 
@@ -233,4 +253,180 @@ entropia_notes <- function(con) {
 #' @export
 entropia_annotations <- function(con) {
   ent_tbl(con, "annotations")
+}
+
+#' LLM results (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `llm_results` table: rows produced by LLM
+#' jobs (summaries, analyses, ...) linked to their target via `target_id` plus
+#' `target_type` (`asset`, `item`, `collection` or `unknown`). The `id` is
+#' deterministic: `llr-{target_type}-{target_id}-{job_type}`. The `result`
+#' column is JSON-in-TEXT, parsed by [entropia_collect()] into a list-column.
+#'
+#' Two optional filters, both pushed down to SQL:
+#'
+#' - `target_type`: keep only rows whose target is one of the given types. On
+#'   databases that predate migration 0019 the column does not exist and
+#'   passing a filter errors with guidance; without a filter the accessor
+#'   still reads the table.
+#' - `job_type`: keep only rows for one or more job types.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @param target_type Optional character vector of target types to keep, or
+#'   `NULL` (default) for all.
+#' @param job_type Optional character vector of job types to keep, or `NULL`
+#'   (default) for all.
+#' @return A `tbl_sql` on `llm_results`.
+#' @export
+entropia_llm_results <- function(con, target_type = NULL, job_type = NULL) {
+  ent_require_conn(con)
+  if (!is.null(target_type)) {
+    if (!is.character(target_type) || anyNA(target_type) || any(!nzchar(target_type))) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        c(
+          "{.arg target_type} must be a character vector of target types.",
+          i = "Allowed values: {.val asset}, {.val item}, {.val collection}, {.val unknown}."
+        )
+      )
+    }
+    known <- c("asset", "item", "collection", "unknown")
+    if (any(!target_type %in% known)) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        c(
+          "Unknown target type {.val {setdiff(target_type, known)}}.",
+          i = "Allowed values: {.val asset}, {.val item}, {.val collection}, {.val unknown}."
+        )
+      )
+    }
+  }
+  if (!is.null(job_type)) {
+    if (!is.character(job_type) || anyNA(job_type) || any(!nzchar(job_type))) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        c(
+          "{.arg job_type} must be a character vector of job types.",
+          i = "Pass {.val NULL} (the default) to keep all job types."
+        )
+      )
+    }
+  }
+  tbl <- ent_tbl(con, "llm_results", required = ent_manifest_required_gated(con, "llm_results"))
+  if (!is.null(target_type)) {
+    if (!ent_has_columns(con, "llm_results", "target_type")) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        c(
+          "This database predates migration 0019 and its {.code llm_results} table has no {.code target_type} column.",
+          i = paste0(
+            "Filter by {.arg job_type}, or open a database at schema version ",
+            "{.val 0019_llm_results_target_type} or later."
+          )
+        )
+      )
+    }
+    tbl <- dplyr::filter(tbl, .data$target_type %in% !!target_type)
+  }
+  if (!is.null(job_type)) {
+    tbl <- dplyr::filter(tbl, .data$job_type %in% !!job_type)
+  }
+  tbl
+}
+
+#' RAG conversations (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `rag_conversations` table: one row per
+#' retrieval-augmented chat session.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `rag_conversations`.
+#' @export
+entropia_rag_conversations <- function(con) {
+  ent_tbl(con, "rag_conversations")
+}
+
+#' RAG messages (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `rag_messages` table: the ordered messages of
+#' a conversation. `role` is `user` or `assistant`; `sort_index` gives the
+#' order within a conversation. The `sources` column is JSON-in-TEXT (an array
+#' of `{chunk_id, text, score}` citations on assistant messages), parsed by
+#' [entropia_collect()] into a list-column.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `rag_messages`.
+#' @export
+entropia_rag_messages <- function(con) {
+  ent_tbl(con, "rag_messages")
+}
+
+#' Asset embedding vectors (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `vec_assets` table (one row per embedded
+#' asset). The `embedding` BLOB -- a raw little-endian `f32` vector -- is
+#' omitted by default so query results stay small; pass `with_vector = TRUE`
+#' to select it. The embedding contract columns (`embedding_model`,
+#' `embedding_contract`, `dimensions`) arrived with migration 0028 and are
+#' simply absent on older databases.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @param with_vector Include the `embedding` BLOB column. Default `FALSE`.
+#' @return A `tbl_sql` on `vec_assets`.
+#' @export
+entropia_embeddings <- function(con, with_vector = FALSE) {
+  ent_require_conn(con)
+  if (length(with_vector) != 1L || is.na(with_vector) || !is.logical(with_vector)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg with_vector} must be a single {.cls logical} (not {.val {with_vector}})."
+    )
+  }
+  tbl <- ent_tbl(con, "vec_assets", required = ent_manifest_required_gated(con, "vec_assets"))
+  if (!with_vector) {
+    tbl <- dplyr::select(tbl, -dplyr::any_of("embedding"))
+  }
+  tbl
+}
+
+#' RAG chunks (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `rag_chunks` table: chunked text with
+#' embeddings for retrieval. The chunking contract is exposed as columns
+#' (`chunking_contract`, `embedding_model`, `embedding_contract`, `dimensions`).
+#' The `embedding` BLOB is omitted by default; pass `with_vector = TRUE` to
+#' select it.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @param with_vector Include the `embedding` BLOB column. Default `FALSE`.
+#' @return A `tbl_sql` on `rag_chunks`.
+#' @export
+entropia_chunks <- function(con, with_vector = FALSE) {
+  ent_require_conn(con)
+  if (length(with_vector) != 1L || is.na(with_vector) || !is.logical(with_vector)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg with_vector} must be a single {.cls logical} (not {.val {with_vector}})."
+    )
+  }
+  tbl <- ent_tbl(con, "rag_chunks", required = ent_manifest_required_gated(con, "rag_chunks"))
+  if (!with_vector) {
+    tbl <- dplyr::select(tbl, -dplyr::any_of("embedding"))
+  }
+  tbl
+}
+
+#' Items full-text index (lazy, raw)
+#'
+#' A lazy [dplyr::tbl()] over the contentless FTS5 table `fts_items`. This is
+#' an advanced, raw accessor: contentless FTS5 stores no column content, so
+#' selecting its columns directly reads `NULL`. To get searchable text, join to
+#' [entropia_items()] on rowid (`items i ON i.rowid = fts_items.rowid`) or use
+#' `entropia_search()`.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `fts_items`.
+#' @export
+entropia_search_index <- function(con) {
+  ent_tbl(con, "fts_items")
 }

@@ -603,12 +603,12 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** 1339 entities on the real DB collapse correctly with soft-deleted excluded. (Verified 2026-08-06 on the 29 MB reference DB via a `VACUUM INTO` copy: default `entropia_entities()` → 1328 rows (11 `source = 'manual_deleted'` excluded), `include_deleted = TRUE` → 1339; triples 700 / topics 3 / item_topics 5 / notes 14 / annotations 3; `entropia_collect` types `entities.created_at` → POSIXct (2026-06-07→2026-07-31); real-DB entities include asset-scoped rows, so `asset_id` is not all-NA in production.)
 
 ### Task 12: AI/RAG accessors (llm_results, conversations, embeddings, chunks, search_index)
-- [ ] implement `entropia_llm_results()` (target_type/job_type filters, `llr-*` id format documented), `entropia_rag_conversations()`, `entropia_rag_messages()`
-- [ ] implement `entropia_embeddings()` / `entropia_chunks()` with `with_vector` BLOB opt-in; `entropia_search_index()` (raw contentless)
-- [ ] write tests: llm_results id parsing; sources JSON → list-column; BLOB not selected by default (`with_vector = FALSE` → no `embedding` col)
-- [ ] write tests: `entropia_chunks()` chunking contract values surfaced (chunking_contract, embedding_model, dimensions)
-- [ ] run tests — must pass before Task 13
-- **Acceptance:** `entropia_chunks(con)` on real DB returns 1648 rows on collect with no BLOB column by default.
+- [x] implement `entropia_llm_results()` (target_type/job_type filters, `llr-*` id format documented), `entropia_rag_conversations()`, `entropia_rag_messages()` (added to `R/tables.R`; `target_type` validated against the enum and version-gated via `ent_manifest_required_gated` — pre-0019 schemas read without the column and a `target_type` filter on them errors with guidance; `job_type` filter pushes down; both accept character vectors; `llr-{target_type}-{target_id}-{job_type}` documented)
+- [x] implement `entropia_embeddings()` / `entropia_chunks()` with `with_vector` BLOB opt-in; `entropia_search_index()` (raw contentless) (`embedding` excluded via `select(-any_of("embedding"))` unless `with_vector = TRUE`; `search_index` returns the contentless `fts_items` table as-is with the rowid-join contract documented)
+- [x] write tests: llm_results id parsing; sources JSON → list-column; BLOB not selected by default (`with_vector = FALSE` → no `embedding` col) (`tests/testthat/test-ai.R`, 73 assertions: laziness, row counts, manifest column parity incl. `with_vector`, `llr-item-*` id derivation, result/sources JSON → list-columns, `created_at` → POSIXct, target_type/job_type push-down + composition + validation, BLOB discipline on both tables, raw 16-byte f32 with `with_vector`, raw contentless `search_index` (3 rows, all-NA content), legacy-pre0019 target_type degradation, mini `table_missing`, closed-connection rejection)
+- [x] write tests: `entropia_chunks()` chunking contract values surfaced (chunking_contract, embedding_model, dimensions)
+- [x] run tests — must pass before Task 13 (full suite green, 0 fail; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes; lint-clean on `R/tables.R` and `test-ai.R`)
+- **Acceptance:** `entropia_chunks(con)` on real DB returns 1648 rows on collect with no BLOB column by default. (Verified 2026-08-06 on the 29 MB reference DB via a `VACUUM INTO` copy: `entropia_chunks()` → 1648 rows, no `embedding` column by default; `llm_results` 147 rows with `target_type`; `rag_messages` 102 rows; `embeddings` 270 rows, no BLOB by default.)
 
 ### Task 13: entropia_collect + datetime/JSON/BLOB typing
 - [ ] implement `entropia_collect()` applying the column contract: datetime cols → POSIXct (ms / `datetime_auto` guard), JSON TEXT → list-columns via jsonlite, BLOB → raw passthrough
