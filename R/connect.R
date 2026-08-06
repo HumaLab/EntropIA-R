@@ -107,8 +107,7 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
   con <- DBI::dbConnect(
     RSQLite::SQLite(),
     db_path,
-    flags = RSQLite::SQLITE_RO,
-    synchronous = NULL
+    flags = RSQLite::SQLITE_RO
   )
   DBI::dbExecute(con, "PRAGMA query_only = ON")
 
@@ -153,7 +152,19 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
   # the connection so nothing leaks.
   if (validate) {
     policy <- getOption("entropiaR.schema_policy", "warn")
-    policy <- match.arg(policy, c("warn", "error", "allow"))
+    policy <- tryCatch(
+      match.arg(policy, c("warn", "error", "allow")),
+      error = function(e) {
+        ent_abort(
+          "entropia_error_invalid_argument",
+          c(
+            "{.code options(entropiaR.schema_policy)} must be one of",
+            "{.val warn}, {.val error} or {.val allow}.",
+            i = "Received {.val {policy}}."
+          )
+        )
+      }
+    )
     compat_err <- tryCatch(
       {
         ent_compat_check(con, policy, quiet = quiet)
@@ -163,7 +174,11 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
     )
     if (!is.null(compat_err)) {
       DBI::dbDisconnect(con)
-      rlang::cnd_signal(compat_err)
+      rlang::abort(
+        "Schema compatibility check failed.",
+        parent = compat_err,
+        class = setdiff(class(compat_err), c("error", "condition", "rlang_error"))
+      )
     }
   }
 
@@ -219,7 +234,8 @@ entropia_disconnect <- function(con) {
 #' entropia_disconnect(con)
 #' @export
 entropia_copy <- function(con, dest) {
-  if (!is.character(dest) || length(dest) != 1L || is.na(dest)) {
+  ent_require_conn(con)
+  if (!is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)) {
     ent_abort("entropia_error_invalid_argument", "{.arg dest} must be a single path.")
   }
   dest <- normalizePath(dest, winslash = "/", mustWork = FALSE)

@@ -10,5 +10,5 @@
     Code
       conditionMessage(err)
     Output
-      [1] "Database at schema version \"0001_initial\" is missing required column(s): items.title.\ni The database does not satisfy the entropiaR column contract.\ni If it is a valid EntropIA database, update entropiaR; otherwise the file may be partial or corrupt. To proceed anyway, set `options(entropiaR.schema_policy = 'allow')`."
+      [1] "Schema compatibility check failed.\nCaused by error:\n! Database at schema version \"0001_initial\" is missing required column(s): items.title.\ni The database does not satisfy the entropiaR column contract.\ni If it is a valid EntropIA database, update entropiaR; otherwise the file may be partial or corrupt. To proceed anyway, set `options(entropiaR.schema_policy = 'allow')`."
 

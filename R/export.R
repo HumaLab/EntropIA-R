@@ -87,7 +87,7 @@ print.entropia_provenance <- function(x, ...) {
 #' entropia_disconnect(con)
 #' @export
 entropia_write_provenance <- function(x, path) {
-  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
     ent_abort("entropia_error_invalid_argument", "{.arg path} must be a single path.")
   }
   prov <- entropia_provenance(x)
@@ -151,9 +151,9 @@ ent_validate_export_format <- function(x) {
   )
 }
 
-# Validate the destination path: a single non-NA character string.
+# Validate the destination path: a single non-NA non-empty character string.
 ent_validate_export_path <- function(path) {
-  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
     ent_abort(
       "entropia_error_invalid_argument",
       "{.arg path} must be a single destination path."
@@ -213,6 +213,14 @@ ent_export_list_scalar <- function(z) {
 # and BLOB (list-of-raw) columns become space-joined bytes, so
 # utils::write.table never sees a type it cannot serialise. Leaves plain atomic
 # columns (including integer64) untouched.
+#
+# Embedding BLOB columns (4096-byte f32 vectors) produce long strings per row
+# under the space-join representation — a thousand such rows produce ~10 MB of
+# serialised bytes, which is manageable for occasional exports but not for
+# streaming the full embedding table. Accessors exclude the `embedding` column
+# by default (select with `any_of("embedding")`), and direct collect+export
+# with `with_vector = TRUE` carries the explicit opt-in. Use parquet/arrow/rds
+# for bulk embedding export.
 ent_prepare_delimited <- function(df) {
   for (nm in names(df)) {
     col <- df[[nm]]

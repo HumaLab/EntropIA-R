@@ -77,8 +77,14 @@ ent_attr <- function(x, name, default = NA_character_) {
 
 # Does `path` begin with the SQLite header magic?
 ent_is_sqlite_header <- function(path) {
-  f <- file(path, "rb")
-  on.exit(close(f), add = TRUE)
+  if (is.na(path) || !nzchar(path) || dir.exists(path)) {
+    return(FALSE)
+  }
+  f <- tryCatch(file(path, "rb"), error = function(e) NULL)
+  if (is.null(f)) {
+    return(FALSE)
+  }
+  on.exit(try(close(f), silent = TRUE), add = TRUE)
   hdr <- readBin(f, "raw", n = length(ent_sqlite_magic))
   length(hdr) == length(ent_sqlite_magic) && identical(hdr, ent_sqlite_magic)
 }

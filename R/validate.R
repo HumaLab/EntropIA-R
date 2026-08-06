@@ -31,7 +31,10 @@ ent_row_counts <- function(con) {
   out <- stats::setNames(integer(), character())
   for (t in tabs) {
     n <- tryCatch(
-      as.integer(DBI::dbGetQuery(con, paste0("SELECT count(*) AS n FROM ", t))$n),
+      as.integer(DBI::dbGetQuery(
+        con,
+        paste0("SELECT count(*) AS n FROM ", DBI::dbQuoteIdentifier(con, t))
+      )$n),
       error = function(e) NA_integer_
     )
     if (!is.na(n)) {

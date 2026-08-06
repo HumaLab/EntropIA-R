@@ -375,7 +375,7 @@ entropia_reconstruct_analysis <- function(con, target = NULL, job_type = NULL) {
   rows <- ent_apply_contract(rows, ent_manifest()$tables$llm_results$columns)
   # Pre-0019 schemas have no target_type column; nothing is resolvable then.
   if (!"target_type" %in% names(rows)) {
-    rows$target_type <- NA_character_
+    rows$target_type <- rep(NA_character_, nrow(rows))
   }
   rows$target <- lapply(seq_len(nrow(rows)), function(i) {
     ent_resolve_llm_target(con, rows$target_type[i], rows$target_id[i])

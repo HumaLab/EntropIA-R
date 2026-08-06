@@ -17,7 +17,7 @@ ent_tables <- function(con) {
     con,
     "SELECT name, sql FROM sqlite_master WHERE type = 'table'"
   )
-  virtual <- tabs$name[grepl("^CREATE VIRTUAL TABLE", tabs$sql)]
+  virtual <- tabs$name[!is.na(tabs$sql) & grepl("^CREATE VIRTUAL TABLE", tabs$sql)]
   shadow <- unlist(lapply(virtual, function(v) {
     paste0(v, c("_config", "_data", "_docsize", "_idx", "_content"))
   }), use.names = FALSE)
@@ -40,7 +40,7 @@ ent_columns <- function(con, table) {
       table = table
     )
   }
-  q <- DBI::dbQuoteString(con, table)
+  q <- DBI::dbQuoteIdentifier(con, table)
   info <- DBI::dbGetQuery(con, paste0("PRAGMA table_xinfo(", q, ")"))
   info <- info[info$hidden == 0 | info$hidden >= 3, , drop = FALSE]
   data.frame(
@@ -63,7 +63,13 @@ ent_require_columns <- function(con, table, columns) {
   # A missing table surfaces as entropia_error_table_missing (from ent_columns);
   # re-raise it rather than reporting every requested column as missing, which
   # would hide the more fundamental failure.
-  if (inherits(cols, "condition")) rlang::cnd_signal(cols)
+  if (inherits(cols, "condition")) {
+    rlang::abort(
+      "Table lookup failed.",
+      parent = cols,
+      class = setdiff(class(cols), c("error", "condition", "rlang_error"))
+    )
+  }
   missing <- setdiff(columns, cols)
   if (length(missing) > 0L) {
     ent_abort(

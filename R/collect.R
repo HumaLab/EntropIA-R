@@ -74,6 +74,10 @@ ent_datetime_auto <- function(x) {
   }
   if (inherits(x, "integer64")) x <- as.numeric(x)
   if (is.character(x)) x <- as.numeric(x)
+  # Convert to numeric. integer64 values (as returned by RSQLite for large
+  # timestamps) can only represent integers up to 2^53 exactly; todays epoch
+  # milliseconds (1.7e12) are well below that limit, and the threshold 1e12
+  # for epoch seconds is even smaller, so no precision is lost in practice.
   x <- ifelse(x < 1e12, x, x / 1000)
   as.POSIXct(x, origin = "1970-01-01", tz = "UTC")
 }
