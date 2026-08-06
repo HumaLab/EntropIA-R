@@ -67,6 +67,42 @@ ent_search_sql <- function(con, query, index = c("items", "chunks"), limit = NUL
   dbplyr::sql(sql)
 }
 
+# Build the SQL that strips all OCR page markers (![](page=n,bbox=[...])) from
+# a `text` column, carried alongside the other `cols` per row. Implemented as a
+# recursive CTE because SQLite ships no regexp function and the marker payload
+# is variable: each row starts at n = 0 and recurses one marker at a time until
+# none remain. The marker contains no ')', so the first ')' at or after the
+# marker start closes it. A ranked CTE then keeps the final iteration (highest
+# n) of each `id` chain, so the result has exactly one row per input row.
+# `sub_sql` is the rendered inner query (its output columns must be `cols`).
+ent_strip_markers_sql <- function(cols, sub_sql) {
+  strip_cols <- paste0('"', cols, '"', collapse = ", ")
+  inner_cols <- paste0('"', setdiff(cols, "text"), '"', collapse = ", ")
+  paste0(
+    "WITH RECURSIVE ent_text(", strip_cols, ", n) AS (\n",
+    "  SELECT ", strip_cols, ", 0\n",
+    "  FROM (", sub_sql, ")\n",
+    "  UNION ALL\n",
+    "  SELECT ", inner_cols, ",\n",
+    "    substr(text, 1, instr(text, '![](') - 1) ||\n",
+    "    substr(text, instr(text, '![](') + instr(substr(text, instr(text,\n",
+    "      '![](') + 1), ')') + 1),\n",
+    "    n + 1\n",
+    "  FROM ent_text\n",
+    "  WHERE instr(text, '![](') > 0\n",
+    "    AND instr(substr(text, instr(text, '![](')), ')') > 0\n",
+    "),\n",
+    "ent_text_ranked AS (\n",
+    "  SELECT ", strip_cols, ",\n",
+    "    ROW_NUMBER() OVER (PARTITION BY \"id\" ORDER BY n DESC) AS ent_rn\n",
+    "  FROM ent_text\n",
+    ")\n",
+    "SELECT ", strip_cols, "\n",
+    "FROM ent_text_ranked\n",
+    "WHERE ent_rn = 1"
+  )
+}
+
 # Resolve a versioned SQL fragment. When the database version predates one or
 # more `pre-<migration>` variants, the variant with the highest migration
 # (closest to the database) wins; an NA/unknown version falls back to the

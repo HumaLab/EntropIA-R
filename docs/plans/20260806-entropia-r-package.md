@@ -629,10 +629,11 @@ starts. Parallelizable groups noted per phase.
 ### Phase 3 — Domain layer (after 9–14; tasks 15–19 serial)
 
 ### Task 15: entropia_text
-- [ ] implement `entropia_text()`: `source ∈ extraction|transcription|auto` (auto = extraction else transcription, in SQL), `strip_markers = TRUE` removes `![](page=n,bbox=...)`
-- [ ] write tests: auto-selection per asset both present/one-present/neither; marker stripping regex on fixture text; empty text handling
-- [ ] run tests — must pass before Task 16
+- [x] implement `entropia_text()`: `source ∈ extraction|transcription|auto` (auto = extraction else transcription, in SQL), `strip_markers = TRUE` removes `![](page=n,bbox=...)` (`R/corpus.R`: `entropia_text()` returns a lazy `tbl_sql` — assets (optionally filtered by `assets`) LEFT JOINed to the 1:1 extractions/transcriptions rows, `text` selected per source as one SQL expression (`COALESCE` for auto, the app's FTS rule), assets with neither layer keep the row with `NA` text; marker stripping implemented in SQL via a recursive CTE (`ent_strip_markers_sql()` in `R/sql.R`) because SQLite ships no regexp — each row strips one `![](...)` marker per iteration until none remain, a ranked window CTE keeps the final iteration per `id`, so the result stays lazy and dplyr-composable)
+- [x] write tests: auto-selection per asset both present/one-present/neither; marker stripping regex on fixture text; empty text handling (`tests/testthat/test-text.R`, 12 blocks: laziness + column set, COALESCE/join SQL render, source selection (extraction/transcription/auto incl. both/one/neither), marker strip on/off with exact output, multi-marker + NULL-pass-through on the `ent_strip_markers_sql` fragment, NA text rows retained, character-vector and lazy-tbl `assets` filters, reserved-column guard, source/strip_markers validation, mini `table_missing`, legacy-pre0019 + closed-connection)
+- [x] run tests — must pass before Task 16 (825 pass, 0 fail, 1 pre-existing CRAN skip; lint-clean on `R/corpus.R` and `R/sql.R` apart from the established test SCREAMING_SNAKE constants profile; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes)
 - **Acceptance:** on real DB, every asset with an extraction gets its text; 27 marker-bearing extractions strip cleanly.
+  - Verified 2026-08-06 with R 4.5.2 on a `VACUUM INTO` copy of the 29 MB reference DB (the Task 8 live-open segfault note still applies; sqlite3 CLI made the copy): schema `0029_rag_chunks`, 2477 assets, 270 assets with a text layer and all 270 got text under `auto`; exactly 27 marker-bearing extractions and 0 still contained a marker after the default strip (e.g. "VISTO el expediente n* 401.144-64..." with the leading marker removed).
 
 ### Task 16: entropia_corpus
 - [ ] implement `entropia_corpus()`: lazy `items ⋈ collections ⋈ assets ⋈ text` with `collections`/`asset_types` filters, `page_assets` toggle, `include_deleted`
