@@ -1,0 +1,8 @@
+> options(rcmdcheck_timeout = Inf)
+> devtools::document("G:/EntropIA-Stack/EntropIA-R", quiet = FALSE)
+ℹ Updating entropiaR documentation
+ℹ Loading entropiaR
+Writing 'entropiaR-package.Rd'
+> cat("DOCUMENT DONE\n")
+DOCUMENT DONE
+> 

@@ -1,0 +1,5 @@
+cat("RSTUDIO_PANDOC =", Sys.getenv("RSTUDIO_PANDOC"), "\n")
+cat("PATH has pandoc dir? ", dirname(Sys.which("pandoc")) != "", "\n")
+cat("pandoc_available:", rmarkdown::pandoc_available(), "\n")
+fp <- tryCatch(rmarkdown::find_pandoc(), error = function(e) conditionMessage(e))
+print(fp)

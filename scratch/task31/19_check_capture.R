@@ -1,0 +1,15 @@
+Sys.setenv(RSTUDIO_PANDOC = "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools")
+suppressMessages({ devtools::load_all(".", quiet = TRUE) })
+res <- devtools::check(".", document = FALSE, manual = FALSE, args = "--no-manual",
+                       quiet = TRUE, error_on = "never")
+log <- file.path(res$checkdir, "00check.log")
+log2 <- "scratch/task31/check-log.txt"
+file.copy(log, log2, overwrite = TRUE)
+cat("log copied to:", log2, "\n")
+lines <- readLines(log, warn = FALSE)
+cat("Status:", grep("^Status:", lines, value = TRUE), "\n")
+nte <- grep(" NOTE", lines, value = TRUE)
+err <- grep(" ERROR", lines, value = TRUE)
+wrn <- grep(" WARNING", lines, value = TRUE)
+cat("ERROR:", length(err), "| WARNING:", length(wrn), "| NOTE:", length(nte), "\n")
+cat("NOTES:\n"); cat(nte, sep = "\n")

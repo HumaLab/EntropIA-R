@@ -1,0 +1,6 @@
+library(testthat)
+library(devtools)
+devtools::load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+res <- testthat::test_file("G:/EntropIA-Stack/EntropIA-R/tests/testthat/test-dataset.R", reporter = "summary")
+if (any(res$failed > 0)) quit(status = 1)
+cat("DATASET TESTS OK\n")

@@ -1,0 +1,7 @@
+pkgload::load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+res <- lintr::lint("G:/EntropIA-Stack/EntropIA-R/R/analysis.R")
+cat("R/analysis.R lints:", length(res), "\n")
+if (length(res)) print(res)
+res2 <- lintr::lint("G:/EntropIA-Stack/EntropIA-R/tests/testthat/test-analysis.R")
+cat("test-analysis.R lints:", length(res2), "\n")
+if (length(res2)) print(res2)

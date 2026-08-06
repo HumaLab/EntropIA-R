@@ -1,0 +1,5 @@
+library(devtools)
+load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+res <- testthat::test_file("G:/EntropIA-Stack/EntropIA-R/tests/testthat/test-performance.R", reporter = "summary")
+df <- as.data.frame(res)
+cat("\nFAILED:", sum(df$failed), " WARNED:", sum(df$warning), " PASSED:", sum(df$passed), " SKIPPED:", sum(df$skipped), "\n")

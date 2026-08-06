@@ -1,0 +1,29 @@
+
+R version 4.5.2 (2025-10-31 ucrt) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+> library(devtools)
+Cargando paquete requerido: usethis
+> load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+> res <- testthat::test_file("G:/EntropIA-Stack/EntropIA-R/tests/testthat/test-performance.R", reporter = "summary")
+performance: .............
+
+══ DONE ════════════════════════════════════════════════════════════════════════
+> df <- as.data.frame(res)
+> cat("\nFAILED:", sum(df$failed), " WARNED:", sum(df$warning), " PASSED:", sum(df$passed), " SKIPPED:", sum(df$skipped), "\n")
+
+FAILED: 0  WARNED: 0  PASSED: 13  SKIPPED: 0 
+> 

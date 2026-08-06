@@ -1,0 +1,142 @@
+
+R version 4.5.2 (2025-10-31 ucrt) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+> suppressPackageStartupMessages({
++   library(devtools)
++   library(dplyr)
++ })
+> load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+> 
+> con <- entropia_connect("G:/EntropIA-Stack/EntropIA-R/tests/testthat/fixtures/full.sqlite")
+> 
+> cat("=== Filtered corpus (collections) plan ===\n")
+=== Filtered corpus (collections) plan ===
+> t <- entropia_corpus(con, collections = "Collection One")
+> sql <- as.character(dbplyr::sql_render(t))
+> cat(sql, "\n")
+SELECT
+  `item_id`,
+  `item_title`,
+  `collection_id`,
+  `metadata`,
+  `item_created_at`,
+  `item_updated_at`,
+  `collection_name`,
+  `collection_description`,
+  `collection_created_at`,
+  `collection_updated_at`,
+  `asset_id`,
+  `asset_path`,
+  `asset_type`,
+  `asset_size`,
+  `asset_created_at`,
+  `asset_sort_index`,
+  `parent_asset_id`,
+  `page_number`,
+  COALESCE(`text_ext`, `text_trx`) AS `text`
+FROM (
+  SELECT
+    `items`.`id` AS `item_id`,
+    `title` AS `item_title`,
+    `collection_id`,
+    `metadata`,
+    `items`.`created_at` AS `item_created_at`,
+    `items`.`updated_at` AS `item_updated_at`,
+    `name` AS `collection_name`,
+    `description` AS `collection_description`,
+    `collections`.`created_at` AS `collection_created_at`,
+    `collections`.`updated_at` AS `collection_updated_at`,
+    `assets`.`id` AS `asset_id`,
+    `path` AS `asset_path`,
+    `type` AS `asset_type`,
+    `size` AS `asset_size`,
+    `assets`.`created_at` AS `asset_created_at`,
+    `sort_index` AS `asset_sort_index`,
+    `parent_asset_id`,
+    `page_number`,
+    `extractions`.`text_content` AS `text_ext`,
+    `transcriptions`.`text_content` AS `text_trx`
+  FROM `items`
+  LEFT JOIN `collections`
+    ON (`items`.`collection_id` = `collections`.`id`)
+  LEFT JOIN `assets`
+    ON (`items`.`id` = `assets`.`item_id`)
+  LEFT JOIN `extractions`
+    ON (`assets`.`id` = `extractions`.`asset_id`)
+  LEFT JOIN `transcriptions`
+    ON (`assets`.`id` = `transcriptions`.`asset_id`)
+) AS `q01`
+WHERE (`collection_name` IN ('Collection One')) 
+> print(DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", sql)))
+  id parent notused
+1 10      0     216
+2 14      0      62
+3 20      0      62
+4 28      0      46
+5 36      0      46
+                                                                                       detail
+1                                                                            SCAN collections
+2                             SEARCH items USING INDEX idx_items_collection (collection_id=?)
+3                        SEARCH assets USING INDEX idx_assets_item_sort (item_id=?) LEFT-JOIN
+4       SEARCH extractions USING INDEX idx_extractions_asset_id_unique (asset_id=?) LEFT-JOIN
+5 SEARCH transcriptions USING INDEX idx_transcriptions_asset_id_unique (asset_id=?) LEFT-JOIN
+> 
+> cat("\n=== Filtered corpus (asset_types + collection) ===\n")
+
+=== Filtered corpus (asset_types + collection) ===
+> t2 <- entropia_corpus(con, collections = "Collection One", asset_types = "pdf")
+> print(DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", as.character(dbplyr::sql_render(t2)))))
+  id parent notused
+1 10      0     216
+2 14      0      46
+3 19      0      47
+4 26      0      46
+5 34      0      46
+                                                                                       detail
+1                                                                                 SCAN assets
+2                                    SEARCH items USING INDEX sqlite_autoindex_items_1 (id=?)
+3                        SEARCH collections USING INDEX sqlite_autoindex_collections_1 (id=?)
+4       SEARCH extractions USING INDEX idx_extractions_asset_id_unique (asset_id=?) LEFT-JOIN
+5 SEARCH transcriptions USING INDEX idx_transcriptions_asset_id_unique (asset_id=?) LEFT-JOIN
+> 
+> cat("\n=== corpus filtered, no text ===\n")
+
+=== corpus filtered, no text ===
+> t3 <- entropia_corpus(con, collections = "Collection One", text = FALSE)
+> print(DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", as.character(dbplyr::sql_render(t3)))))
+  id parent notused
+1  6      0     216
+2 10      0      62
+3 16      0      62
+                                                                detail
+1                                                     SCAN collections
+2      SEARCH items USING INDEX idx_items_collection (collection_id=?)
+3 SEARCH assets USING INDEX idx_assets_item_sort (item_id=?) LEFT-JOIN
+> 
+> cat("\n=== search plan detail strings ===\n")
+
+=== search plan detail strings ===
+> s <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", as.character(dbplyr::sql_render(entropia_search(con, "huelga")))))
+> print(s$detail)
+[1] "SCAN fts_items VIRTUAL TABLE INDEX 0:M4"     
+[2] "SEARCH i USING INTEGER PRIMARY KEY (rowid=?)"
+[3] "USE TEMP B-TREE FOR ORDER BY"                
+> 
+> entropia_disconnect(con)
+> cat("DONE\n")
+DONE
+> 

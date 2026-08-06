@@ -1,0 +1,311 @@
+
+R version 4.5.2 (2025-10-31 ucrt) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+> # Probe for Task 30: corpus/search/entity-join query plans + fixture indexes.
+> suppressPackageStartupMessages({
++   library(devtools)
++   library(dplyr)
++ })
+> load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+> 
+> cat("=== Fixture index inventory ===\n")
+=== Fixture index inventory ===
+> con <- entropia_connect("G:/EntropIA-Stack/EntropIA-R/tests/testthat/fixtures/full.sqlite")
+> idx <- DBI::dbGetQuery(con, "SELECT type, name, tbl_name FROM sqlite_master WHERE type IN ('index','table') AND name NOT LIKE 'sqlite_%' ORDER BY type, name")
+> print(idx)
+    type                               name                  tbl_name
+1  index           annotations_asset_id_idx               annotations
+2  index         annotations_asset_page_idx               annotations
+3  index                    idx_assets_item                    assets
+4  index               idx_assets_item_sort                    assets
+5  index         idx_assets_parent_asset_id                    assets
+6  index             idx_assets_parent_page                    assets
+7  index              idx_entities_asset_id                  entities
+8  index            idx_entities_geo_status                  entities
+9  index               idx_entities_item_id                  entities
+10 index                  idx_entities_type                  entities
+11 index           idx_extractions_asset_id               extractions
+12 index    idx_extractions_asset_id_unique               extractions
+13 index         idx_item_topics_item_topic               item_topics
+14 index           idx_item_topics_topic_id               item_topics
+15 index               idx_items_collection                     items
+16 index                   idx_items_search                     items
+17 index               idx_layouts_asset_id                   layouts
+18 index        idx_layouts_asset_id_unique                   layouts
+19 index             idx_llm_results_target               llm_results
+20 index       idx_llm_results_target_typed               llm_results
+21 index                 idx_notes_asset_id                     notes
+22 index                     idx_notes_item                     notes
+23 index  idx_rag_asset_embedding_state_due rag_asset_embedding_state
+24 index            idx_rag_chunks_asset_id                rag_chunks
+25 index  idx_rag_chunks_embedding_contract                rag_chunks
+26 index             idx_rag_chunks_item_id                rag_chunks
+27 index      idx_rag_messages_conversation              rag_messages
+28 index                 idx_sync_oplog_row                sync_oplog
+29 index        idx_transcriptions_asset_id            transcriptions
+30 index idx_transcriptions_asset_id_unique            transcriptions
+31 index               idx_triples_asset_id                   triples
+32 index             idx_vec_assets_item_id                vec_assets
+33 index                triples_item_id_idx                   triples
+34 table                        _migrations               _migrations
+35 table                        annotations               annotations
+36 table                       app_settings              app_settings
+37 table                             assets                    assets
+38 table                        collections               collections
+39 table                           entities                  entities
+40 table                        extractions               extractions
+41 table                          fts_items                 fts_items
+42 table                   fts_items_config          fts_items_config
+43 table                     fts_items_data            fts_items_data
+44 table                  fts_items_docsize         fts_items_docsize
+45 table                      fts_items_idx             fts_items_idx
+46 table                        item_topics               item_topics
+47 table                              items                     items
+48 table                            layouts                   layouts
+49 table                        llm_results               llm_results
+50 table                              notes                     notes
+51 table          rag_asset_embedding_state rag_asset_embedding_state
+52 table                         rag_chunks                rag_chunks
+53 table                     rag_chunks_fts            rag_chunks_fts
+54 table              rag_chunks_fts_config     rag_chunks_fts_config
+55 table             rag_chunks_fts_content    rag_chunks_fts_content
+56 table                rag_chunks_fts_data       rag_chunks_fts_data
+57 table             rag_chunks_fts_docsize    rag_chunks_fts_docsize
+58 table                 rag_chunks_fts_idx        rag_chunks_fts_idx
+59 table                  rag_conversations         rag_conversations
+60 table                       rag_messages              rag_messages
+61 table                    sync_blob_index           sync_blob_index
+62 table                     sync_conflicts            sync_conflicts
+63 table                          sync_meta                 sync_meta
+64 table                         sync_oplog                sync_oplog
+65 table                 sync_pending_blobs        sync_pending_blobs
+66 table                   sync_pending_fts          sync_pending_fts
+67 table                  sync_pending_rows         sync_pending_rows
+68 table                  sync_row_versions         sync_row_versions
+69 table                 sync_topic_aliases        sync_topic_aliases
+70 table                             topics                    topics
+71 table                     transcriptions            transcriptions
+72 table                            triples                   triples
+73 table                         vec_assets                vec_assets
+> cat("index count:", sum(idx$type == "index"), "\n")
+index count: 33 
+> 
+> cat("\n=== EXPLAIN QUERY PLAN: corpus join (no text) ===\n")
+
+=== EXPLAIN QUERY PLAN: corpus join (no text) ===
+> corpus_tbl <- entropia_corpus(con, text = FALSE)
+> corpus_sql <- as.character(dbplyr::sql_render(corpus_tbl))
+> cat(corpus_sql, "\n")
+SELECT
+  `items`.`id` AS `item_id`,
+  `title` AS `item_title`,
+  `collection_id`,
+  `metadata`,
+  `items`.`created_at` AS `item_created_at`,
+  `items`.`updated_at` AS `item_updated_at`,
+  `name` AS `collection_name`,
+  `description` AS `collection_description`,
+  `collections`.`created_at` AS `collection_created_at`,
+  `collections`.`updated_at` AS `collection_updated_at`,
+  `assets`.`id` AS `asset_id`,
+  `path` AS `asset_path`,
+  `type` AS `asset_type`,
+  `size` AS `asset_size`,
+  `assets`.`created_at` AS `asset_created_at`,
+  `sort_index` AS `asset_sort_index`,
+  `parent_asset_id`,
+  `page_number`
+FROM `items`
+LEFT JOIN `collections`
+  ON (`items`.`collection_id` = `collections`.`id`)
+LEFT JOIN `assets`
+  ON (`items`.`id` = `assets`.`item_id`) 
+> plan <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", corpus_sql))
+> print(plan)
+  id parent notused
+1  6      0     216
+2  8      0      47
+3 15      0      62
+                                                                          detail
+1                                                                     SCAN items
+2 SEARCH collections USING INDEX sqlite_autoindex_collections_1 (id=?) LEFT-JOIN
+3           SEARCH assets USING INDEX idx_assets_item_sort (item_id=?) LEFT-JOIN
+> 
+> cat("\n=== EXPLAIN QUERY PLAN: corpus join (with auto text) ===\n")
+
+=== EXPLAIN QUERY PLAN: corpus join (with auto text) ===
+> corpus_tbl2 <- entropia_corpus(con)
+> corpus_sql2 <- as.character(dbplyr::sql_render(corpus_tbl2))
+> cat(corpus_sql2, "\n")
+SELECT
+  `item_id`,
+  `item_title`,
+  `collection_id`,
+  `metadata`,
+  `item_created_at`,
+  `item_updated_at`,
+  `collection_name`,
+  `collection_description`,
+  `collection_created_at`,
+  `collection_updated_at`,
+  `asset_id`,
+  `asset_path`,
+  `asset_type`,
+  `asset_size`,
+  `asset_created_at`,
+  `asset_sort_index`,
+  `parent_asset_id`,
+  `page_number`,
+  COALESCE(`text_ext`, `text_trx`) AS `text`
+FROM (
+  SELECT
+    `items`.`id` AS `item_id`,
+    `title` AS `item_title`,
+    `collection_id`,
+    `metadata`,
+    `items`.`created_at` AS `item_created_at`,
+    `items`.`updated_at` AS `item_updated_at`,
+    `name` AS `collection_name`,
+    `description` AS `collection_description`,
+    `collections`.`created_at` AS `collection_created_at`,
+    `collections`.`updated_at` AS `collection_updated_at`,
+    `assets`.`id` AS `asset_id`,
+    `path` AS `asset_path`,
+    `type` AS `asset_type`,
+    `size` AS `asset_size`,
+    `assets`.`created_at` AS `asset_created_at`,
+    `sort_index` AS `asset_sort_index`,
+    `parent_asset_id`,
+    `page_number`,
+    `extractions`.`text_content` AS `text_ext`,
+    `transcriptions`.`text_content` AS `text_trx`
+  FROM `items`
+  LEFT JOIN `collections`
+    ON (`items`.`collection_id` = `collections`.`id`)
+  LEFT JOIN `assets`
+    ON (`items`.`id` = `assets`.`item_id`)
+  LEFT JOIN `extractions`
+    ON (`assets`.`id` = `extractions`.`asset_id`)
+  LEFT JOIN `transcriptions`
+    ON (`assets`.`id` = `transcriptions`.`asset_id`)
+) AS `q01` 
+> plan2 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", corpus_sql2))
+> print(plan2)
+  id parent notused
+1 10      0     216
+2 12      0      47
+3 19      0      62
+4 27      0      46
+5 35      0      46
+                                                                                       detail
+1                                                                                  SCAN items
+2              SEARCH collections USING INDEX sqlite_autoindex_collections_1 (id=?) LEFT-JOIN
+3                        SEARCH assets USING INDEX idx_assets_item_sort (item_id=?) LEFT-JOIN
+4       SEARCH extractions USING INDEX idx_extractions_asset_id_unique (asset_id=?) LEFT-JOIN
+5 SEARCH transcriptions USING INDEX idx_transcriptions_asset_id_unique (asset_id=?) LEFT-JOIN
+> 
+> cat("\n=== EXPLAIN QUERY PLAN: entity relations ===\n")
+
+=== EXPLAIN QUERY PLAN: entity relations ===
+> rel_tbl <- entropia_entity_relations(con)
+> rel_sql <- as.character(dbplyr::sql_render(rel_tbl))
+> cat(rel_sql, "\n")
+SELECT
+  `triples`.`id` AS `id`,
+  `subject`,
+  `predicate`,
+  `object`,
+  `item_id`,
+  `asset_id`,
+  `title` AS `item_title`,
+  `collection_id`,
+  `name` AS `collection_name`
+FROM `triples`
+LEFT JOIN `items`
+  ON (`triples`.`item_id` = `items`.`id`)
+LEFT JOIN `collections`
+  ON (`items`.`collection_id` = `collections`.`id`) 
+> plan3 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", rel_sql))
+> print(plan3)
+  id parent notused
+1  6      0     216
+2  8      0      46
+3 15      0      47
+                                                                          detail
+1                                                                   SCAN triples
+2             SEARCH items USING INDEX sqlite_autoindex_items_1 (id=?) LEFT-JOIN
+3 SEARCH collections USING INDEX sqlite_autoindex_collections_1 (id=?) LEFT-JOIN
+> 
+> cat("\n=== EXPLAIN QUERY PLAN: search items ===\n")
+
+=== EXPLAIN QUERY PLAN: search items ===
+> search_tbl <- entropia_search(con, "huelga", index = "items")
+> search_sql <- as.character(dbplyr::sql_render(search_tbl))
+> cat(search_sql, "\n")
+SELECT i.*, bm25(fts_items) AS rank
+FROM fts_items
+JOIN items i ON i.rowid = fts_items.rowid
+WHERE fts_items MATCH 'huelga'
+ORDER BY rank 
+> plan4 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", search_sql))
+> print(plan4)
+  id parent notused                                       detail
+1  4      0     132      SCAN fts_items VIRTUAL TABLE INDEX 0:M4
+2  9      0      45 SEARCH i USING INTEGER PRIMARY KEY (rowid=?)
+3 24      0       0                 USE TEMP B-TREE FOR ORDER BY
+> 
+> cat("\n=== EXPLAIN QUERY PLAN: search chunks ===\n")
+
+=== EXPLAIN QUERY PLAN: search chunks ===
+> search_tbl2 <- entropia_search(con, "huelga", index = "chunks")
+> search_sql2 <- as.character(dbplyr::sql_render(search_tbl2))
+> cat(search_sql2, "\n")
+SELECT
+  `id`,
+  `asset_id`,
+  `item_id`,
+  `source_kind`,
+  `source_id`,
+  `chunk_ordinal`,
+  `text_content`,
+  `start_char`,
+  `end_char`,
+  `source_text_hash`,
+  `chunking_contract`,
+  `embedding_model`,
+  `embedding_contract`,
+  `dimensions`,
+  `rank`
+FROM (
+SELECT c.*, bm25(rag_chunks_fts) AS rank
+FROM rag_chunks_fts
+JOIN rag_chunks c ON c.id = rag_chunks_fts.chunk_id
+WHERE rag_chunks_fts MATCH 'huelga'
+ORDER BY rank
+) AS `q01` 
+> plan5 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", search_sql2))
+> print(plan5)
+  id parent notused                                                    detail
+1  5      0     132              SCAN rag_chunks_fts VIRTUAL TABLE INDEX 0:M2
+2 10      0      46 SEARCH c USING INDEX sqlite_autoindex_rag_chunks_1 (id=?)
+3 38      0       0                              USE TEMP B-TREE FOR ORDER BY
+> 
+> entropia_disconnect(con)
+> cat("\nDONE\n")
+
+DONE
+> 

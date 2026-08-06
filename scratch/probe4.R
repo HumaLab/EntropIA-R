@@ -1,0 +1,5 @@
+con <- DBI::dbConnect(RSQLite::SQLite(), "G:/EntropIA-Stack/EntropIA-R/tests/testthat/fixtures/legacy-pre0019.sqlite", flags = RSQLite::SQLITE_RO)
+cat("fts|rag tables:", grep("fts|rag_chunks", DBI::dbListTables(con), value = TRUE), "\n")
+cat("fts_items n:", DBI::dbGetQuery(con, "SELECT count(*) n FROM fts_items")$n, "\n")
+cat("rag_chunks_fts n:", DBI::dbGetQuery(con, "SELECT count(*) n FROM rag_chunks_fts")$n, "\n")
+DBI::dbDisconnect(con)

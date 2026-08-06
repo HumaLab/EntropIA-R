@@ -1,0 +1,52 @@
+#' @details
+#'
+#' ## Lifecycle
+#'
+#' The public API follows the [lifecycle](https://lifecycle.r-lib.org/) stages.
+#' New capabilities ship as `experimental` and stabilise in later releases. In
+#' v1 the analysis layer is experimental: [entropia_temporal_profile()],
+#' [entropia_document_lengths()], [entropia_entity_frequency()],
+#' [entropia_topic_frequency()], [entropia_compare_collections()] and
+#' [entropia_analysis_dataset()] carry the experimental badge and are expected
+#' to stabilise in v2.
+#'
+#' Deprecations use [lifecycle::deprecate_warn()] with a one-release grace
+#' period: a function deprecated in release N keeps working (with a warning)
+#' through release N+1 and is removed in N+2. Deprecation warnings carry a
+#' stable condition class so tests and user code can catch them.
+#'
+#' The backward-compatibility surface is the column-contract manifest
+#' (`inst/schemas/manifest.json`) plus the schema compatibility policy
+#' (`options(entropiaR.schema_policy)`): schema support is removed only by
+#' bumping the manifest, never silently. Error and warning conditions follow
+#' the same contract as functions: every exported message is cli-formatted,
+#' carries a stable class, and lists an actionable next step.
+#'
+#' ## Writing a deprecation
+#'
+#' When a function or argument is superseded, signal the deprecation through
+#' the package's internal wrapper `ent_deprecate()`, which forwards to
+#' `lifecycle::deprecate_warn()` so users get the standard staged warning:
+#'
+#' ```r
+#' ent_deprecate(
+#'   when = "0.1.0",
+#'   what = "entropia_old_function()",
+#'   with = "entropia_new_function()"
+#' )
+#' ```
+#'
+#' The `when` version is the release that deprecates, `what` is the deprecated
+#' object (suffix the name with `()` for a function), and `with` names the
+#' replacement. Keep the function working for the one-release grace period,
+#' then remove it in the following release. Deprecation warnings carry the
+#' standard `lifecycle_warning_deprecated` condition class, so tests and user
+#' code can catch them.
+#' @keywords internal
+#' @importClassesFrom RSQLite SQLiteConnection
+#' @importFrom rlang .data
+"_PACKAGE"
+
+## usethis namespace: start
+## usethis namespace: end
+NULL

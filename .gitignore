@@ -1,2 +1,21 @@
-# Test data
+# Test data (reference corpus, never a test fixture)
 data-test/
+
+# R package artifacts
+*.tar.gz
+.Rproj.user/
+*.Rproj
+*.Rcheck/
+.Rhistory
+.RData
+.Ruserdata
+renv/
+src/*.o
+src/*.so
+src/*.dll
+
+# Generated test fixtures (rebuilt by data-raw/make_fixtures.R)
+tests/testthat/fixtures/
+
+# Local pkgdown build (rebuilt by pkgdown::build_site())
+pkgdown/

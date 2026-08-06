@@ -1,0 +1,141 @@
+---
+title: "Lazy queries with dplyr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Lazy queries with dplyr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(entropiaR)
+library(dplyr)
+```
+
+# Everything is a lazy table
+
+Every accessor returns a `tbl_sql` backed by SQLite. That means you can compose
+the whole `dplyr` grammar — `filter`, `select`, `mutate`, `arrange`,
+`group_by`, `summarise`, `left_join` — and the *entire query* is translated to
+SQL and executed by SQLite. Nothing is loaded into R until you `collect()`.
+
+```{r}
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
+
+entropia_items(con) |>
+  filter(collection_id == "11111111-1111-4111-8111-111111111111") |>
+  select(id, title) |>
+  collect()
+```
+
+The `entropiaR` package deliberately defines *no* custom verbs. `dplyr` works
+because the accessors are plain `tbl_sql` — zero magic, and you can read dbplyr
+documentation for the full verb vocabulary.
+
+# Filters and selection push down
+
+This never pulls the `items` table into memory:
+
+```{r}
+q <- entropia_items(con) |>
+  filter(grepl("huelga", title, ignore.case = TRUE)) |>
+  select(id, title, created_at)
+```
+
+You can inspect the generated SQL to confirm the work stays on SQLite:
+
+```{r}
+dbplyr::sql_render(q)
+```
+
+tidyselect works natively too — the `select()` above could have been written
+with helpers like `starts_with()`:
+
+```{r}
+entropia_items(con) |>
+  select(id, starts_with("created")) |>
+  collect()
+```
+
+# Joins across accessors
+
+Because every accessor is a `tbl_sql`, you can join them directly. Entities
+join to items for context:
+
+```{r}
+entropia_entities(con) |>
+  left_join(entropia_items(con), by = c("item_id" = "id")) |>
+  select(entity_type, value, title) |>
+  collect()
+```
+
+Note that `entropia_entities()` excludes soft-deleted rows by default
+(`source = 'manual_deleted'`), and `min_confidence` filters on confidence — both
+push down to SQL.
+
+# Grouped summaries
+
+```{r}
+entropia_assets(con) |>
+  group_by(type) |>
+  summarise(n = n(), total_size = sum(size, na.rm = TRUE)) |>
+  arrange(desc(n)) |>
+  collect()
+```
+
+# Parameter-safe full-text search
+
+`entropia_search()` wraps SQLite's FTS5 index and is injection-safe: your query
+text is escaped via `dbQuoteString` before it is spliced into `MATCH`. Results
+come back ranked by BM25.
+
+```{r}
+entropia_search(con, "huelga") |> collect()
+```
+
+`index = "chunks"` searches the RAG chunk index instead:
+
+```{r}
+entropia_search(con, "huelga", index = "chunks") |> collect()
+```
+
+Multi-word queries are AND-ed, `limit` truncates the ranked result, and the
+query itself is never interpolated into SQL.
+
+# Collecting applies the column contract
+
+`entropia_collect()` is `collect()` plus the package's column contract:
+millisecond timestamps become `POSIXct`, JSON-in-TEXT columns become
+list-columns, and embedding BLOBs stay `raw` (and are not selected unless you
+opt in).
+
+```{r}
+items <- entropia_items(con) |> entropia_collect()
+items$created_at
+```
+
+```{r}
+metadata_col <- entropia_items(con) |> entropia_collect()
+metadata_col$metadata
+```
+
+The pure timestamp helpers back this: `entropia_datetime()` converts
+milliseconds, `entropia_datetime_s()` seconds, and `entropia_datetime_auto()`
+uses a magnitude guard for columns whose units have drifted over time (used for
+`entities.created_at` and `triples.created_at`):
+
+```{r}
+entropia_datetime(1768478400000)
+entropia_datetime_s(1768478400)
+entropia_datetime_auto(c(1768478400000, 1768478400))
+```
+
+# Cleaning up
+
+```{r}
+entropia_disconnect(con)
+```
+
+Next: `vignette("datasets")` for building reproducible analysis datasets, or
+`vignette("analysis")` for a complete analysis workflow.

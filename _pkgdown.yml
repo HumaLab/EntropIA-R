@@ -1,0 +1,148 @@
+url: https://github.com/HLab-MITI/EntropIA-R
+destination: pkgdown
+template:
+  bootstrap: 5
+
+articles:
+- title: Using entropiaR
+  desc: "End-to-end workflows: connect, explore, extract, query, and analyze."
+  contents:
+  - connect
+  - corpus
+  - text
+  - dplyr
+  - datasets
+  - analysis
+  - administration
+
+reference:
+- title: Connection & administration
+  desc: >
+    Open and close read-only connections to an EntropIA SQLite database,
+    snapshot it, and read the schema version and compatibility state.
+  contents:
+  - entropia_connect
+  - entropia_disconnect
+  - entropia_copy
+  - entropia_conn-class
+  - entropia_schema_version
+  - entropia_schema_info
+  - entropia_schema_compat
+
+- title: Entity access
+  desc: >
+    One lazy `tbl_sql` accessor per readable table. Compose with dplyr/dbplyr;
+    materialise with `entropia_collect()`.
+  contents:
+  - entropia_collections
+  - entropia_items
+  - entropia_assets
+  - entropia_extractions
+  - entropia_transcriptions
+  - entropia_layouts
+  - entropia_notes
+  - entropia_annotations
+  - entropia_entities
+  - entropia_triples
+  - entropia_topics
+  - entropia_item_topics
+  - entropia_llm_results
+  - entropia_rag_conversations
+  - entropia_rag_messages
+  - entropia_embeddings
+  - entropia_chunks
+  - entropia_search_index
+
+- title: Search
+  desc: >
+    Parameter-safe FTS5 full-text search over the items and chunk indexes.
+  contents:
+  - entropia_search
+
+- title: Collection & typing
+  desc: >
+    Materialise a lazy query with the column contract applied, and the pure
+    timestamp-conversion helpers.
+  contents:
+  - entropia_collect
+  - entropia_datetime
+  - entropia_datetime_s
+  - entropia_datetime_auto
+
+- title: Domain layer
+  desc: >
+    High-level, research-oriented views over the corpus: joined items/assets/
+    collections with best text, parsed metadata, and text helpers.
+  contents:
+  - entropia_corpus
+  - entropia_text
+  - entropia_metadata
+
+- title: Corpus quality & diagnostics
+  desc: >
+    Coverage reports, orphaned-reference detection, connection validation and
+    compact status.
+  contents:
+  - entropia_ocr_coverage
+  - entropia_metadata_coverage
+  - entropia_corpus_quality
+  - entropia_orphans
+  - entropia_validate
+  - entropia_status
+
+- title: Research layer
+  desc: >
+    Entity relations, LLM result reconstruction, conversations with citations,
+    and the sync-metadata surface.
+  contents:
+  - entropia_entity_relations
+  - entropia_reconstruct_analysis
+  - entropia_conversation
+  - entropia_sync_info
+  - entropia_sync_versions
+  - entropia_conflicts
+
+- title: Analysis
+  desc: >
+    Operate on collected tibbles: temporal profiles, document lengths,
+    entity/topic frequency, collection comparison, and reproducible datasets
+    with provenance.
+  contents:
+  - entropia_temporal_profile
+  - entropia_document_lengths
+  - entropia_entity_frequency
+  - entropia_topic_frequency
+  - entropia_compare_collections
+  - entropia_analysis_dataset
+
+- title: Visualization
+  desc: >
+    ggplot2 helpers on analysis summaries (Suggests).
+  contents:
+  - entropia_plot_temporal
+  - entropia_plot_entities
+  - entropia_plot_coverage
+
+- title: Export & provenance
+  desc: >
+    Export tibbles or lazy queries to disk (streamed for delimited formats) and
+    read/write provenance sidecars.
+  contents:
+  - entropia_export
+  - entropia_provenance
+  - entropia_write_provenance
+
+- title: Write API (v2 stubs)
+  desc: >
+    v1 stubs for the v2 write API. All error with `entropia_error_write_disabled`
+    and documented guidance.
+  contents:
+  - entropia_insert
+  - entropia_update
+  - entropia_upsert
+  - entropia_delete
+
+- title: Package
+  desc: Package-level documentation.
+  contents:
+  - entropiaR-package

@@ -1,0 +1,23 @@
+> pkgload::load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+> files <- c(
++   "R/analysis.R", "R/collect.R", "R/corpus.R", "R/connect.R", "R/schema.R",
++   "R/utils.R", "R/entropiaR-package.R", "tests/testthat/test-lifecycle.R"
++ )
+> total <- 0L
+> for (f in files) {
++   res <- lintr::lint(f)
++   cat(sprintf("%-45s lints: %d\n", f, length(res)))
++   if (length(res) > 0) print(res)
++   total <- total + length(res)
++ }
+R/analysis.R                                  lints: 0
+R/collect.R                                   lints: 0
+R/corpus.R                                    lints: 0
+R/connect.R                                   lints: 0
+R/schema.R                                    lints: 0
+R/utils.R                                     lints: 0
+R/entropiaR-package.R                         lints: 0
+tests/testthat/test-lifecycle.R               lints: 0
+> cat("TOTAL lints:", total, "\n")
+TOTAL lints: 0 
+> 

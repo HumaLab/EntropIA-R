@@ -1,0 +1,6 @@
+cat("inside test, test_path():", testthat::test_path(), "\n")
+cat("inside test, test_path(..,..):", testthat::test_path("..", ".."), "\n")
+cat("inside test, getwd():", getwd(), "\n")
+cat("sysfile man:", system.file("man", "entropia_temporal_profile.Rd", package = "entropiaR"), "\n")
+cat("pkg_root candidate:", file.path(testthat::test_path("..", ".."), "man", "entropia_temporal_profile.Rd"), "\n")
+cat("normalize:", normalizePath(file.path(testthat::test_path("..", ".."), "man", "entropia_temporal_profile.Rd"), mustWork = FALSE, winslash = "/"), "\n")

@@ -1,0 +1,1030 @@
+{
+  "manifest_version": 1,
+  "schema_head": "0029_rag_chunks",
+  "description": "entropiaR column contract for the post-0029 EntropIA schema. required marks columns whose absence is a compatibility failure once the database version reaches the column's min_version; contract records the typed transformation entropia_collect applies.",
+  "sync_meta_keys": ["device_id", "account_email", "server_url", "last_sync_at", "server_epoch", "triggers_version", "capture_enabled"],
+  "tables": {
+    "_migrations": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "name": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "applied_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_s"
+        }
+      },
+      "min_version": "0001_initial"
+    },
+    "collections": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "name": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "description": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0001_initial"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        },
+        "updated_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0001_initial"
+    },
+    "items": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "title": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "collection_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "metadata": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0002_metadata_search",
+          "contract": "json"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        },
+        "updated_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        },
+        "search_text": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0002_metadata_search"
+        }
+      },
+      "min_version": "0001_initial"
+    },
+    "assets": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "path": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "type": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "enum",
+          "values": ["image", "pdf", "audio"]
+        },
+        "size": {
+          "type": "INTEGER",
+          "required": false,
+          "min_version": "0001_initial",
+          "contract": "int"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        },
+        "sort_index": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0013_assets_sort_index"
+        },
+        "parent_asset_id": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0024_pdf_page_assets"
+        },
+        "page_number": {
+          "type": "INTEGER",
+          "required": false,
+          "min_version": "0024_pdf_page_assets"
+        }
+      },
+      "min_version": "0001_initial"
+    },
+    "extractions": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0003_extractions"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0003_extractions"
+        },
+        "text_content": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0003_extractions"
+        },
+        "method": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0003_extractions"
+        },
+        "confidence": {
+          "type": "REAL",
+          "required": false,
+          "min_version": "0003_extractions",
+          "contract": "dbl"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0003_extractions",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0003_extractions"
+    },
+    "transcriptions": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0008_transcriptions"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0008_transcriptions"
+        },
+        "text_content": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0008_transcriptions"
+        },
+        "language": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0008_transcriptions"
+        },
+        "duration_ms": {
+          "type": "INTEGER",
+          "required": false,
+          "min_version": "0008_transcriptions",
+          "contract": "int"
+        },
+        "model": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0008_transcriptions"
+        },
+        "segments": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0008_transcriptions",
+          "contract": "json"
+        },
+        "confidence": {
+          "type": "REAL",
+          "required": false,
+          "min_version": "0008_transcriptions",
+          "contract": "dbl"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0008_transcriptions",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0008_transcriptions"
+    },
+    "layouts": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0020_layouts"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0020_layouts"
+        },
+        "regions": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0020_layouts",
+          "contract": "json"
+        },
+        "blocks": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0020_layouts",
+          "contract": "json"
+        },
+        "model": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0020_layouts"
+        },
+        "image_width": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0020_layouts",
+          "contract": "int"
+        },
+        "image_height": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0020_layouts",
+          "contract": "int"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0020_layouts",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0020_layouts"
+    },
+    "notes": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "content": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0001_initial"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        },
+        "updated_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0001_initial",
+          "contract": "datetime_ms"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0014_asset_scoping"
+        }
+      },
+      "min_version": "0001_initial"
+    },
+    "annotations": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0007_annotations"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0007_annotations"
+        },
+        "page": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "int"
+        },
+        "kind": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "enum",
+          "values": ["rectangle", "underline", "crop", "erase", "rotation"]
+        },
+        "color": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0007_annotations"
+        },
+        "x": {
+          "type": "REAL",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "dbl"
+        },
+        "y": {
+          "type": "REAL",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "dbl"
+        },
+        "width": {
+          "type": "REAL",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "dbl"
+        },
+        "height": {
+          "type": "REAL",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "dbl"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "datetime_ms"
+        },
+        "updated_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0007_annotations",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0007_annotations"
+    },
+    "entities": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0005_nlp_tables"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0005_nlp_tables"
+        },
+        "entity_type": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0005_nlp_tables",
+          "contract": "enum",
+          "values": ["person", "place", "date", "institution", "organization", "misc", "custom"]
+        },
+        "value": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0005_nlp_tables"
+        },
+        "start_offset": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0005_nlp_tables",
+          "contract": "int"
+        },
+        "end_offset": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0005_nlp_tables",
+          "contract": "int"
+        },
+        "confidence": {
+          "type": "REAL",
+          "required": true,
+          "min_version": "0005_nlp_tables",
+          "contract": "dbl"
+        },
+        "source": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0009_entities_provenance"
+        },
+        "model_name": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0009_entities_provenance"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0005_nlp_tables",
+          "contract": "datetime_auto"
+        },
+        "latitude": {
+          "type": "REAL",
+          "required": false,
+          "min_version": "0011_entities_geocoding",
+          "contract": "dbl"
+        },
+        "longitude": {
+          "type": "REAL",
+          "required": false,
+          "min_version": "0011_entities_geocoding",
+          "contract": "dbl"
+        },
+        "geo_status": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0011_entities_geocoding",
+          "contract": "enum"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0014_asset_scoping"
+        },
+        "manual_lat": {
+          "type": "REAL",
+          "required": false,
+          "min_version": "0026_entity_manual_coordinates",
+          "contract": "dbl"
+        },
+        "manual_lon": {
+          "type": "REAL",
+          "required": false,
+          "min_version": "0026_entity_manual_coordinates",
+          "contract": "dbl"
+        }
+      },
+      "min_version": "0005_nlp_tables"
+    },
+    "triples": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0006_triples"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0006_triples"
+        },
+        "subject": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0006_triples"
+        },
+        "predicate": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0006_triples"
+        },
+        "object": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0006_triples"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0006_triples",
+          "contract": "datetime_auto"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0014_asset_scoping"
+        }
+      },
+      "min_version": "0006_triples"
+    },
+    "topics": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0015_topics"
+        },
+        "name": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0015_topics"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0015_topics",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0015_topics"
+    },
+    "item_topics": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0015_topics"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0015_topics"
+        },
+        "topic_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0015_topics"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0015_topics",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0015_topics"
+    },
+    "llm_results": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0012_llm_results"
+        },
+        "target_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0012_llm_results"
+        },
+        "target_type": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0019_llm_results_target_type",
+          "contract": "enum",
+          "values": ["asset", "item", "collection", "unknown"]
+        },
+        "job_type": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0012_llm_results"
+        },
+        "result": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0012_llm_results",
+          "contract": "json"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0012_llm_results",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0012_llm_results"
+    },
+    "rag_conversations": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0022_rag_conversations"
+        },
+        "title": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0022_rag_conversations"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0022_rag_conversations",
+          "contract": "datetime_ms"
+        },
+        "updated_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0022_rag_conversations",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0022_rag_conversations"
+    },
+    "rag_messages": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0022_rag_conversations"
+        },
+        "conversation_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0022_rag_conversations"
+        },
+        "sort_index": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0022_rag_conversations"
+        },
+        "role": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0022_rag_conversations",
+          "contract": "enum",
+          "values": ["user", "assistant"]
+        },
+        "content": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0022_rag_conversations"
+        },
+        "sources": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0022_rag_conversations",
+          "contract": "json"
+        },
+        "model": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0022_rag_conversations"
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0022_rag_conversations",
+          "contract": "datetime_ms"
+        }
+      },
+      "min_version": "0022_rag_conversations"
+    },
+    "vec_assets": {
+      "source": "migration",
+      "columns": {
+        "asset_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0017_vec_assets"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0017_vec_assets"
+        },
+        "embedding": {
+          "type": "BLOB",
+          "required": true,
+          "min_version": "0017_vec_assets",
+          "contract": "blob_f32"
+        },
+        "embedding_model": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0028_vec_assets_embedding_contract"
+        },
+        "embedding_contract": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0028_vec_assets_embedding_contract"
+        },
+        "dimensions": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0028_vec_assets_embedding_contract",
+          "contract": "int"
+        }
+      },
+      "min_version": "0017_vec_assets"
+    },
+    "rag_chunks": {
+      "source": "migration",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "asset_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "source_kind": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks",
+          "contract": "enum",
+          "values": ["extraction", "transcription"]
+        },
+        "source_id": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "chunk_ordinal": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0029_rag_chunks",
+          "contract": "int"
+        },
+        "text_content": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "start_char": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0029_rag_chunks",
+          "contract": "int"
+        },
+        "end_char": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0029_rag_chunks",
+          "contract": "int"
+        },
+        "source_text_hash": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "chunking_contract": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "embedding": {
+          "type": "BLOB",
+          "required": true,
+          "min_version": "0029_rag_chunks",
+          "contract": "blob_f32"
+        },
+        "embedding_model": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "embedding_contract": {
+          "type": "TEXT",
+          "required": true,
+          "min_version": "0029_rag_chunks"
+        },
+        "dimensions": {
+          "type": "INTEGER",
+          "required": true,
+          "min_version": "0029_rag_chunks",
+          "contract": "int"
+        }
+      },
+      "min_version": "0029_rag_chunks"
+    },
+    "fts_items": {
+      "source": "migration",
+      "columns": {
+        "item_id": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0004_fts5"
+        },
+        "title": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0004_fts5"
+        },
+        "metadata": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0004_fts5"
+        },
+        "extracted_text": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0004_fts5"
+        }
+      },
+      "min_version": "0004_fts5"
+    },
+    "rag_chunks_fts": {
+      "source": "migration",
+      "columns": {
+        "chunk_id": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0029_rag_chunks"
+        },
+        "text_content": {
+          "type": "TEXT",
+          "required": false,
+          "min_version": "0029_rag_chunks"
+        }
+      },
+      "min_version": "0029_rag_chunks"
+    },
+    "sync_meta": {
+      "source": "sync",
+      "columns": {
+        "key": {
+          "type": "TEXT",
+          "required": true
+        },
+        "value": {
+          "type": "TEXT",
+          "required": true
+        }
+      }
+    },
+    "sync_row_versions": {
+      "source": "sync",
+      "columns": {
+        "table_name": {
+          "type": "TEXT",
+          "required": true
+        },
+        "row_id": {
+          "type": "TEXT",
+          "required": true
+        },
+        "server_seq": {
+          "type": "INTEGER",
+          "required": true
+        }
+      }
+    },
+    "sync_conflicts": {
+      "source": "sync",
+      "columns": {
+        "id": {
+          "type": "TEXT",
+          "required": true
+        },
+        "table_name": {
+          "type": "TEXT",
+          "required": true
+        },
+        "row_id": {
+          "type": "TEXT",
+          "required": true
+        },
+        "reason": {
+          "type": "TEXT",
+          "required": true,
+          "contract": "enum"
+        },
+        "loser_payload": {
+          "type": "TEXT",
+          "required": false
+        },
+        "winner_summary": {
+          "type": "TEXT",
+          "required": false
+        },
+        "created_at": {
+          "type": "INTEGER",
+          "required": true,
+          "contract": "datetime_ms"
+        },
+        "acknowledged": {
+          "type": "INTEGER",
+          "required": true
+        }
+      }
+    },
+    "sync_blob_index": {
+      "source": "sync",
+      "columns": {
+        "asset_id": {
+          "type": "TEXT",
+          "required": true
+        },
+        "sha256": {
+          "type": "TEXT",
+          "required": true
+        },
+        "size": {
+          "type": "INTEGER",
+          "required": true
+        },
+        "file_mtime_ms": {
+          "type": "INTEGER",
+          "required": true
+        },
+        "uploaded": {
+          "type": "INTEGER",
+          "required": true
+        }
+      }
+    },
+    "app_settings": {
+      "source": "repair",
+      "columns": {
+        "key": {
+          "type": "TEXT",
+          "required": true
+        },
+        "value": {
+          "type": "TEXT",
+          "required": true
+        }
+      }
+    },
+    "rag_asset_embedding_state": {
+      "source": "repair",
+      "columns": {
+        "asset_id": {
+          "type": "TEXT",
+          "required": true
+        },
+        "item_id": {
+          "type": "TEXT",
+          "required": true
+        },
+        "rag_incomplete": {
+          "type": "INTEGER",
+          "required": true
+        },
+        "failure_count": {
+          "type": "INTEGER",
+          "required": true
+        },
+        "next_retry_at_ms": {
+          "type": "INTEGER",
+          "required": true,
+          "contract": "datetime_ms"
+        },
+        "last_error": {
+          "type": "TEXT",
+          "required": false
+        },
+        "updated_at_ms": {
+          "type": "INTEGER",
+          "required": true,
+          "contract": "datetime_ms"
+        }
+      }
+    }
+  }
+}
