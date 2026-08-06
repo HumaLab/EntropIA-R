@@ -59,7 +59,11 @@ ent_columns <- function(con, table) {
 # which is the more fundamental failure. Accessors (Task 9+) call this before
 # querying a table so failures stay stable and actionable.
 ent_require_columns <- function(con, table, columns) {
-  cols <- tryCatch(ent_columns(con, table)$name, error = function(e) character())
+  cols <- tryCatch(ent_columns(con, table)$name, error = function(e) e)
+  # A missing table surfaces as entropia_error_table_missing (from ent_columns);
+  # re-raise it rather than reporting every requested column as missing, which
+  # would hide the more fundamental failure.
+  if (inherits(cols, "condition")) stop(cols)
   missing <- setdiff(columns, cols)
   if (length(missing) > 0L) {
     ent_abort(

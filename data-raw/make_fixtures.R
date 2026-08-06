@@ -1052,7 +1052,7 @@ seed_sync_and_settings <- function(con) {
             "last_sync_at", "server_epoch", "triggers_version", "capture_enabled"),
     value = c("device-fixture", "https://cloud.entropia.example",
               "fixture@entropia.example", "42", as.character(ms(800)),
-              "7", "2", "1"),
+              "c3f5e8a0-1111-4111-8111-111111111111", "2", "1"),
     stringsAsFactors = FALSE
   ), append = TRUE, row.names = FALSE)
 
@@ -1065,7 +1065,7 @@ seed_sync_and_settings <- function(con) {
 
   dbWriteTable(con, "sync_conflicts", data.frame(
     id = "conf-1", table_name = "items", row_id = ITEM_1,
-    reason = "concurrent_update", loser_payload = "{}", winner_summary = "{}",
+    reason = "lww_lost", loser_payload = "{}", winner_summary = "{}",
     created_at = ms(810), acknowledged = 0L,
     stringsAsFactors = FALSE
   ), append = TRUE, row.names = FALSE)

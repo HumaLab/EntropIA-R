@@ -569,12 +569,12 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** `entropia_validate(con)` on the real test DB returns a useful findings tibble with zero false "broken" reports on healthy tables. (Verified 2026-08-06 on the 29 MB reference DB: 1 warning — `rag_asset_embedding_state`, a Rust repair table the app creates lazily, absent — zero errors; `entropia_status` reports path/mode/`0029_rag_chunks`/row counts/sync `2026-08-04 03:23:25`/journal `wal`/`-wal` sidecar present.)
 
 ### Task 8: sync-metadata surface
-- [ ] implement `entropia_sync_info(con)`: whitelisted `sync_meta` keys as a tibble (device_id, account_email, server_url, last_sync_at→POSIXct, server_epoch, triggers_version, capture_enabled)
-- [ ] implement `entropia_sync_versions(con)` (tbl on `sync_row_versions`) and `entropia_conflicts(con)` (tbl on `sync_conflicts`, `reason` documented)
-- [ ] write tests: sync_info values match fixture; sync_versions lazy join test; conflicts reason parsing
-- [ ] write tests: `app_settings` NOT surfaced raw (secret keys excluded) — whitelist assertion
-- [ ] run tests — must pass before Task 9
-- **Acceptance:** on the real DB, `entropia_sync_info()` shows account email + last_sync_at without exposing secrets.
+- [x] implement `entropia_sync_info(con)`: whitelisted `sync_meta` keys as a tibble (device_id, account_email, server_url, last_sync_at→POSIXct, server_epoch, triggers_version, capture_enabled) (`R/sync.R`: `entropia_sync_info` returns a one-row typed tibble; `last_sync_at`→`POSIXct` (ms), `server_epoch`→character — real DBs store a server/session UUID string, not a numeric epoch, so integer coercion would silently NA — `triggers_version`→integer, `capture_enabled`→logical; whitelist sourced from `manifest.json$sync_meta_keys` with a built-in fallback)
+- [x] implement `entropia_sync_versions(con)` (tbl on `sync_row_versions`) and `entropia_conflicts(con)` (tbl on `sync_conflicts`, `reason` documented) (lazy `dplyr::tbl()`; `reason` enum documented from `EntropIA-Cloud/docs/DESIGN.md`: `lww_lost|parent_deleted|unique_collision|apply_error|schema_drift|blob_missing|blob_hash_mismatch`; fixed `ent_require_columns` in `R/schema.R` to propagate `entropia_error_table_missing` instead of swallowing it into `column_missing`)
+- [x] write tests: sync_info values match fixture; sync_versions lazy join test; conflicts reason parsing (`test-sync.R`, 13 assertions; SQL push-down verified via `dbplyr::sql_render`; fixture `sync_conflicts.reason` switched from `concurrent_update` — not in the protocol enum — to `lww_lost` in `data-raw/make_fixtures.R`)
+- [x] write tests: `app_settings` NOT surfaced raw (secret keys excluded) — whitelist assertion (no `*_api_key` column/value leaks into the sync surface; `last_pull_seq` excluded too)
+- [x] run tests — must pass before Task 9 (367 pass, 0 fail; lint-clean apart from the known cross-file `object_usage` local artifact; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes)
+- **Acceptance:** on the real DB, `entropia_sync_info()` shows account email + last_sync_at without exposing secrets. (Verified 2026-08-06 on the 29 MB reference DB via a clean `VACUUM INTO` copy: `account_email = agustin.nieto77@gmail.com`, `last_sync_at = 2026-08-04 03:23:25 UTC`, `server_epoch` preserved as its real UUID string, zero `*_api_key` leakage, `sync_versions`/`conflicts` lazy. Environment note: RSQLite 2.4.3 segfaults opening the live DB (0-byte `-wal` + stale `-shm` sidecars) and even CLI-created files under `Rscript -e` on this machine — the DB itself is healthy (`PRAGMA integrity_check = ok` via sqlite3); acceptance was verified from a script file on the VACUUM copy.)
 
 ### Phase 2 — Entity access (after 5; tasks 9–13, partially parallel)
 
