@@ -579,12 +579,12 @@ starts. Parallelizable groups noted per phase.
 ### Phase 2 — Entity access (after 5; tasks 9–13, partially parallel)
 
 ### Task 9: Core accessors (collections, items, assets)
-- [ ] implement `entropia_collections()`, `entropia_items()`, `entropia_assets()` returning `tbl_sql` on raw tables
-- [ ] ensure `entropia_assets()` exposes `parent_asset_id`/`page_number` (PDF pages) and never selects BLOBs
-- [ ] write tests: each accessor is lazy (`class` includes `tbl_sql`), columns match the manifest, `nrow` requires `collect`
-- [ ] write tests: PDF page parent/child join on full fixture (partial UNIQUE respected)
-- [ ] run tests — must pass before Task 10
-- **Acceptance:** `entropia_items(con) %>% filter(collection_id == X) %>% collect()` returns expected rows (SQL pushed down, verified via `dbplyr::sql_render`).
+- [x] implement `entropia_collections()`, `entropia_items()`, `entropia_assets()` returning `tbl_sql` on raw tables
+- [x] ensure `entropia_assets()` exposes `parent_asset_id`/`page_number` (PDF pages) and never selects BLOBs
+- [x] write tests: each accessor is lazy (`class` includes `tbl_sql`), columns match the manifest, `nrow` requires `collect`
+- [x] write tests: PDF page parent/child join on full fixture (partial UNIQUE respected)
+- [x] run tests — must pass before Task 10 (408 pass, 0 fail; lint-clean on both new files; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes)
+- **Acceptance:** `entropia_items(con) %>% filter(collection_id == X) %>% collect()` returns expected rows (SQL pushed down, verified via `dbplyr::sql_render`). (Verified 2026-08-06 on the full fixture: filter renders a WHERE collection_id clause, 3 rows returned; assets accessor exposes parent/page columns, 2 PDF pages join to the pdf parent with `parent_type == "pdf"`, partial UNIQUE `(parent_asset_id, page_number)` held; legacy mini schema degrades gracefully without page columns.)
 
 ### Task 10: Text accessors (extractions, transcriptions, layouts)
 - [ ] implement `entropia_extractions()`, `entropia_transcriptions()`, `entropia_layouts()`
