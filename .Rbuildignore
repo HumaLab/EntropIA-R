@@ -1,0 +1,13 @@
+^\.atl$
+^\.ralphex$
+^\.gitignore$
+^\.editorconfig$
+^\.lintr$
+^\.github$
+^docs$
+^data-test$
+^data-raw$
+^LICENSE\.md$
+^_pkgdown\.yml$
+^pkgdown$
+^tests/testthat/fixtures$

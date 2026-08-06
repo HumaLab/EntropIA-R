@@ -505,12 +505,13 @@ starts. Parallelizable groups noted per phase.
 ### Phase 0 — Bootstrap (must precede everything)
 
 ### Task 1: Scaffold the package skeleton
-- [ ] run `usethis::create_package(".", open = FALSE)` (or manual equivalent) to scaffold DESCRIPTION/NAMESPACE/R at repo root; confirm it does not clobber `data-test/`, `.atl/`, `.gitignore`
-- [ ] write DESCRIPTION: Package `entropiaR`, Title/Description, `License: MIT + file LICENSE`, Imports/Suggests per Architecture, `RoxygenNote`, `Config/testthat/edition: 3`, `Depends: R (>= 4.1)`
-- [ ] add LICENSE + LICENSE.md (MIT, user as copyright holder); add `.Rbuildignore` entries (docs/, data-test/, .atl/, .github unless wanted in build)
-- [ ] extend `.gitignore` (R outputs: `.Rproj.user`, `*.Rcheck`, `renv/` if used)
-- [ ] write tests: `tests/testthat.R`, empty `testthat/` dir, `helper-fixtures.R` skeleton — run `devtools::test()` (0 tests, green)
+- [x] run `usethis::create_package(".", open = FALSE)` (or manual equivalent) to scaffold DESCRIPTION/NAMESPACE/R at repo root; confirm it does not clobber `data-test/`, `.atl/`, `.gitignore` (manual equivalent used; `data-test/entropia.sqlite`, `.atl/`, `docs/` verified intact)
+- [x] write DESCRIPTION: Package `entropiaR`, Title/Description, `License: MIT + file LICENSE`, Imports/Suggests per Architecture, `RoxygenNote`, `Config/testthat/edition: 3`, `Depends: R (>= 4.1)`
+- [x] add LICENSE + LICENSE.md (MIT, user as copyright holder); add `.Rbuildignore` entries (docs/, data-test/, .atl/, .github unless wanted in build)
+- [x] extend `.gitignore` (R outputs: `.Rproj.user`, `*.Rcheck`, `renv/` if used)
+- [x] write tests: `tests/testthat.R`, empty `testthat/` dir, `helper-fixtures.R` skeleton — run `devtools::test()` (green; testthat 3e aborts with zero test files, so a minimal scaffold smoke test `test-scaffold.R` is included)
 - **Acceptance:** `devtools::load_all()` succeeds; `R CMD build` produces a valid tarball; package name `entropiaR` confirmed available (check CRAN + GitHub).
+  - Verified 2026-08-06 with R 4.5.2: `load_all()` OK, `devtools::test()` 1 file green, `R CMD build` → `entropiaR_0.0.0.9000.tar.gz` with expected contents. Name check: no `entropiaR` on CRAN (404); GitHub has only `Snikerso/EntropiaR` (2019 entropy-calculation scripts, not a package) — Risk 1 still pending user confirm at release.
 
 ### Task 2: R environment + local check gate
 - [ ] document and verify R invocation for the local machine (add `C:\Program Files\R\R-4.5.2\bin` guidance in README dev section or `renv` bootstrap)
