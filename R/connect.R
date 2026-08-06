@@ -107,7 +107,8 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
   con <- DBI::dbConnect(
     RSQLite::SQLite(),
     db_path,
-    flags = RSQLite::SQLITE_RO
+    flags = RSQLite::SQLITE_RO,
+    synchronous = NULL
   )
   DBI::dbExecute(con, "PRAGMA query_only = ON")
 

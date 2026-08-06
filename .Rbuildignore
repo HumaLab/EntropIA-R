@@ -1,5 +1,6 @@
 ^\.atl$
 ^\.ralphex$
+^CLAUDE\.md$
 ^\.gitignore$
 ^\.editorconfig$
 ^\.lintr$
