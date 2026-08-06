@@ -78,6 +78,14 @@ ent_require_columns <- function(con, table, columns) {
   invisible(TRUE)
 }
 
+# Do all `cols` exist on `table`? Used to gate optional-column behaviour (e.g.
+# the entities soft-delete marker `source` on schemas that predate migration
+# 0009) without raising on absent tables or columns.
+ent_has_columns <- function(con, table, cols) {
+  live <- tryCatch(ent_columns(con, table)$name, error = function(e) character(0))
+  all(cols %in% live)
+}
+
 # Path to the bundled schema manifest inside the installed package.
 ent_manifest_path <- function() {
   system.file("schemas", "manifest.json", package = "entropiaR")

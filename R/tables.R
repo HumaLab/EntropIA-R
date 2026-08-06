@@ -115,3 +115,122 @@ entropia_transcriptions <- function(con) {
 entropia_layouts <- function(con) {
   ent_tbl(con, "layouts")
 }
+
+#' Entities (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `entities` table (named-entity recognition
+#' output). Two filters are applied, both pushed down to SQL:
+#'
+#' - By default rows marked soft-deleted (`source = "manual_deleted"`, the
+#'   app's hidden marker) are excluded; pass `include_deleted = TRUE` to keep
+#'   them. On schemas that predate the `source` column (migration 0009) there
+#'   is no marker to honour and the filter is a no-op.
+#' - Set `min_confidence` to keep only entities at or above a confidence
+#'   threshold.
+#'
+#' `created_at` uses the magnitude-guarded `datetime_auto` contract (the app
+#' writes epoch milliseconds, the DDL default is seconds); `asset_id` is NULL
+#' for item-level entities.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @param include_deleted Include soft-deleted entities (`source =
+#'   "manual_deleted"`). Default `FALSE`.
+#' @param min_confidence Optional numeric threshold in `[0, 1]`; rows with
+#'   `confidence < min_confidence` are excluded. `NULL` (default) keeps all
+#'   confidence levels.
+#' @return A `tbl_sql` on `entities`.
+#' @export
+entropia_entities <- function(con, include_deleted = FALSE, min_confidence = NULL) {
+  ent_require_conn(con)
+  if (length(include_deleted) != 1L || is.na(include_deleted) || !is.logical(include_deleted)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg include_deleted} must be a single {.cls logical} (not {.val {include_deleted}})."
+    )
+  }
+  if (!is.null(min_confidence)) {
+    if (length(min_confidence) != 1L || !is.numeric(min_confidence) ||
+        !is.finite(min_confidence) || min_confidence < 0 || min_confidence > 1) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        c(
+          "{.arg min_confidence} must be a single number in {.val [0, 1]}.",
+          i = "Received {.val {min_confidence}}."
+        )
+      )
+    }
+  }
+  tbl <- ent_tbl(con, "entities")
+  if (!include_deleted && ent_has_columns(con, "entities", "source")) {
+    tbl <- dplyr::filter(tbl, is.na(.data$source) | .data$source != "manual_deleted")
+  }
+  if (!is.null(min_confidence)) {
+    tbl <- dplyr::filter(tbl, .data$confidence >= min_confidence)
+  }
+  tbl
+}
+
+#' Triples (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `triples` table (subject/predicate/object
+#' extractions). `created_at` uses the magnitude-guarded `datetime_auto`
+#' contract; `asset_id` is NULL for item-level triples.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `triples`.
+#' @export
+entropia_triples <- function(con) {
+  ent_tbl(con, "triples")
+}
+
+#' Topics (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `topics` table. Topic names are normalised to
+#' UPPERCASE by the app (UNIQUE constraint); the accessor returns them exactly
+#' as stored and never re-normalises.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `topics`.
+#' @export
+entropia_topics <- function(con) {
+  ent_tbl(con, "topics")
+}
+
+#' Item-topic links (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `item_topics` join table, linking items to
+#' topics (one row per `(item_id, topic_id)` pair, UNIQUE in the app schema).
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `item_topics`.
+#' @export
+entropia_item_topics <- function(con) {
+  ent_tbl(con, "item_topics")
+}
+
+#' Notes (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `notes` table. Notes are item-level by
+#' default; when `asset_id` is present (migration 0014) the note is scoped to
+#' a specific asset instead. `asset_id` is NULL for item-level notes.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `notes`.
+#' @export
+entropia_notes <- function(con) {
+  ent_tbl(con, "notes")
+}
+
+#' Annotations (lazy)
+#'
+#' A lazy [dplyr::tbl()] over the `annotations` table (drawing/OCR-cleanup
+#' marks on a PDF page). `kind` is an enum (`rectangle`, `underline`, `crop`,
+#' `erase`, `rotation`); `page` is 1-based and `x`/`y`/`width`/`height` are
+#' coordinates in page units.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A `tbl_sql` on `annotations`.
+#' @export
+entropia_annotations <- function(con) {
+  ent_tbl(con, "annotations")
+}

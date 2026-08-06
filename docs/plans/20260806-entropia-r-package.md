@@ -595,12 +595,12 @@ starts. Parallelizable groups noted per phase.
   - Verified 2026-08-06 with R 4.5.2 on the full fixture: 2 extractions (`ext-*`), 1 transcription (`trx-*`), 1 layout (`lay-*`), all ids derivable from `asset_id`, all `asset_id` values resolve to existing assets, inner joins keep row counts (no fan-out). `entropia_collect()` turns `transcriptions.segments` into a list-column of `{start_ms,end_ms,text}` data.frames and `created_at` into `POSIXct`; mini schema (no text tables) raises `entropia_error_table_missing`.
 
 ### Task 11: Research accessors (entities, triples, topics, notes, annotations)
-- [ ] implement `entropia_entities()` with `include_deleted`/`min_confidence`; soft-delete filter `source != 'manual_deleted'` by default
-- [ ] implement `entropia_triples()`, `entropia_topics()`, `entropia_item_topics()`, `entropia_notes()`, `entropia_annotations()`
-- [ ] write tests: soft-delete default vs include; `entity_type` values; topics UPPERCASE normalization documented (not re-normalized by us)
-- [ ] write tests: nullable `asset_id` semantics (item-level rows) exposed as NA
-- [ ] run tests — must pass before Task 12
-- **Acceptance:** 1339 entities on the real DB collapse correctly with soft-deleted excluded.
+- [x] implement `entropia_entities()` with `include_deleted`/`min_confidence`; soft-delete filter `source != 'manual_deleted'` by default (added to `R/tables.R`; soft-delete is `is.na(source) | source != 'manual_deleted'`, gated on column presence via new `ent_has_columns` in `R/schema.R` so pre-0009 schemas degrade; `min_confidence` validated as a single number in `[0,1]`; both filters push down to SQL; `@importFrom rlang .data` added for the tidy-eval pronoun)
+- [x] implement `entropia_triples()`, `entropia_topics()`, `entropia_item_topics()`, `entropia_notes()`, `entropia_annotations()` (plain `ent_tbl` accessors on the shared pattern with roxygen docs)
+- [x] write tests: soft-delete default vs include; `entity_type` values; topics UPPERCASE normalization documented (not re-normalized by us) (`tests/testthat/test-research.R`, 75 assertions: laziness, row counts, manifest column parity, soft-delete default/exclude, SQL push-down of both filters, `min_confidence` composition, entity_type/provenance surface, nullable asset_id, invalid-argument classes, mini-schema `table_missing`, closed-connection rejection, `datetime_auto` on full + legacy-seconds)
+- [x] write tests: nullable `asset_id` semantics (item-level rows) exposed as NA (entities/triples all-NA on fixture; notes expose both item-level NA and asset-scoped values)
+- [x] run tests — must pass before Task 12 (full suite green; 0 fail; `devtools::check()` 0 errors / 0 warnings / 1 known baseline note — unused Imports lifecycle/stringr/tidyselect consumed by later tasks; lint-clean apart from the known cross-file `object_usage` local artifact)
+- **Acceptance:** 1339 entities on the real DB collapse correctly with soft-deleted excluded. (Verified 2026-08-06 on the 29 MB reference DB via a `VACUUM INTO` copy: default `entropia_entities()` → 1328 rows (11 `source = 'manual_deleted'` excluded), `include_deleted = TRUE` → 1339; triples 700 / topics 3 / item_topics 5 / notes 14 / annotations 3; `entropia_collect` types `entities.created_at` → POSIXct (2026-06-07→2026-07-31); real-DB entities include asset-scoped rows, so `asset_id` is not all-NA in production.)
 
 ### Task 12: AI/RAG accessors (llm_results, conversations, embeddings, chunks, search_index)
 - [ ] implement `entropia_llm_results()` (target_type/job_type filters, `llr-*` id format documented), `entropia_rag_conversations()`, `entropia_rag_messages()`
