@@ -523,12 +523,13 @@ starts. Parallelizable groups noted per phase.
   - Verified 2026-08-06 with R 4.5.2: `devtools::check()` → 0 errors | 0 warnings | 2 notes (env clock note; "Imports not imported from" — expected for the empty scaffold, resolves as code lands). lintr 3.4.0 / styler 1.11.0 / covr 3.6.5 installed.
 
 ### Task 3: Fixture infrastructure
-- [ ] write `data-raw/make_fixtures.R` generating the 6 fixture DBs (mini, full, legacy-pre0019, legacy-seconds, unknown-version, corrupt) from embedded DDL strings (source: `runner.ts` migrations, distilled — see Context)
-- [ ] fixtures written to `tests/testthat/fixtures/` with deterministic tiny datasets (3–5 rows/table, one collection, familiar values)
-- [ ] add `helper-fixtures.R`: `ent_fixture(name)` returning temp copy (so tests never mutate originals), `ent_connect_fixture(name)`
-- [ ] write tests: every fixture connects and reports expected `_migrations` version; `legacy-*` variants assert their distinguishing columns exist/absent
-- [ ] run tests — must pass before Task 4
+- [x] write `data-raw/make_fixtures.R` generating the 6 fixture DBs (mini, full, legacy-pre0019, legacy-seconds, unknown-version, corrupt) from embedded DDL strings (source: `runner.ts` migrations, distilled — see Context) (also emits `notsqlite.txt`; DDL distilled from `runner.ts` MIGRATIONS + `LAYOUTS_DDL`, `sync/schema.rs`, `sync/capture.rs` trigger templates, and the Rust runtime repairs `app_settings`/`rag_asset_embedding_state`)
+- [x] fixtures written to `tests/testthat/fixtures/` with deterministic tiny datasets (3–5 rows/table, one collection, familiar values) (all timestamps derive from a fixed epoch `1768478400`/2026-01-15; embeddings are real 4-dim little-endian f32 BLOBs; every DB VACUUMed)
+- [x] add `helper-fixtures.R`: `ent_fixture(name)` returning temp copy (so tests never mutate originals), `ent_connect_fixture(name)` (`ent_connect_fixture` prefers `entropia_connect()` once Task 4 lands, falling back to a read-only DBI connection until then)
+- [x] write tests: every fixture connects and reports expected `_migrations` version; `legacy-*` variants assert their distinguishing columns exist/absent (`test-fixtures.R`: version per fixture, 48 sync + 33 activity triggers, `target_type` present/absent, seconds-vs-ms magnitude, corrupt/notsqlite unreadable, isolated writable copy)
+- [x] run tests — must pass before Task 4 (`devtools::test()` green; `devtools::check()` 0 errors / 0 warnings / 2 acceptable notes)
 - **Acceptance:** `make_fixtures.R` is reproducible (delete + rerun → identical); fixtures never touch `data-test/entropia.sqlite`.
+  - Verified 2026-08-06 with R 4.5.2 / RSQLite 2.4.3 (SQLite 3.50.4, FTS5 contentless + regular confirmed): delete + rerun produced byte-identical SHA-256 for all artifacts; read-only open refused writes and left `full.sqlite` unchanged; `data-test/` untouched. Packaging fix so fixtures reach `R CMD check`: removed `tests/testthat/fixtures` from `.Rbuildignore` (they are bundled when present) and added a `Generate test fixtures` step to `R-CMD-check.yaml` (fixtures stay gitignored, regenerated in CI).
 
 ### Phase 1 — Connection & schema core (after 1–3; tasks 4–8 serial)
 

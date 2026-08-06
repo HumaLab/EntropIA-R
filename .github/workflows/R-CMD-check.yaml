@@ -44,6 +44,11 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      # Test fixtures are deterministic generated artifacts (gitignored), so
+      # they are rebuilt here rather than committed. See data-raw/make_fixtures.R.
+      - name: Generate test fixtures
+        run: Rscript data-raw/make_fixtures.R
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
