@@ -636,12 +636,13 @@ starts. Parallelizable groups noted per phase.
   - Verified 2026-08-06 with R 4.5.2 on a `VACUUM INTO` copy of the 29 MB reference DB (the Task 8 live-open segfault note still applies; sqlite3 CLI made the copy): schema `0029_rag_chunks`, 2477 assets, 270 assets with a text layer and all 270 got text under `auto`; exactly 27 marker-bearing extractions and 0 still contained a marker after the default strip (e.g. "VISTO el expediente n* 401.144-64..." with the leading marker removed).
 
 ### Task 16: entropia_corpus
-- [ ] implement `entropia_corpus()`: lazy `items ⋈ collections ⋈ assets ⋈ text` with `collections`/`asset_types` filters, `page_assets` toggle, `include_deleted`
-- [ ] implement `entropia_metadata()`: `items.metadata` parsed to tidy rows (original_name/path/imported_at + list-columns)
-- [ ] write tests: corpus join cardinality on full fixture (no fan-out from layouts/extractions dupes); filters push down to SQL (`sql_render` assertion)
-- [ ] write tests: metadata parse incl. missing metadata → NA row; imported_at ISO → POSIXct
-- [ ] run tests — must pass before Task 17
+- [x] implement `entropia_corpus()`: lazy `items ⋈ collections ⋈ assets ⋈ text` with `collections`/`asset_types` filters, `page_assets` toggle, `include_deleted`
+- [x] implement `entropia_metadata()`: `items.metadata` parsed to tidy rows (original_name/path/imported_at + list-columns)
+- [x] write tests: corpus join cardinality on full fixture (no fan-out from layouts/extractions dupes); filters push down to SQL (`sql_render` assertion)
+- [x] write tests: metadata parse incl. missing metadata → NA row; imported_at ISO → POSIXct
+- [x] run tests — must pass before Task 17
 - **Acceptance:** `entropia_corpus(con, collections = "X")` on real DB returns one row per asset with text, metadata, collection name — SQL-rendered join, no BLOB.
+  - Verified 2026-08-06 with R 4.5.2 on a `VACUUM INTO` copy of the 29 MB reference DB (the Task 8 live-open segfault note still applies): `entropia_corpus()` → 2477 rows (one per asset, matching the reference 2477 assets), 17 distinct collections, `text`/`metadata`/`collection_name` present, SQL-rendered join, no BLOB column; `collections = "SOIP 1961"` → 56 rows all matching; `asset_types = "image"` → 2428 rows; `page_assets = FALSE` → 2448 (excludes 29 PDF page assets). `entropia_metadata()` → 2393 rows (one per item), `imported_at` POSIXct (e.g. 2026-06-06 21:41:13.648 UTC), unknown top-level keys (`date`) surfaced as list-columns, real metadata lacks `original_name` so it degrades to NA without error. Full suite: 909 pass / 0 fail / 1 CRAN skip (84 new corpus assertions); `devtools::check()` 0 errors / 0 warnings / 1 known baseline note; lint matches the established profile (cross-file object_usage artifact + test SCREAMING_SNAKE constants only).
 
 ### Task 17: Corpus quality helpers
 - [ ] implement `entropia_ocr_coverage()`, `entropia_metadata_coverage()`, `entropia_corpus_quality()` per the API
