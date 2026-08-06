@@ -28,7 +28,6 @@ Imports:
     methods,
     RSQLite,
     rlang,
-    stringr,
     tibble,
     tidyselect
 Suggests:

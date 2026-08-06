@@ -33,3 +33,10 @@ databases and never writes to them.
   is cli-formatted with a stable condition class — including a new
   `entropia_warn_malformed_json` class for tolerant JSON reads — and no bare
   `stop()`/`warning()` remains in `R/`.
+* Performance: the corpus, FTS search, and entity-relations joins resolve every
+  lookup table through an index (`EXPLAIN QUERY PLAN` verified); a smoke test
+  enforces that the corpus join never full-scans a joined table.
+* Dependencies: dropped the unused `stringr` import. Marker stripping runs in
+  SQL (recursive CTE) and search-term hygiene is handled by `dbQuoteString`, so
+  no string helper is needed — removing it also clears the last `R CMD check`
+  note.
