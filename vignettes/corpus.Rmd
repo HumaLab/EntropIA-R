@@ -99,16 +99,24 @@ Assets with no text layer keep their row and get `NA` text — no rows are lost.
 down to SQL:
 
 ```{r}
-entropia_corpus(con, asset_types = "pdf") |> collect() |> nrow()
-entropia_corpus(con, collections = "Archivo de prueba") |> collect() |> nrow()
+entropia_corpus(con, asset_types = "pdf") |>
+  collect() |>
+  nrow()
+entropia_corpus(con, collections = "Archivo de prueba") |>
+  collect() |>
+  nrow()
 ```
 
 By default the corpus includes PDF *page* assets. Set `page_assets = FALSE` to
 see only top-level assets:
 
 ```{r}
-entropia_corpus(con) |> collect() |> nrow()
-entropia_corpus(con, page_assets = FALSE) |> collect() |> nrow()
+entropia_corpus(con) |>
+  collect() |>
+  nrow()
+entropia_corpus(con, page_assets = FALSE) |>
+  collect() |>
+  nrow()
 ```
 
 `include_deleted = FALSE` (the default) excludes soft-deleted entities from any

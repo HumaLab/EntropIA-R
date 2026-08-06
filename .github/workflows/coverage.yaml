@@ -1,0 +1,62 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+name: coverage
+
+permissions: read-all
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::covr
+          needs: coverage
+
+      # Test fixtures are deterministic generated artifacts (gitignored), so
+      # they are rebuilt here rather than committed. See data-raw/make_fixtures.R.
+      - name: Generate test fixtures
+        run: Rscript data-raw/make_fixtures.R
+
+      - name: Compute coverage and gate core modules
+        run: |
+          cov <- covr::package_coverage(
+            quiet = FALSE,
+            install_path = file.path(Sys.getenv("RUNNER_TEMP"), "entropiaR")
+          )
+          res <- covr::coverage_to_list(cov)$filecoverage
+          core <- c("connect", "schema", "corpus", "collect")
+          idx <- vapply(names(res), function(n) basename(n) %in% paste0(core, ".R"), logical(1))
+          core_cov <- res[idx]
+          core_cov <- core_cov[order(names(core_cov))]
+          print(core_cov)
+          low <- core_cov[core_cov < 80]
+          if (length(low) > 0) {
+            stop(
+              "Coverage below 80% on core modules: ",
+              paste(names(low), collapse = ", ")
+            )
+          }
+          cat("Core-module coverage gate passed (>= 80%).\n")
+        shell: Rscript {0}
+
+      - name: Show testthat output
+        if: failure()
+        run: |
+          find "${{ runner.temp }}/entropiaR" -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash

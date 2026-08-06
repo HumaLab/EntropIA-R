@@ -28,7 +28,7 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", packag
 snap <- tempfile(fileext = ".sqlite")
 entropia_copy(con, snap)
 snap_con <- entropia_connect(snap)
-entropia_disconnect(con)          # original connection no longer needed
+entropia_disconnect(con) # original connection no longer needed
 ```
 
 # 2. Build the analysis dataset

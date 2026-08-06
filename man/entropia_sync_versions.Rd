@@ -21,7 +21,8 @@ R.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_sync_versions(con))
 entropia_disconnect(con)
 }

@@ -47,7 +47,8 @@ NULL
 #' @return An `entropia_conn` object (S4, `SQLiteConnection` subclass).
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_status(con)
 #' entropia_disconnect(con)
 #' @export
@@ -183,7 +184,8 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
 #' @return `con`, invisibly.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_disconnect(con)
 #' entropia_disconnect(con) # idempotent: safe on a closed connection
 #' @export
@@ -207,7 +209,8 @@ entropia_disconnect <- function(con) {
 #' @return The normalized `dest` path, invisibly.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' dest <- tempfile(fileext = ".sqlite")
 #' entropia_copy(con, dest)
 #' copy_con <- entropia_connect(dest)

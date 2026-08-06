@@ -226,8 +226,10 @@ test_that("parquet/arrow raise a clear missing-dependency error without arrow", 
   # Simulate the arrow Suggests being absent by mocking the ent_arrow_available
   # seam (requireNamespace is a base function with no package-namespace binding,
   # so it cannot be mocked directly). The other formats must be unaffected.
-  local_mocked_bindings(ent_arrow_available = function() FALSE,
-                        .package = "entropiaR")
+  local_mocked_bindings(
+    ent_arrow_available = function() FALSE,
+    .package = "entropiaR"
+  )
   df <- tibble::tibble(a = 1:2)
   for (fmt in c("parquet", "arrow")) {
     expect_error(

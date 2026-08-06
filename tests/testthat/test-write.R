@@ -28,7 +28,8 @@ test_that("write stubs fail hard even without a live connection", {
   # connection: the operation is impossible regardless of its validity.
   expect_error(entropia_insert(NULL, "items", NULL), class = WRITE_ERR)
   expect_error(entropia_update("not-a-con", "items", NULL, by = "id"),
-               class = WRITE_ERR)
+    class = WRITE_ERR
+  )
   expect_error(entropia_upsert(1:3, "items", NULL, by = "id"), class = WRITE_ERR)
   expect_error(entropia_delete(NULL, "items"), class = WRITE_ERR)
 })
@@ -61,7 +62,8 @@ test_that("the stub message text is stable and per-verb", {
   con <- ent_connect_fixture("full")
   on.exit(try(entropia_disconnect(con), silent = TRUE), add = TRUE)
   e <- tryCatch(entropia_insert(con, "items", data.frame(id = "x")),
-                error = function(e) e)
+    error = function(e) e
+  )
   expect_s3_class(e, "entropia_error_write_disabled")
   msg <- conditionMessage(e)
   expect_match(msg, "entropia_insert")
@@ -82,11 +84,15 @@ test_that("entropia_connect(write = TRUE) rejects with the same class", {
 
 test_that("the write stubs are exported and documented", {
   ns <- asNamespace("entropiaR")
-  for (fn in c("entropia_insert", "entropia_update", "entropia_upsert",
-               "entropia_delete")) {
+  for (fn in c(
+    "entropia_insert", "entropia_update", "entropia_upsert",
+    "entropia_delete"
+  )) {
     expect_true(exists(fn, envir = ns, inherits = FALSE),
-                info = fn)
+      info = fn
+    )
     expect_true("function" %in% class(get(fn, envir = ns)),
-                info = fn)
+      info = fn
+    )
   }
 })

@@ -121,7 +121,8 @@ ent_resolve_text_base <- function(con, assets) {
 #' @return A `tbl_sql` with the input asset columns plus `text`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_text(con)
 #' entropia_text(con, source = "extraction", strip_markers = TRUE)
 #' entropia_disconnect(con)
@@ -216,13 +217,17 @@ entropia_text <- function(con, assets = NULL, source = "auto", strip_markers = T
 # layer entirely; otherwise it must be a source mode (reuses the entropia_text
 # validator, which carries the entropia_error_invalid_argument class).
 ent_validate_text_arg <- function(text) {
-  if (isFALSE(text)) return(FALSE)
+  if (isFALSE(text)) {
+    return(FALSE)
+  }
   ent_validate_text_source(text)
 }
 
 # Validate a character-vector filter argument (collections/asset_types).
 ent_validate_filter <- function(x, arg) {
-  if (is.null(x)) return(x)
+  if (is.null(x)) {
+    return(x)
+  }
   if (!is.character(x) || anyNA(x) || any(!nzchar(x))) {
     ent_abort(
       "entropia_error_invalid_argument",
@@ -345,7 +350,8 @@ ent_append_text_layer <- function(base, con, source) {
 #'   `text = FALSE`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_corpus(con)
 #' entropia_corpus(con, collections = "Archivo de prueba", asset_types = "pdf")
 #' entropia_disconnect(con)
@@ -476,7 +482,8 @@ ent_resolve_item_base <- function(con, items) {
 #' @return A [tibble::tibble()] with one row per item.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_metadata(con)
 #' entropia_metadata(con, parse = FALSE) # raw metadata text
 #' entropia_disconnect(con)
@@ -498,7 +505,9 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   }
 
   parsed <- lapply(rows$metadata, function(z) {
-    if (length(z) != 1L || is.na(z)) return(list())
+    if (length(z) != 1L || is.na(z)) {
+      return(list())
+    }
     p <- tryCatch(jsonlite::fromJSON(z, simplifyVector = TRUE), error = function(e) e)
     if (inherits(p, "condition")) {
       cli::cli_warn(

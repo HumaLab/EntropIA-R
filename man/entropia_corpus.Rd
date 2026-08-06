@@ -64,7 +64,8 @@ text). Pass \code{text = FALSE} to omit the text layer entirely.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_corpus(con)
 entropia_corpus(con, collections = "Archivo de prueba", asset_types = "pdf")
 entropia_disconnect(con)

@@ -19,7 +19,8 @@ database has no \verb{_migrations} table.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_schema_version(con)
 entropia_disconnect(con)
 }

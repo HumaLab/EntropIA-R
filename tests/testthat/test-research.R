@@ -179,8 +179,8 @@ test_that("notes expose both item-level (NA) and asset-scoped asset_id", {
   with_research_con("full", function(con) {
     out <- dplyr::collect(entropia_notes(con))
     expect_equal(nrow(out), 2L)
-    expect_true(any(is.na(out$asset_id)))      # item-level note
-    expect_true(any(!is.na(out$asset_id)))     # asset-scoped note
+    expect_true(any(is.na(out$asset_id))) # item-level note
+    expect_true(any(!is.na(out$asset_id))) # asset-scoped note
     # The asset-scoped note resolves to an existing asset.
     assets <- dplyr::collect(entropia_assets(con))
     expect_true(all(out$asset_id[!is.na(out$asset_id)] %in% assets$id))

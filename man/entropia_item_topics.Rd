@@ -18,7 +18,8 @@ topics (one row per \verb{(item_id, topic_id)} pair, UNIQUE in the app schema).
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_item_topics(con))
 entropia_disconnect(con)
 }

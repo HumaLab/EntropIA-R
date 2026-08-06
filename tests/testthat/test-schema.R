@@ -140,15 +140,17 @@ test_that("the manifest carries the typed contract for every listed column", {
   expect_false("min_version" %in% names(mf$tables$sync_meta))
   # app_settings is whitelist-handled, not surfaced raw (Task 8).
   expect_true(all(c("device_id", "account_email", "last_sync_at") %in%
-                    mf$sync_meta_keys))
+    mf$sync_meta_keys))
 })
 
 test_that("entropia_schema_info lists every readable table with correct types", {
   with_schema_con("full", function(con) {
     info <- entropia_schema_info(con)
     expect_s3_class(info, "tbl_df")
-    expect_true(all(c("table", "column", "type", "required", "contract",
-                      "min_version", "source") %in% names(info)))
+    expect_true(all(c(
+      "table", "column", "type", "required", "contract",
+      "min_version", "source"
+    ) %in% names(info)))
     # Every manifest table is represented.
     mf <- ent_manifest()
     listed <- unique(info$table)

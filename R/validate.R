@@ -84,7 +84,8 @@ ent_findings_tibble <- function(findings) {
 #'   `column` and `message`, plus `row_counts` and `schema_version` attributes.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_validate(con) # zero findings on the example database
 #' entropia_disconnect(con)
 #' @export
@@ -240,7 +241,8 @@ ent_status_wal <- function(con, path) {
     shm_present <- file.exists(paste0(path, "-shm"))
     if (wal_present) {
       wal_size <- tryCatch(file.info(paste0(path, "-wal"))$size,
-                           error = function(e) NA_real_)
+        error = function(e) NA_real_
+      )
     }
   }
   list(
@@ -263,7 +265,8 @@ ent_status_wal <- function(con, path) {
 #'   `schema_version`, `row_counts`, `sync`, `wal` and `valid`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_status(con)
 #' entropia_disconnect(con)
 #' @export
@@ -313,7 +316,9 @@ print.entropia_status <- function(x, ...) {
   cap <- x$sync$capture_enabled
   cap_txt <- if (is.null(cap) || is.na(cap)) "?" else cap
   cat("  sync:           last_sync_at ", last_txt,
-      ", capture_enabled ", cap_txt, "\n", sep = "")
+    ", capture_enabled ", cap_txt, "\n",
+    sep = ""
+  )
   cat("  journal:        ", x$wal$journal_mode, "\n", sep = "")
   cat("  wal sidecar:    ", x$wal$wal_present, sep = "")
   if (isTRUE(x$wal$wal_present) && !is.na(x$wal$wal_size)) {

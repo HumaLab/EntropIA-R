@@ -25,7 +25,8 @@ With \code{by = "collection"} (default) each row is one collection with
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_metadata_coverage(con))
 entropia_disconnect(con)
 }

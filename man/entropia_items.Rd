@@ -20,7 +20,8 @@ contract.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_items(con)
 entropia_collect(entropia_items(con)) # metadata -> list-column, created_at -> POSIXct
 entropia_disconnect(con)

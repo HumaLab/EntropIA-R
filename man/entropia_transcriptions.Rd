@@ -22,7 +22,8 @@ applies the column contract.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_transcriptions(con)) # segments -> list-column
 entropia_disconnect(con)
 }

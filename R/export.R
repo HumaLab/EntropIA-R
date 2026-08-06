@@ -22,7 +22,8 @@
 #' @return A list of class `entropia_provenance`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' ds <- entropia_analysis_dataset(con, asset_type == "image")
 #' entropia_provenance(ds)
 #' entropia_disconnect(con)
@@ -77,7 +78,8 @@ print.entropia_provenance <- function(x, ...) {
 #' @return The normalized `path`, invisibly.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' ds <- entropia_analysis_dataset(con, asset_type == "image")
 #' path <- tempfile(fileext = ".json")
 #' entropia_write_provenance(ds, path)
@@ -193,8 +195,12 @@ ent_export_ordered <- function(x) {
 # Serialise one list-column cell for delimited output: NULL/empty -> NA, raw
 # (a BLOB cell) -> space-joined bytes, anything else -> JSON.
 ent_export_list_scalar <- function(z) {
-  if (is.null(z) || length(z) == 0L) return(NA_character_)
-  if (is.raw(z)) return(paste(z, collapse = " "))
+  if (is.null(z) || length(z) == 0L) {
+    return(NA_character_)
+  }
+  if (is.raw(z)) {
+    return(paste(z, collapse = " "))
+  }
   jsonlite::toJSON(z, auto_unbox = TRUE)
 }
 
@@ -227,13 +233,16 @@ ent_export_delimited_lazy <- function(x, path, sep, chunk_size) {
   res <- DBI::dbSendQuery(con, sql)
   on.exit(DBI::dbClearResult(res), add = TRUE)
   chunk <- ent_prepare_delimited(DBI::dbFetch(res, n = chunk_size))
-  utils::write.table(chunk, path, sep = sep, row.names = FALSE, quote = TRUE,
-                     qmethod = "double")
+  utils::write.table(chunk, path,
+    sep = sep, row.names = FALSE, quote = TRUE,
+    qmethod = "double"
+  )
   while (nrow(chunk) > 0L) {
     chunk <- ent_prepare_delimited(DBI::dbFetch(res, n = chunk_size))
     if (nrow(chunk) > 0L) {
       utils::write.table(
-        chunk, path, sep = sep, row.names = FALSE, quote = TRUE,
+        chunk, path,
+        sep = sep, row.names = FALSE, quote = TRUE,
         col.names = FALSE, append = TRUE, qmethod = "double"
       )
     }
@@ -248,8 +257,10 @@ ent_export_delimited_lazy <- function(x, path, sep, chunk_size) {
 # them in R's own parser.
 ent_export_delimited_df <- function(x, path, sep) {
   df <- ent_prepare_delimited(tibble::as_tibble(x))
-  utils::write.table(df, path, sep = sep, row.names = FALSE, quote = TRUE,
-                     qmethod = "double")
+  utils::write.table(df, path,
+    sep = sep, row.names = FALSE, quote = TRUE,
+    qmethod = "double"
+  )
   invisible(path)
 }
 
@@ -348,12 +359,18 @@ entropia_export <- function(x, path,
 
   switch(format,
     csv = {
-      if (lazy) ent_export_delimited_lazy(x, path, ",", chunk_size)
-      else ent_export_delimited_df(x, path, ",")
+      if (lazy) {
+        ent_export_delimited_lazy(x, path, ",", chunk_size)
+      } else {
+        ent_export_delimited_df(x, path, ",")
+      }
     },
     tsv = {
-      if (lazy) ent_export_delimited_lazy(x, path, "\t", chunk_size)
-      else ent_export_delimited_df(x, path, "\t")
+      if (lazy) {
+        ent_export_delimited_lazy(x, path, "\t", chunk_size)
+      } else {
+        ent_export_delimited_df(x, path, "\t")
+      }
     },
     json = ent_export_json(x, path),
     rds = ent_export_rds(x, path),

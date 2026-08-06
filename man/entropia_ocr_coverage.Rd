@@ -36,7 +36,8 @@ with a non-empty extraction).
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_ocr_coverage(con))
 entropia_collect(entropia_ocr_coverage(con, by = "asset"))
 entropia_disconnect(con)

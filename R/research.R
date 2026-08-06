@@ -95,7 +95,8 @@ ent_require_search_tables <- function(con, index) {
 #'   index returns `rag_chunks` rows plus `rank`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_collect(entropia_search(con, "huelga"))
 #' entropia_collect(entropia_search(con, "huelga", index = "chunks", limit = 5))
 #' entropia_disconnect(con)
@@ -163,7 +164,8 @@ ent_validate_conversation_id <- function(id) {
 #' @return A list of class `entropia_conversation`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_conversation(con, "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1")
 #' entropia_disconnect(con)
 #' @export
@@ -247,7 +249,8 @@ print.entropia_conversation <- function(x, ...) {
 #' @return A `tbl_sql`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_collect(entropia_entity_relations(con))
 #' entropia_disconnect(con)
 #' @export
@@ -255,7 +258,7 @@ entropia_entity_relations <- function(con, min_confidence = NULL) {
   ent_require_conn(con)
   if (!is.null(min_confidence)) {
     if (length(min_confidence) != 1L || !is.numeric(min_confidence) ||
-          !is.finite(min_confidence) || min_confidence < 0 || min_confidence > 1) {
+      !is.finite(min_confidence) || min_confidence < 0 || min_confidence > 1) {
       ent_abort(
         "entropia_error_invalid_argument",
         c(
@@ -299,9 +302,13 @@ entropia_entity_relations <- function(con, min_confidence = NULL) {
 # looked-up row is typed via entropia_collect so its contract applies.
 ent_resolve_llm_target <- function(con, type, id) {
   refs <- c(asset = "assets", item = "items", collection = "collections")
-  if (is.na(type) || !type %in% names(refs)) return(NULL)
+  if (is.na(type) || !type %in% names(refs)) {
+    return(NULL)
+  }
   tab <- refs[[type]]
-  if (!DBI::dbExistsTable(con, tab)) return(NULL)
+  if (!DBI::dbExistsTable(con, tab)) {
+    return(NULL)
+  }
   row <- dplyr::filter(dplyr::tbl(con, tab), .data$id == !!id)
   out <- entropia_collect(row)
   if (nrow(out) == 0L) NULL else out
@@ -327,7 +334,8 @@ ent_resolve_llm_target <- function(con, type, id) {
 #' @return A tibble of class `entropia_reconstruction`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_reconstruct_analysis(con)
 #' entropia_disconnect(con)
 #' @export

@@ -39,7 +39,8 @@ entropia_insert(con, "items", data.frame(title = "nope"))
 
 ```{r error = TRUE}
 entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"),
-                 write = TRUE)
+  write = TRUE
+)
 ```
 
 Every stub error message names the verb, states that v1 is read-only, points at

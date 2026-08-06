@@ -204,9 +204,9 @@ test_that("remaining top-level metadata keys become list-columns", {
   with_corpus_con("full", function(con) {
     m <- entropia_metadata(con)
     expect_true(is.list(m$page_count))
-    expect_equal(m$page_count[[1]], 2L)  # item 1 has page_count = 2
-    expect_null(m$page_count[[2]])       # item 2 has no extra keys
-    expect_null(m$page_count[[3]])       # item 3 has no metadata at all
+    expect_equal(m$page_count[[1]], 2L) # item 1 has page_count = 2
+    expect_null(m$page_count[[2]]) # item 2 has no extra keys
+    expect_null(m$page_count[[3]]) # item 3 has no metadata at all
   })
 })
 

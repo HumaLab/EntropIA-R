@@ -25,7 +25,8 @@ database reaches that version.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_schema_info(con)
 entropia_disconnect(con)
 }

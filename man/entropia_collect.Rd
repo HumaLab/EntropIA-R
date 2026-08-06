@@ -31,7 +31,8 @@ query for best results.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_items(con)) # created_at -> POSIXct, metadata -> list-column
 entropia_disconnect(con)
 }

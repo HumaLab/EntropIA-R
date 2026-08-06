@@ -51,7 +51,8 @@ removed exactly; surrounding whitespace is preserved.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_text(con)
 entropia_text(con, source = "extraction", strip_markers = TRUE)
 entropia_disconnect(con)

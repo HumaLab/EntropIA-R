@@ -53,7 +53,9 @@ tidyselect works natively too — the `select()` above could have been written
 with helpers like `starts_with()`:
 
 ```{r}
-entropia_items(con) |> select(id, starts_with("created")) |> collect()
+entropia_items(con) |>
+  select(id, starts_with("created")) |>
+  collect()
 ```
 
 # Joins across accessors

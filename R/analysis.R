@@ -103,7 +103,8 @@ ent_floor_date <- function(d, unit) {
 #'   a count column `n`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' items <- entropia_collect(entropia_items(con))
 #' entropia_temporal_profile(items, created_at, unit = "month")
 #' entropia_disconnect(con)
@@ -165,9 +166,13 @@ entropia_temporal_profile <- function(x, date_var, unit = "month", by = NULL) {
 # text is 0 words; NA is NA (the caller's NA policy). Punctuation stays
 # attached to its token, so "Compañeros," counts as one word.
 ent_n_words <- function(z) {
-  if (is.na(z)) return(NA_integer_)
+  if (is.na(z)) {
+    return(NA_integer_)
+  }
   z <- trimws(z)
-  if (!nzchar(z)) return(0L)
+  if (!nzchar(z)) {
+    return(0L)
+  }
   lengths(gregexpr("[^[:space:]]+", z))
 }
 
@@ -188,7 +193,8 @@ ent_n_words <- function(z) {
 #'   (whitespace-separated tokens).
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' text_layer <- entropia_collect(entropia_text(con))
 #' entropia_document_lengths(text_layer)
 #' entropia_disconnect(con)
@@ -272,7 +278,8 @@ ent_require_analysis_cols <- function(x, cols, fn) {
 #'   `value`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entities <- entropia_collect(entropia_entities(con))
 #' entropia_entity_frequency(entities)
 #' entropia_disconnect(con)
@@ -324,7 +331,8 @@ entropia_entity_frequency <- function(x, by = NULL) {
 #'   count), ordered by `n` descending then `name`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' item_topics <- entropia_collect(entropia_item_topics(con))
 #' topics <- entropia_collect(entropia_topics(con))
 #' joined <- dplyr::left_join(item_topics, topics, by = c("topic_id" = "id"))
@@ -375,7 +383,8 @@ entropia_topic_frequency <- function(x, by = NULL) {
 #'   those id columns) and `n`, ordered by the collection column.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' corpus <- entropia_collect(entropia_corpus(con))
 #' entropia_compare_collections(corpus)
 #' entropia_disconnect(con)
@@ -441,7 +450,9 @@ entropia_compare_collections <- function(x, by = "collection_name") {
 # Validate the `name` argument of entropia_analysis_dataset(): NULL (unnamed)
 # or a single non-NA character string.
 ent_validate_dataset_name <- function(name) {
-  if (is.null(name)) return(name)
+  if (is.null(name)) {
+    return(name)
+  }
   if (!is.character(name) || length(name) != 1L || is.na(name)) {
     ent_abort(
       "entropia_error_invalid_argument",
@@ -486,7 +497,8 @@ ent_validate_dataset_name <- function(name) {
 #'   with the `entropia_prov` attribute.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' ds <- entropia_analysis_dataset(con, asset_type == "pdf", name = "PDF corpus")
 #' entropia_provenance(ds)
 #' entropia_disconnect(con)

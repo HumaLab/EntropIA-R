@@ -32,3 +32,19 @@ jobs:
         shell: Rscript {0}
         env:
           LINTR_ERROR_ON_LINT: true
+
+  # Source-hygiene gate: no bare stop()/warning() in R/ — every condition
+  # must be raised through ent_abort/cli::cli_warn/rlang::cnd_signal with a
+  # stable class (see Task 28). Runs without R so it stays fast.
+  grep-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No bare stop()/warning() in R/
+        run: |
+          if grep -rnE '\b(stop|warning)\s*\(' R/; then
+            echo "Bare stop()/warning() without a condition class are forbidden in R/."
+            exit 1
+          fi
+          echo "No bare stop()/warning() found in R/."

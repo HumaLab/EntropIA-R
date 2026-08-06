@@ -23,7 +23,8 @@ no provenance stamp.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 ds <- entropia_analysis_dataset(con, asset_type == "image")
 entropia_provenance(ds)
 entropia_disconnect(con)

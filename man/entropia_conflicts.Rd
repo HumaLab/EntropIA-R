@@ -22,7 +22,8 @@ and \code{winner_summary} are JSON text.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_conflicts(con))
 entropia_disconnect(con)
 }

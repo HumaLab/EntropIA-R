@@ -36,7 +36,8 @@ is a small aggregate, like \code{\link[=entropia_validate]{entropia_validate()}}
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_corpus_quality(con)
 entropia_disconnect(con)
 }

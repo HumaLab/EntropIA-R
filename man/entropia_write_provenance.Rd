@@ -23,7 +23,8 @@ class). The file is UTF-8.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 ds <- entropia_analysis_dataset(con, asset_type == "image")
 path <- tempfile(fileext = ".json")
 entropia_write_provenance(ds, path)

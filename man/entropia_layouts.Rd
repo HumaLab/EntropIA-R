@@ -20,7 +20,8 @@ are JSON-in-TEXT columns, parsed by \code{\link[=entropia_collect]{entropia_coll
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_layouts(con))
 entropia_disconnect(con)
 }

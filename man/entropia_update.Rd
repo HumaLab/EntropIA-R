@@ -32,10 +32,12 @@ transaction and never rewrites primary keys.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 err <- tryCatch(entropia_update(con, "items", data.frame(id = "x"), by = "id"),
-  error = identity)
-class(err)          # "entropia_error_write_disabled"
+  error = identity
+)
+class(err) # "entropia_error_write_disabled"
 conditionMessage(err)
 entropia_disconnect(con)
 }

@@ -87,7 +87,7 @@ test_that("llm_results exposes the deterministic id and target/job surface", {
   with_ai_con("full", function(con) {
     out <- entropia_collect(entropia_llm_results(con))
     expect_equal(nrow(out), 1L)
-    # id = llr-{target_type}-{target_id}-{job_type}
+    # ids follow the llr-<target_type>-<target_id>-<job_type> convention
     expect_identical(out$id, paste0("llr-item-", AI_ITEM_1, "-summary"))
     expect_identical(out$target_id, AI_ITEM_1)
     expect_identical(out$target_type, "item")
@@ -106,17 +106,23 @@ test_that("llm_results filters push down to SQL and compose", {
     sql <- dbplyr::sql_render(entropia_llm_results(con, target_type = "item"))
     expect_match(sql, "target_type")
     expect_match(sql, "IN")
-    expect_match(dbplyr::sql_render(entropia_llm_results(con, job_type = "summary")),
-                 "job_type")
+    expect_match(
+      dbplyr::sql_render(entropia_llm_results(con, job_type = "summary")),
+      "job_type"
+    )
 
     expect_equal(nrow(dplyr::collect(entropia_llm_results(con, target_type = "item"))), 1L)
     expect_equal(nrow(dplyr::collect(entropia_llm_results(con, target_type = "asset"))), 0L)
     # a vector of types is a subset, not an exact match
-    expect_equal(nrow(dplyr::collect(entropia_llm_results(con, target_type = c("item", "asset")))), 1L)
+    expect_equal(
+      nrow(dplyr::collect(entropia_llm_results(con, target_type = c("item", "asset")))),
+      1L
+    )
     expect_equal(nrow(dplyr::collect(entropia_llm_results(con, job_type = "summary"))), 1L)
     expect_equal(nrow(dplyr::collect(entropia_llm_results(con, job_type = "nope"))), 0L)
     expect_equal(nrow(dplyr::collect(entropia_llm_results(
-      con, target_type = "item", job_type = "summary"
+      con,
+      target_type = "item", job_type = "summary"
     ))), 1L)
   })
 })
@@ -267,7 +273,9 @@ test_that("embeddings reads a legacy vec_assets (contract columns tolerated)", {
     expect_s3_class(emb, "tbl_sql")
     expect_equal(nrow(dplyr::collect(emb)), 1L)
     expect_false("embedding" %in% as.vector(dplyr::tbl_vars(emb)))
-    expect_true("embedding" %in% as.vector(dplyr::tbl_vars(entropia_embeddings(con, with_vector = TRUE))))
+    expect_true(
+      "embedding" %in% as.vector(dplyr::tbl_vars(entropia_embeddings(con, with_vector = TRUE)))
+    )
   })
 })
 

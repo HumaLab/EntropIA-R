@@ -34,7 +34,8 @@ output of \code{\link[=entropia_entities]{entropia_entities()}} directly, or joi
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entities <- entropia_collect(entropia_entities(con))
 entropia_entity_frequency(entities)
 entropia_disconnect(con)

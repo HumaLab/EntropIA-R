@@ -20,9 +20,16 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest, r: release}
+          # 3 OS x release, plus oldrel and devel on every OS (Definition of Done)
+          - {os: ubuntu-latest,  r: release}
           - {os: windows-latest, r: release}
-          - {os: macos-latest, r: release}
+          - {os: macos-latest,   r: release}
+          - {os: ubuntu-latest,  r: oldrel-1, http-user-agent: 'release'}
+          - {os: windows-latest, r: oldrel-1, http-user-agent: 'release'}
+          - {os: macos-latest,   r: oldrel-1, http-user-agent: 'release'}
+          - {os: ubuntu-latest,  r: devel, http-user-agent: 'release'}
+          - {os: windows-latest, r: devel, http-user-agent: 'release'}
+          - {os: macos-latest,   r: devel, http-user-agent: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

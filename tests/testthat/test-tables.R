@@ -210,13 +210,16 @@ test_that("text tables join 1:1 to assets on the full fixture (no fan-out)", {
     # inner join keeps the row count: no fan-out from layouts/extractions
     # (assets is keyed by `id`; the conceptual FK is assets.id <- table.asset_id)
     j_ext <- dplyr::collect(dplyr::inner_join(
-      entropia_extractions(con), entropia_assets(con), by = c("asset_id" = "id")
+      entropia_extractions(con), entropia_assets(con),
+      by = c("asset_id" = "id")
     ))
     j_trx <- dplyr::collect(dplyr::inner_join(
-      entropia_transcriptions(con), entropia_assets(con), by = c("asset_id" = "id")
+      entropia_transcriptions(con), entropia_assets(con),
+      by = c("asset_id" = "id")
     ))
     j_lay <- dplyr::collect(dplyr::inner_join(
-      entropia_layouts(con), entropia_assets(con), by = c("asset_id" = "id")
+      entropia_layouts(con), entropia_assets(con),
+      by = c("asset_id" = "id")
     ))
     expect_equal(nrow(j_ext), nrow(ext))
     expect_equal(nrow(j_trx), nrow(trx))

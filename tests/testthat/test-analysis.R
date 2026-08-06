@@ -204,7 +204,7 @@ test_that("document lengths match the fixture's stripped texts", {
     expect_equal(nrow(lens), 5L)
 
     row <- function(id) lens[lens$id == id, ]
-    expect_identical(row(ANAL_ASSET_PDF)$n_chars, 50L)   # leading space survives marker strip
+    expect_identical(row(ANAL_ASSET_PDF)$n_chars, 50L) # leading space survives marker strip
     expect_identical(row(ANAL_ASSET_PDF)$n_words, 9L)
     expect_identical(row(ANAL_ASSET_PAGE1)$n_chars, 54L)
     expect_identical(row(ANAL_ASSET_PAGE1)$n_words, 7L)
@@ -279,7 +279,8 @@ test_that("entity frequency breaks counts by collection when joined", {
   with_analysis_con("full", function(con) {
     entities <- entropia_collect(entropia_entities(con))
     items <- dplyr::select(
-      entropia_collect(entropia_items(con)), item_id = "id", "collection_id"
+      entropia_collect(entropia_items(con)),
+      item_id = "id", "collection_id"
     )
     colls <- dplyr::select(
       entropia_collect(entropia_collections(con)),

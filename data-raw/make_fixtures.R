@@ -50,8 +50,10 @@ out_dir <- file.path(pkg_root, "tests", "testthat", "fixtures")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Guard: never touch the reference corpus.
-stopifnot(!identical(normalizePath(out_dir, winslash = "/"),
-                     normalizePath(file.path(pkg_root, "data-test"), winslash = "/")))
+stopifnot(!identical(
+  normalizePath(out_dir, winslash = "/"),
+  normalizePath(file.path(pkg_root, "data-test"), winslash = "/")
+))
 
 # ---------------------------------------------------------------------------
 # Deterministic epoch + ids
@@ -694,7 +696,6 @@ insert_migrations <- function(con, names) {
 # ---------------------------------------------------------------------------
 seed_core <- function(con, entity_unit = c("ms", "seconds")) {
   entity_unit <- match.arg(entity_unit)
-  ts_entity <- if (entity_unit == "ms") ms else secs
 
   dbWriteTable(con, "collections", data.frame(
     id = COLL_1,
@@ -856,8 +857,10 @@ seed_full_rest <- function(con, llm_target_type = TRUE) {
   dbWriteTable(con, "assets", data.frame(
     id = c(ASSET_PDF, ASSET_PAGE1, ASSET_PAGE2, ASSET_IMG, ASSET_AUDIO),
     item_id = c(ITEM_1, ITEM_1, ITEM_1, ITEM_3, ITEM_2),
-    path = c("store/manifiesto.pdf", "store/manifiesto_p1.pdf",
-             "store/manifiesto_p2.pdf", "store/marcha.jpg", "store/carta.mp3"),
+    path = c(
+      "store/manifiesto.pdf", "store/manifiesto_p1.pdf",
+      "store/manifiesto_p2.pdf", "store/marcha.jpg", "store/carta.mp3"
+    ),
     type = c("pdf", "pdf", "pdf", "image", "audio"),
     size = c(20480L, 10240L, 10240L, 5120L, 40960L),
     created_at = c(ms(420), ms(430), ms(440), ms(450), ms(460)),
@@ -897,7 +900,8 @@ seed_full_rest <- function(con, llm_target_type = TRUE) {
 
   # layouts for the pdf parent
   regions <- jsonlite::toJSON(list(list(kind = "text", bbox = list(10L, 10L, 500L, 700L))),
-                              auto_unbox = TRUE)
+    auto_unbox = TRUE
+  )
   blocks <- jsonlite::toJSON(list(list(id = "b1", text = "La huelga")), auto_unbox = TRUE)
   dbWriteTable(con, "layouts", data.frame(
     id = LAY_PDF, asset_id = ASSET_PDF,
@@ -1047,11 +1051,15 @@ seed_ai <- function(con, llm_target_type = TRUE) {
 
 seed_sync_and_settings <- function(con) {
   dbWriteTable(con, "sync_meta", data.frame(
-    key = c("device_id", "server_url", "account_email", "last_pull_seq",
-            "last_sync_at", "server_epoch", "triggers_version", "capture_enabled"),
-    value = c("device-fixture", "https://cloud.entropia.example",
-              "fixture@entropia.example", "42", as.character(ms(800)),
-              "c3f5e8a0-1111-4111-8111-111111111111", "2", "1"),
+    key = c(
+      "device_id", "server_url", "account_email", "last_pull_seq",
+      "last_sync_at", "server_epoch", "triggers_version", "capture_enabled"
+    ),
+    value = c(
+      "device-fixture", "https://cloud.entropia.example",
+      "fixture@entropia.example", "42", as.character(ms(800)),
+      "c3f5e8a0-1111-4111-8111-111111111111", "2", "1"
+    ),
     stringsAsFactors = FALSE
   ), append = TRUE, row.names = FALSE)
 
@@ -1070,10 +1078,14 @@ seed_sync_and_settings <- function(con) {
   ), append = TRUE, row.names = FALSE)
 
   dbWriteTable(con, "app_settings", data.frame(
-    key = c("language", "llm_mode", "embedding_provider",
-            "openai_api_key", "openrouter_api_key"),
-    value = c("es", "cloud", "openrouter",
-              "sk-secret-should-not-surface", "or-secret-should-not-surface"),
+    key = c(
+      "language", "llm_mode", "embedding_provider",
+      "openai_api_key", "openrouter_api_key"
+    ),
+    value = c(
+      "es", "cloud", "openrouter",
+      "sk-secret-should-not-surface", "or-secret-should-not-surface"
+    ),
     stringsAsFactors = FALSE
   ), append = TRUE, row.names = FALSE)
 

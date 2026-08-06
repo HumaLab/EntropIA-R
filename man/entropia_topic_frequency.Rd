@@ -29,7 +29,8 @@ count then topic name (deterministic).
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 item_topics <- entropia_collect(entropia_item_topics(con))
 topics <- entropia_collect(entropia_topics(con))
 joined <- dplyr::left_join(item_topics, topics, by = c("topic_id" = "id"))

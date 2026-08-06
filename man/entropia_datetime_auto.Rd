@@ -20,6 +20,6 @@ treated as epoch seconds, everything else as epoch milliseconds -- the same
 guard EntropIA migration 0019 used.
 }
 \examples{
-entropia_datetime_auto(1768478400)    # seconds
+entropia_datetime_auto(1768478400) # seconds
 entropia_datetime_auto(1768478400000) # milliseconds
 }

@@ -20,7 +20,8 @@ collected.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collections(con) # lazy; nothing fetched until collected
 entropia_collect(entropia_collections(con))
 entropia_disconnect(con)

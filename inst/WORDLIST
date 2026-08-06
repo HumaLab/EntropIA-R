@@ -2,11 +2,13 @@ BLOBs
 CTE
 Conflicto
 DDL
+Deprecations
 EntropIA
 EntropIA's
 FKs
 FTS
 LLM
+Lifecycle
 Materialised
 Materialises
 RSQLite
@@ -19,6 +21,7 @@ Upsert
 WAL
 analysed
 checkable
+cli
 colour
 composable
 conn
@@ -36,6 +39,7 @@ journaling
 json
 labelled
 lexicographically
+lifecycle
 materialised
 materialises
 natively
@@ -47,6 +51,7 @@ rds
 rowid
 schema's
 schemas
+stabilise
 subqueries
 testthat
 tibble

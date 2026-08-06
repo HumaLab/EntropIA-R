@@ -31,7 +31,8 @@ Returns a list of class \code{entropia_conversation} with two elements:
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_conversation(con, "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1")
 entropia_disconnect(con)
 }

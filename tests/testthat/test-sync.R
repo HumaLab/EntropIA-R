@@ -25,16 +25,20 @@ test_that("entropia_sync_info returns the whitelisted sync_meta keys typed", {
     expect_s3_class(si, "tbl_df")
     expect_identical(
       names(si),
-      c("device_id", "account_email", "server_url", "last_sync_at",
-        "server_epoch", "triggers_version", "capture_enabled")
+      c(
+        "device_id", "account_email", "server_url", "last_sync_at",
+        "server_epoch", "triggers_version", "capture_enabled"
+      )
     )
     expect_equal(nrow(si), 1L)
     expect_identical(si$device_id, "device-fixture")
     expect_identical(si$account_email, "fixture@entropia.example")
     expect_identical(si$server_url, "https://cloud.entropia.example")
     expect_s3_class(si$last_sync_at, "POSIXct")
-    expect_identical(si$last_sync_at,
-                     as.POSIXct(1768479200, origin = "1970-01-01", tz = "UTC"))
+    expect_identical(
+      si$last_sync_at,
+      as.POSIXct(1768479200, origin = "1970-01-01", tz = "UTC")
+    )
     # server_epoch is a server/session identifier string on real databases
     # (a UUID), so it must stay character -- never coerced to a number.
     expect_identical(si$server_epoch, "c3f5e8a0-1111-4111-8111-111111111111")
@@ -127,9 +131,11 @@ test_that("entropia_conflicts is lazy and reasons are documented enum values", {
     expect_match(dbplyr::sql_render(cf), "sync_conflicts")
 
     out <- dplyr::collect(cf)
-    expect_true(all(c("id", "table_name", "row_id", "reason",
-                      "loser_payload", "winner_summary", "created_at",
-                      "acknowledged") %in% names(out)))
+    expect_true(all(c(
+      "id", "table_name", "row_id", "reason",
+      "loser_payload", "winner_summary", "created_at",
+      "acknowledged"
+    ) %in% names(out)))
     expect_equal(nrow(out), 1L)
     # The fixture uses a documented enum value; the contract holds.
     expect_true(all(out$reason %in% ent_conflict_reasons))
@@ -144,9 +150,11 @@ test_that("sync accessors raise stable classes on missing tables", {
   with_sync_con("mini", function(con) {
     # mini has no sync tables.
     expect_error(entropia_sync_versions(con),
-                 class = "entropia_error_table_missing")
+      class = "entropia_error_table_missing"
+    )
     expect_error(entropia_conflicts(con),
-                 class = "entropia_error_table_missing")
+      class = "entropia_error_table_missing"
+    )
   })
 })
 
@@ -157,9 +165,12 @@ test_that("sync functions reject a closed connection", {
   )
   entropia_disconnect(con)
   expect_error(entropia_sync_info(con),
-               class = "entropia_error_invalid_connection")
+    class = "entropia_error_invalid_connection"
+  )
   expect_error(entropia_sync_versions(con),
-               class = "entropia_error_invalid_connection")
+    class = "entropia_error_invalid_connection"
+  )
   expect_error(entropia_conflicts(con),
-               class = "entropia_error_invalid_connection")
+    class = "entropia_error_invalid_connection"
+  )
 })

@@ -169,7 +169,8 @@ ent_schema_gaps <- function(con) {
 #' @return A single string, or `NA_character_`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_schema_version(con)
 #' entropia_disconnect(con)
 #' @export
@@ -194,7 +195,8 @@ entropia_schema_version <- function(con) {
 #'   `contract`, `min_version` and `source`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_schema_info(con)
 #' entropia_disconnect(con)
 #' @export
@@ -254,9 +256,15 @@ entropia_schema_info <- function(con) {
 # Classify a version against the manifest head. Migration names are zero-padded
 # fixed-width ("0029_rag_chunks"), so lexicographic comparison is correct.
 ent_compat_status <- function(ver, head) {
-  if (is.null(ver) || is.na(ver)) return("unknown")
-  if (ver == head) return("known")
-  if (ver > head) return("newer")
+  if (is.null(ver) || is.na(ver)) {
+    return("unknown")
+  }
+  if (ver == head) {
+    return("known")
+  }
+  if (ver > head) {
+    return("newer")
+  }
   "older"
 }
 
@@ -282,7 +290,8 @@ ent_compat_status <- function(ver, head) {
 #'   table), `required_missing`, `optional_missing` and `compatible`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_schema_compat(con)
 #' entropia_disconnect(con)
 #' @export
@@ -322,7 +331,8 @@ ent_abort_schema_incompatible <- function(compat) {
       version = compat$version,
       missing = paste0(
         compat$required_missing$table, ".",
-        compat$required_missing$column, collapse = ", "
+        compat$required_missing$column,
+        collapse = ", "
       )
     )
     ent_abort(
@@ -395,7 +405,8 @@ ent_warn_schema_compat <- function(compat) {
   if (nrow(compat$optional_missing) > 0L) {
     msg_env$missing <- paste0(
       compat$optional_missing$table, ".",
-      compat$optional_missing$column, collapse = ", "
+      compat$optional_missing$column,
+      collapse = ", "
     )
     bullets <- c(bullets, i = "Optional columns absent: {missing}.")
   }

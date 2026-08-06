@@ -32,7 +32,8 @@ attributes. All DBI and dbplyr functions keep working on it.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_status(con)
 entropia_disconnect(con)
 }

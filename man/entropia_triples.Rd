@@ -19,7 +19,8 @@ contract; \code{asset_id} is NULL for item-level triples.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_triples(con))
 entropia_disconnect(con)
 }

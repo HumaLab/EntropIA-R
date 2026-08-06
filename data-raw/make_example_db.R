@@ -53,8 +53,10 @@ invisible(seed_research(con, entity_unit = "ms"))
 invisible(seed_ai(con, llm_target_type = TRUE))
 invisible(seed_sync_and_settings(con))
 invisible(populate_fts_items(con))
-invisible(apply_runtime_triggers(con, include_sync = TRUE, include_activity = TRUE,
-                                 llm_target_type = TRUE))
+invisible(apply_runtime_triggers(con,
+  include_sync = TRUE, include_activity = TRUE,
+  llm_target_type = TRUE
+))
 
 # The example DB ships without key-shaped values.
 invisible(DBI::dbExecute(con, "DELETE FROM app_settings WHERE key LIKE '%_api_key'"))

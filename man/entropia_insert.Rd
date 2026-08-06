@@ -33,9 +33,10 @@ database.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 err <- tryCatch(entropia_insert(con, "items", data.frame(id = "x")), error = identity)
-class(err)          # "entropia_error_write_disabled"
+class(err) # "entropia_error_write_disabled"
 conditionMessage(err)
 entropia_disconnect(con)
 }

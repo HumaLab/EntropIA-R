@@ -52,9 +52,10 @@ ent_write_disabled <- function(verb) {
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' err <- tryCatch(entropia_insert(con, "items", data.frame(id = "x")), error = identity)
-#' class(err)          # "entropia_error_write_disabled"
+#' class(err) # "entropia_error_write_disabled"
 #' conditionMessage(err)
 #' entropia_disconnect(con)
 #' @export
@@ -80,10 +81,12 @@ entropia_insert <- function(con, table, data, dry_run = TRUE) {
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' err <- tryCatch(entropia_update(con, "items", data.frame(id = "x"), by = "id"),
-#'   error = identity)
-#' class(err)          # "entropia_error_write_disabled"
+#'   error = identity
+#' )
+#' class(err) # "entropia_error_write_disabled"
 #' conditionMessage(err)
 #' entropia_disconnect(con)
 #' @export
@@ -110,10 +113,12 @@ entropia_update <- function(con, table, data, by, dry_run = TRUE) {
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' err <- tryCatch(entropia_upsert(con, "items", data.frame(id = "x"), by = "id"),
-#'   error = identity)
-#' class(err)          # "entropia_error_write_disabled"
+#'   error = identity
+#' )
+#' class(err) # "entropia_error_write_disabled"
 #' conditionMessage(err)
 #' entropia_disconnect(con)
 #' @export
@@ -142,10 +147,12 @@ entropia_upsert <- function(con, table, data, by, dry_run = TRUE) {
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' err <- tryCatch(entropia_delete(con, "items", id == "x", confirm = TRUE),
-#'   error = identity)
-#' class(err)          # "entropia_error_write_disabled"
+#'   error = identity
+#' )
+#' class(err) # "entropia_error_write_disabled"
 #' conditionMessage(err)
 #' entropia_disconnect(con)
 #' @export

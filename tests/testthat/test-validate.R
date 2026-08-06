@@ -127,7 +127,9 @@ test_that("entropia_validate finds nothing on healthy fixtures", {
       v <- entropia_validate(con)
       expect_equal(nrow(v), 0L, info = nm)
       expect_identical(attr(v, "schema_version"),
-                       entropia_schema_version(con), info = nm)
+        entropia_schema_version(con),
+        info = nm
+      )
     })
   }
 })
@@ -137,7 +139,7 @@ test_that("entropia_validate returns a well-formed findings tibble", {
     v <- entropia_validate(con)
     expect_s3_class(v, "tbl_df")
     expect_true(all(c("severity", "kind", "table", "column", "message") %in%
-                      names(v)))
+      names(v)))
     rc <- attr(v, "row_counts")
     expect_type(rc, "integer")
     expect_true("items" %in% names(rc))
@@ -175,7 +177,7 @@ test_that("entropia_validate reports a missing required column as an error findi
     on.exit(entropia_disconnect(con), add = TRUE)
     v <- entropia_validate(con)
     hit <- v[v$kind == "column_missing" & v$table == "items" &
-               v$column == "title", ]
+      v$column == "title", ]
     expect_equal(nrow(hit), 1L)
     expect_identical(hit$severity, "error")
     # Older-but-not-yet columns (min_version not reached) are not flagged.
@@ -206,13 +208,14 @@ test_that("entropia_validate diagnoses a database with no tables", {
   on.exit(entropia_disconnect(con), add = TRUE)
   v <- entropia_validate(con)
   expect_true(all(c("collections", "items", "assets") %in%
-                    v$table[v$kind == "table_missing"]))
+    v$table[v$kind == "table_missing"]))
   expect_true("no_migrations" %in% v$kind)
 })
 
 test_that("entropia_validate reports an unreadable database", {
   con <- suppressWarnings(DBI::dbConnect(
-    RSQLite::SQLite(), ent_fixture("corrupt"), flags = RSQLite::SQLITE_RO
+    RSQLite::SQLite(), ent_fixture("corrupt"),
+    flags = RSQLite::SQLITE_RO
   ))
   on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE)
   v <- entropia_validate(con)
@@ -225,9 +228,11 @@ test_that("error classes stay stable while validate reports findings", {
   with_validate_con("full", function(con) {
     # The accessor primitives raise the stable classes.
     expect_error(ent_columns(con, "does_not_exist"),
-                 class = "entropia_error_table_missing")
+      class = "entropia_error_table_missing"
+    )
     expect_error(ent_require_columns(con, "items", c("id", "title", "nope")),
-                 class = "entropia_error_column_missing")
+      class = "entropia_error_column_missing"
+    )
   })
   # validate reports the same situation as findings, never as errors.
   tmp <- scratch_db_missing_req_col()
@@ -246,9 +251,11 @@ test_that("entropia_validate and entropia_status reject a closed connection", {
   )
   entropia_disconnect(con)
   expect_error(entropia_validate(con),
-               class = "entropia_error_invalid_connection")
+    class = "entropia_error_invalid_connection"
+  )
   expect_error(entropia_status(con),
-               class = "entropia_error_invalid_connection")
+    class = "entropia_error_invalid_connection"
+  )
 })
 
 # --- entropia_status ---------------------------------------------------------
@@ -272,8 +279,10 @@ test_that("entropia_status reads sync freshness from sync_meta", {
   with_validate_con("full", function(con) {
     st <- entropia_status(con)
     expect_s3_class(st$sync$last_sync_at, "POSIXct")
-    expect_identical(st$sync$last_sync_at,
-                     as.POSIXct(1768479200, origin = "1970-01-01", tz = "UTC"))
+    expect_identical(
+      st$sync$last_sync_at,
+      as.POSIXct(1768479200, origin = "1970-01-01", tz = "UTC")
+    )
     expect_true(st$sync$capture_enabled)
     expect_identical(st$sync$triggers_version, 2L)
   })
@@ -290,7 +299,8 @@ test_that("entropia_status reports never-synced without sync_meta", {
 
 test_that("entropia_status works on a raw DBI connection", {
   con <- DBI::dbConnect(RSQLite::SQLite(), ent_fixture("full"),
-                        flags = RSQLite::SQLITE_RO)
+    flags = RSQLite::SQLITE_RO
+  )
   on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE)
   st <- entropia_status(con)
   expect_false(is.na(st$path))

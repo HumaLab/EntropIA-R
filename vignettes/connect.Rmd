@@ -25,7 +25,8 @@ schema), and a read-only client is safe to point at it at any time.
 ```{r error = TRUE}
 # Even requesting a write connection fails in v1.
 entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"),
-                 write = TRUE)
+  write = TRUE
+)
 ```
 
 # Opening a connection
@@ -120,7 +121,7 @@ missing optional columns degrade gracefully, and only genuinely missing
 *required* columns raise `entropia_error_schema_incompatible`.
 
 ```{r}
-options(entropiaR.schema_policy = "warn")   # the default; scoped to this session
+options(entropiaR.schema_policy = "warn") # the default; scoped to this session
 ```
 
 # Validating the database

@@ -43,7 +43,8 @@ small diagnostic, like \code{\link[=entropia_validate]{entropia_validate()}} fin
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_orphans(con) # zero findings on the example database
 entropia_disconnect(con)
 }

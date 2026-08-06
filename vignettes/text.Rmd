@@ -50,7 +50,9 @@ entropia_text(con) |> entropia_collect()
 Assets with neither layer keep their row and get `NA` text:
 
 ```{r}
-entropia_text(con) |> entropia_collect() |> dplyr::filter(is.na(text))
+entropia_text(con) |>
+  entropia_collect() |>
+  dplyr::filter(is.na(text))
 ```
 
 # OCR markers
@@ -80,7 +82,9 @@ query still runs on SQLite.
 `assets` accepts a character vector of asset ids or a lazy `tbl_sql`:
 
 ```{r}
-ids <- entropia_assets(con) |> dplyr::filter(type == "audio") |> dplyr::pull(id)
+ids <- entropia_assets(con) |>
+  dplyr::filter(type == "audio") |>
+  dplyr::pull(id)
 entropia_text(con, assets = ids) |> entropia_collect()
 ```
 

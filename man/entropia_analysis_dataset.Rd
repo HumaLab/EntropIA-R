@@ -48,7 +48,8 @@ as a JSON sidecar with \code{\link[=entropia_write_provenance]{entropia_write_pr
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 ds <- entropia_analysis_dataset(con, asset_type == "pdf", name = "PDF corpus")
 entropia_provenance(ds)
 entropia_disconnect(con)

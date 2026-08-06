@@ -21,7 +21,8 @@ WAL state (journal mode + sidecar files). Unlike \code{\link[=entropia_validate]
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_status(con)
 entropia_disconnect(con)
 }

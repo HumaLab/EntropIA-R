@@ -113,7 +113,8 @@ ent_ocr_summary <- function(base, groups) {
 #' @return A `tbl_sql`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_collect(entropia_ocr_coverage(con))
 #' entropia_collect(entropia_ocr_coverage(con, by = "asset"))
 #' entropia_disconnect(con)
@@ -180,7 +181,8 @@ ent_metadata_summary <- function(base, groups) {
 #' @return A `tbl_sql`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_collect(entropia_metadata_coverage(con))
 #' entropia_disconnect(con)
 #' @export
@@ -287,7 +289,8 @@ ent_text_layer_base <- function(con) {
 #'   `group`, `n`, `total` and `pct`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_corpus_quality(con)
 #' entropia_disconnect(con)
 #' @export
@@ -367,8 +370,12 @@ entropia_corpus_quality <- function(con) {
 # when the tables/columns are absent (schema degrades gracefully) or nothing is
 # broken.
 ent_orphan_check <- function(con, table, fk, ref_table, kind) {
-  if (!ent_has_columns(con, table, c("id", fk))) return(NULL)
-  if (!DBI::dbExistsTable(con, ref_table)) return(NULL)
+  if (!ent_has_columns(con, table, c("id", fk))) {
+    return(NULL)
+  }
+  if (!DBI::dbExistsTable(con, ref_table)) {
+    return(NULL)
+  }
   child <- dplyr::select(
     dplyr::tbl(con, table),
     id = "id", fk = dplyr::all_of(fk)
@@ -378,7 +385,9 @@ ent_orphan_check <- function(con, table, fk, ref_table, kind) {
     dplyr::anti_join(child, parent, by = c("fk" = "pk")) |>
       dplyr::filter(!is.na(.data$fk))
   )
-  if (nrow(bad) == 0L) return(NULL)
+  if (nrow(bad) == 0L) {
+    return(NULL)
+  }
   data.frame(
     kind = kind,
     table = table,
@@ -469,7 +478,8 @@ ent_orphan_llm <- function(con) {
 #'   `id`, `column`, `ref_table` and `message`, ordered by `kind` then `id`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_orphans(con) # zero findings on the example database
 #' entropia_disconnect(con)
 #' @export

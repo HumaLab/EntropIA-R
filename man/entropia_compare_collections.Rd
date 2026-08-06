@@ -33,7 +33,8 @@ of assets in the collection. Rows are ordered by the collection column
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 corpus <- entropia_collect(entropia_corpus(con))
 entropia_compare_collections(corpus)
 entropia_disconnect(con)

@@ -99,7 +99,8 @@ ent_sync_info_values <- function(con) {
 #'   type.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_sync_info(con)
 #' entropia_disconnect(con)
 #' @export
@@ -120,7 +121,8 @@ entropia_sync_info <- function(con) {
 #' @return A `tbl_sql` on `sync_row_versions`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_collect(entropia_sync_versions(con))
 #' entropia_disconnect(con)
 #' @export
@@ -143,7 +145,8 @@ entropia_sync_versions <- function(con) {
 #' @return A `tbl_sql` on `sync_conflicts`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-#'   package = "entropiaR"))
+#'   package = "entropiaR"
+#' ))
 #' entropia_collect(entropia_conflicts(con))
 #' entropia_disconnect(con)
 #' @export
@@ -151,8 +154,10 @@ entropia_conflicts <- function(con) {
   ent_require_conn(con)
   ent_require_columns(
     con, "sync_conflicts",
-    c("id", "table_name", "row_id", "reason", "loser_payload",
-      "winner_summary", "created_at", "acknowledged")
+    c(
+      "id", "table_name", "row_id", "reason", "loser_payload",
+      "winner_summary", "created_at", "acknowledged"
+    )
   )
   dplyr::tbl(con, "sync_conflicts")
 }

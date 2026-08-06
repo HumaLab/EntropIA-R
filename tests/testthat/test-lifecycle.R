@@ -18,9 +18,13 @@ ent_rd_text <- function(fn) {
     return(paste(readLines(rd, warn = FALSE), collapse = "\n"))
   }
   h <- tryCatch(utils::help(fn, package = "entropiaR"), error = function(e) NULL)
-  if (is.null(h) || length(h) == 0L) return(NULL)
+  if (is.null(h) || length(h) == 0L) {
+    return(NULL)
+  }
   rdobj <- tryCatch(utils:::.getHelpFile(h), error = function(e) NULL)
-  if (is.null(rdobj)) return(NULL)
+  if (is.null(rdobj)) {
+    return(NULL)
+  }
   paste(capture.output(tools::Rd2txt(rdobj)), collapse = "\n")
 }
 
@@ -29,7 +33,9 @@ ent_rd_text <- function(fn) {
 # gate skips there (the CI grep job covers check).
 ent_r_source_dir <- function() {
   man <- system.file("man", package = "entropiaR")
-  if (!nzchar(man)) return(NA_character_)
+  if (!nzchar(man)) {
+    return(NA_character_)
+  }
   dirname(man)
 }
 
@@ -52,7 +58,8 @@ test_that("analysis-layer docs carry the experimental lifecycle badge", {
     txt <- ent_rd_text(fn)
     expect_false(is.null(txt), info = paste0(fn, " Rd file missing (run devtools::document())"))
     expect_match(
-      txt, "[Experimental]", fixed = TRUE,
+      txt, "[Experimental]",
+      fixed = TRUE,
       info = paste0(fn, " should carry the experimental lifecycle badge")
     )
   }

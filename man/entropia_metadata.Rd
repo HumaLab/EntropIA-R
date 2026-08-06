@@ -34,7 +34,8 @@ list-columns is an R-side step. \code{parse = FALSE} returns the raw
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_metadata(con)
 entropia_metadata(con, parse = FALSE) # raw metadata text
 entropia_disconnect(con)

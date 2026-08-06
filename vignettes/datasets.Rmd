@@ -59,9 +59,11 @@ of the database:
 ```{r}
 a <- entropia_analysis_dataset(con, asset_type == "image")
 b <- entropia_analysis_dataset(con, asset_type == "image")
-identical(a, b)            # data bytes identical
-identical(entropia_provenance(a)[["content_hash"]],
-          entropia_provenance(b)[["content_hash"]])
+identical(a, b) # data bytes identical
+identical(
+  entropia_provenance(a)[["content_hash"]],
+  entropia_provenance(b)[["content_hash"]]
+)
 ```
 
 Only `built_at` differs between builds.
@@ -87,13 +89,13 @@ RDS, parquet and arrow are whole-file formats.
 
 ```{r}
 csv_path <- tempfile(fileext = ".csv")
-entropia_export(entropia_corpus(con), csv_path)      # lazy input, streamed
+entropia_export(entropia_corpus(con), csv_path) # lazy input, streamed
 read.csv(csv_path) |> nrow()
 ```
 
 ```{r}
 rds_path <- tempfile(fileext = ".rds")
-entropia_export(ds, rds_path, format = "rds")          # class + provenance intact
+entropia_export(ds, rds_path, format = "rds") # class + provenance intact
 back <- readRDS(rds_path)
 class(back)
 ```

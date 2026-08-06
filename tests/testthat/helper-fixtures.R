@@ -42,16 +42,20 @@ ent_fixture <- function(name) {
   files <- ent_fixture_files()
   if (!name %in% names(files)) {
     stop(
-      sprintf("Unknown fixture '%s'. Available: %s",
-              name, paste(names(files), collapse = ", ")),
+      sprintf(
+        "Unknown fixture '%s'. Available: %s",
+        name, paste(names(files), collapse = ", ")
+      ),
       call. = FALSE
     )
   }
   src <- testthat::test_path("fixtures", files[[name]])
   if (!file.exists(src)) {
     stop(
-      sprintf("Fixture '%s' not found at '%s'. Run data-raw/make_fixtures.R.",
-              name, src),
+      sprintf(
+        "Fixture '%s' not found at '%s'. Run data-raw/make_fixtures.R.",
+        name, src
+      ),
       call. = FALSE
     )
   }

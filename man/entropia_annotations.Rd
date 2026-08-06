@@ -20,7 +20,8 @@ coordinates in page units.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_annotations(con))
 entropia_disconnect(con)
 }

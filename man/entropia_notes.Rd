@@ -19,7 +19,8 @@ a specific asset instead. \code{asset_id} is NULL for item-level notes.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_notes(con))
 entropia_disconnect(con)
 }

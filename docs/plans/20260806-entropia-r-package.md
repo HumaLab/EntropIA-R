@@ -742,11 +742,12 @@ starts. Parallelizable groups noted per phase.
 ### Phase 7 — CI & Definition of Done (after 26; tasks 29–31)
 
 ### Task 29: CI matrix + lint + style gates
-- [ ] finalize `R-CMD-check.yaml` (3-OS × release/oldrel/devel), `lint.yaml`, `style.yaml` (verification-only), coverage gate
-- [ ] add `spelling.yaml`; add a `grep`-gate job (no `stop(`/`warning(` without cli/class in `R/`)
-- [ ] write tests: CI is green end-to-end on a pushed branch (verify once)
-- [ ] run tests: full suite + `devtools::check()` — must pass before Task 30
+- [x] finalize `R-CMD-check.yaml` (3-OS × release/oldrel/devel), `lint.yaml`, `style.yaml` (verification-only), coverage gate (R-CMD-check matrix expanded to 9 cells — 3 OS × release/oldrel-1/devel with `http-user-agent` on the non-release cells; lint.yaml keeps `LINTR_ERROR_ON_LINT: true`; style.yaml stays verification-only; new `.github/workflows/coverage.yaml` gates ≥ 80% on the four core modules; `.lintr` finalised: `SCREAMING_SNAKE` permitted for test/data-raw constants, `object_usage_linter` excluded for tests/data-raw, `indentation_linter` disabled because styler owns formatting and the two disagreed on continuation indents)
+- [x] add `spelling.yaml`; add a `grep`-gate job (no `stop(`/`warning(` without cli/class in `R/`) (new `.github/workflows/spelling.yaml` runs `spell_check_package(vignettes = TRUE)` and fails on findings; a `grep-gate` job added to lint.yaml greps `R/` for bare `stop(`/`warning(` — 0 matches, enforced)
+- [x] write tests: CI is green end-to-end on a pushed branch (verify once) — **skipped: requires a GitHub push and remote CI run, not automatable locally**; instead every gate was reproduced in the CI scenario locally: all 5 workflow YAMLs parse (`yaml::read_yaml`), lint → 0 findings with the package installed, styler → 0 files changed, spelling → 0 errors, grep gate → 0 matches
+- [x] run tests: full suite + `devtools::check()` — must pass before Task 30 (full testthat suite 0 failures / 0 warnings / 1 pre-existing vdiffr skip; `devtools::check()` 0 errors / 0 warnings / 1 known baseline note — the `stringr` unused-Imports note reserved for Task 30; R 4.5.2, pandoc via `RSTUDIO_PANDOC`)
 - **Acceptance:** GitHub Actions green on all 3 OS; coverage ≥ 80% on `connect.R`, `schema.R`, `corpus.R`, `collect.R`.
+  - Verified 2026-08-06 with R 4.5.2: coverage on core modules — `collect.R` 81.8%, `connect.R` 87.0%, `corpus.R` 93.8%, `schema.R` 94.9% (all ≥ 80%). The package was also made genuinely styler-clean: `styler::style_pkg(strict = TRUE)` reformatted 35 files (462+/212−) and regenerated the man/ Rd example formatting; the full suite stayed green and `devtools::check()` returned 0 errors / 0 warnings / 1 note after the reformat. The one non-automatable item — green CI on a pushed branch — is marked skipped above; the YAML syntax and every local gate (lint, style, spelling, grep, coverage, check) are verified.
 
 ### Task 30: R CMD check clean + performance pass
 - [ ] resolve every warning/note; document unavoidable notes in NEWS

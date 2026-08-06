@@ -36,7 +36,8 @@ every declared column. The \code{chunks} index joins \code{rag_chunks_fts.chunk_
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_collect(entropia_search(con, "huelga"))
 entropia_collect(entropia_search(con, "huelga", index = "chunks", limit = 5))
 entropia_disconnect(con)

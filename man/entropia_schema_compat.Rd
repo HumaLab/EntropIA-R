@@ -34,7 +34,8 @@ version must exist in the live schema. Missing ones are listed in
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_schema_compat(con)
 entropia_disconnect(con)
 }

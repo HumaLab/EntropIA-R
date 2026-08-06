@@ -35,7 +35,8 @@ The one exception is an unreadable (corrupt) file, which yields a single
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 entropia_validate(con) # zero findings on the example database
 entropia_disconnect(con)
 }

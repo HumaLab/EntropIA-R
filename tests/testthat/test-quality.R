@@ -43,15 +43,19 @@ test_that("OCR per-asset flags match the fixture's known gaps", {
   with_quality_con("full", function(con) {
     res <- dplyr::collect(entropia_ocr_coverage(con, by = "asset"))
     expect_equal(nrow(res), 5L)
-    res <- res[match(c(QUAL_ASSET_PDF, QUAL_ASSET_PAGE1, QUAL_ASSET_PAGE2,
-                       QUAL_ASSET_IMG, QUAL_ASSET_AUDIO), res$asset_id), ]
+    res <- res[match(c(
+      QUAL_ASSET_PDF, QUAL_ASSET_PAGE1, QUAL_ASSET_PAGE2,
+      QUAL_ASSET_IMG, QUAL_ASSET_AUDIO
+    ), res$asset_id), ]
     # 0/1 integers (SQLite booleans): pdf + page1 have extractions, the rest do not
     expect_identical(res$has_extraction, c(1L, 1L, 0L, 0L, 0L))
     # text_empty is NA when there is no extraction; none of the fixture texts is empty
     expect_identical(res$text_empty, c(0L, 0L, NA, NA, NA))
     expect_identical(res$asset_type, c("pdf", "pdf", "pdf", "image", "audio"))
-    expect_identical(res$item_id, c(QUAL_ITEM_1, QUAL_ITEM_1, QUAL_ITEM_1,
-                                    QUAL_ITEM_3, QUAL_ITEM_2))
+    expect_identical(res$item_id, c(
+      QUAL_ITEM_1, QUAL_ITEM_1, QUAL_ITEM_1,
+      QUAL_ITEM_3, QUAL_ITEM_2
+    ))
   })
 })
 
@@ -226,7 +230,7 @@ test_that("corpus quality reports an empty text layer once one exists", {
   q <- entropia_corpus_quality(con)
 
   ocr_img <- q[q$metric == "ocr_coverage" & q$group == "image", ]
-  expect_identical(ocr_img$n, 0L)  # the only image extraction is empty
+  expect_identical(ocr_img$n, 0L) # the only image extraction is empty
   expect_identical(ocr_img$total, 1L)
 
   empty_img <- q[q$metric == "empty_text" & q$group == "image", ]

@@ -23,7 +23,8 @@ exist.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 dest <- tempfile(fileext = ".sqlite")
 entropia_copy(con, dest)
 copy_con <- entropia_connect(dest)

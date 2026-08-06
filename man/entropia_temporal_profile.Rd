@@ -41,7 +41,8 @@ on Monday.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-  package = "entropiaR"))
+  package = "entropiaR"
+))
 items <- entropia_collect(entropia_items(con))
 entropia_temporal_profile(items, created_at, unit = "month")
 entropia_disconnect(con)
