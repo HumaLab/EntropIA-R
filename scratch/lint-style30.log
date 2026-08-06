@@ -1,0 +1,105 @@
+
+R version 4.5.2 (2025-10-31 ucrt) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64
+
+R es un software libre y viene sin GARANTIA ALGUNA.
+Usted puede redistribuirlo bajo ciertas circunstancias.
+Escriba 'license()' o 'licence()' para detalles de distribucion.
+
+R es un proyecto colaborativo con muchos contribuyentes.
+Escriba 'contributors()' para obtener más información y
+'citation()' para saber cómo citar R o paquetes de R en publicaciones.
+
+Escriba 'demo()' para demostraciones, 'help()' para el sistema on-line de ayuda,
+o 'help.start()' para abrir el sistema de ayuda HTML con su navegador.
+Escriba 'q()' para salir de R.
+
+> suppressPackageStartupMessages({
++   library(devtools)
++   library(lintr)
++   library(styler)
++ })
+Avisos:
+1: package 'lintr' was built under R version 4.5.3 
+2: package 'styler' was built under R version 4.5.3 
+> load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+> 
+> cat("=== LINT (package installed, mirroring CI) ===\n")
+=== LINT (package installed, mirroring CI) ===
+> lints <- lintr::lint_package(path = "G:/EntropIA-Stack/EntropIA-R")
+> cat("Lint findings:", length(lints), "\n")
+Lint findings: 0 
+> if (length(lints) > 0) print(lints)
+> 
+> cat("\n=== STYLER (should be 0 files changed) ===\n")
+
+=== STYLER (should be 0 files changed) ===
+> res <- styler::style_pkg(
++   pkg = "G:/EntropIA-Stack/EntropIA-R",
++   strict = TRUE,
++   dry = "fail" # errors if any file would change
++ )
+Styling  53  files:
+ R/analysis.R                      ✔ 
+ R/collect.R                       ✔ 
+ R/connect.R                       ✔ 
+ R/corpus.R                        ✔ 
+ R/entropiaR-package.R             ✔ 
+ R/export.R                        ✔ 
+ R/plot.R                          ✔ 
+ R/quality.R                       ✔ 
+ R/research.R                      ✔ 
+ R/schema.R                        ✔ 
+ R/sql.R                           ✔ 
+ R/sync.R                          ✔ 
+ R/tables.R                        ✔ 
+ R/utils.R                         ✔ 
+ R/validate.R                      ✔ 
+ R/write.R                         ✔ 
+ R/zzz.R                           ✔ 
+ tests/testthat.R                  ✔ 
+ tests/testthat/helper-fixtures.R  ✔ 
+ tests/testthat/test-ai.R          ✔ 
+ tests/testthat/test-analysis.R    ✔ 
+ tests/testthat/test-collect.R     ✔ 
+ tests/testthat/test-compat.R      ✔ 
+ tests/testthat/test-connect.R     ✔ 
+ tests/testthat/test-corpus.R      ✔ 
+ tests/testthat/test-dataset.R     ✔ 
+ tests/testthat/test-export.R      ✔ 
+ tests/testthat/test-fixtures.R    ✔ 
+ tests/testthat/test-lifecycle.R   ✔ 
+ tests/testthat/test-orphans.R     ✔ 
+ tests/testthat/test-performance.R ✔ 
+ tests/testthat/test-plot.R        ✔ 
+ tests/testthat/test-quality.R     ✔ 
+ tests/testthat/test-relations.R   ✔ 
+ tests/testthat/test-research.R    ✔ 
+ tests/testthat/test-scaffold.R    ✔ 
+ tests/testthat/test-schema.R      ✔ 
+ tests/testthat/test-search.R      ✔ 
+ tests/testthat/test-sync.R        ✔ 
+ tests/testthat/test-tables.R      ✔ 
+ tests/testthat/test-text.R        ✔ 
+ tests/testthat/test-validate.R    ✔ 
+ tests/testthat/test-write.R       ✔ 
+ data-raw/make_example_db.R        ✔ 
+ data-raw/make_fixtures.R          ✔ 
+ data-raw/make_manifest.R          ✔ 
+ vignettes/administration.Rmd      ✔ 
+ vignettes/analysis.Rmd            ✔ 
+ vignettes/connect.Rmd             ✔ 
+ vignettes/corpus.Rmd              ✔ 
+ vignettes/datasets.Rmd            ✔ 
+ vignettes/dplyr.Rmd               ✔ 
+ vignettes/text.Rmd                ✔ 
+────────────────────────────────────────
+Status	Count	Legend 
+✔ 	53	File unchanged.
+ℹ 	0	File changed.
+✖ 	0	Styling threw an error.
+────────────────────────────────────────
+> cat("styler dry-run: no files would change (OK)\n")
+styler dry-run: no files would change (OK)
+> 

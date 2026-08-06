@@ -1,0 +1,15 @@
+start
+cli : ok 
+DBI : ok 
+RSQLite : ok 
+dbplyr : ok 
+dplyr : ok 
+tibble : ok 
+rlang : ok 
+jsonlite : ok 
+tidyselect : ok 
+stringr : ok 
+digest : ok 
+methods : ok 
+lifecycle : ok 
+done

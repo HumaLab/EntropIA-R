@@ -1,0 +1,4 @@
+loaded: 0.0.0.9000 
+schema: 0029_rag_chunks 
+items rows: 3 created_at class: POSIXct POSIXt 
+SMOKE OK

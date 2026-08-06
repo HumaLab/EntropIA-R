@@ -1,0 +1,50 @@
+# Probe for Task 30: corpus/search/entity-join query plans + fixture indexes.
+suppressPackageStartupMessages({
+  library(devtools)
+  library(dplyr)
+})
+load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+
+cat("=== Fixture index inventory ===\n")
+con <- entropia_connect("G:/EntropIA-Stack/EntropIA-R/tests/testthat/fixtures/full.sqlite")
+idx <- DBI::dbGetQuery(con, "SELECT type, name, tbl_name FROM sqlite_master WHERE type IN ('index','table') AND name NOT LIKE 'sqlite_%' ORDER BY type, name")
+print(idx)
+cat("index count:", sum(idx$type == "index"), "\n")
+
+cat("\n=== EXPLAIN QUERY PLAN: corpus join (no text) ===\n")
+corpus_tbl <- entropia_corpus(con, text = FALSE)
+corpus_sql <- as.character(dbplyr::sql_render(corpus_tbl))
+cat(corpus_sql, "\n")
+plan <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", corpus_sql))
+print(plan)
+
+cat("\n=== EXPLAIN QUERY PLAN: corpus join (with auto text) ===\n")
+corpus_tbl2 <- entropia_corpus(con)
+corpus_sql2 <- as.character(dbplyr::sql_render(corpus_tbl2))
+cat(corpus_sql2, "\n")
+plan2 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", corpus_sql2))
+print(plan2)
+
+cat("\n=== EXPLAIN QUERY PLAN: entity relations ===\n")
+rel_tbl <- entropia_entity_relations(con)
+rel_sql <- as.character(dbplyr::sql_render(rel_tbl))
+cat(rel_sql, "\n")
+plan3 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", rel_sql))
+print(plan3)
+
+cat("\n=== EXPLAIN QUERY PLAN: search items ===\n")
+search_tbl <- entropia_search(con, "huelga", index = "items")
+search_sql <- as.character(dbplyr::sql_render(search_tbl))
+cat(search_sql, "\n")
+plan4 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", search_sql))
+print(plan4)
+
+cat("\n=== EXPLAIN QUERY PLAN: search chunks ===\n")
+search_tbl2 <- entropia_search(con, "huelga", index = "chunks")
+search_sql2 <- as.character(dbplyr::sql_render(search_tbl2))
+cat(search_sql2, "\n")
+plan5 <- DBI::dbGetQuery(con, paste0("EXPLAIN QUERY PLAN ", search_sql2))
+print(plan5)
+
+entropia_disconnect(con)
+cat("\nDONE\n")

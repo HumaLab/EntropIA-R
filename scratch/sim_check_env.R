@@ -1,0 +1,31 @@
+Sys.setenv(RSTUDIO_PANDOC = "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools")
+lib <- file.path(tempdir(), "simlib")
+dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+.libPaths(c(lib, .libPaths()))
+# Build and install the package to the temp lib
+pkg <- devtools::build("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+cat("built:", pkg, "\n")
+utils::install.packages(pkg, lib = lib, repos = NULL, type = "source", quiet = TRUE)
+cat("installed\n")
+# Now load the installed package (NOT load_all) and exercise ent_rd_text
+library(entropiaR)
+txt <- tryCatch({
+  rd <- system.file("man", "entropia_temporal_profile.Rd", package = "entropiaR")
+  if (nzchar(rd) && file.exists(rd)) {
+    paste(readLines(rd, warn = FALSE), collapse = "\n")
+  } else {
+    h <- utils::help("entropia_temporal_profile", package = "entropiaR")
+    cat("help path len:", length(h), "\n")
+    rdobj <- utils:::.getHelpFile(h)
+    paste(capture.output(tools::Rd2txt(rdobj)), collapse = "\n")
+  }
+}, error = function(e) paste("ERR", conditionMessage(e)))
+cat("badge Experimental present:", grepl("Experimental", txt, fixed = TRUE), "\n")
+cat("badge lifecycle present:", grepl("lifecycle", txt, fixed = TRUE), "\n")
+pkgdoc <- tryCatch({
+  h2 <- utils::help("entropiaR-package", package = "entropiaR")
+  rdobj2 <- utils:::.getHelpFile(h2)
+  paste(capture.output(tools::Rd2txt(rdobj2)), collapse = "\n")
+}, error = function(e) paste("ERR", conditionMessage(e)))
+cat("pkgdoc deprecate_warn:", grepl("deprecate_warn", pkgdoc, fixed = TRUE), "\n")
+cat("pkgdoc Lifecycle:", grepl("Lifecycle", pkgdoc, fixed = TRUE), "\n")

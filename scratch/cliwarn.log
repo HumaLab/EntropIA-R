@@ -1,0 +1,4 @@
+class: entropia_warn_malformed_json,rlang_warning,warning,condition 
+msg: Malformed JSON, returning NA: Unmatched } and { special: <br> 
+w2 class: ent_warn_test,rlang_warning,warning,condition 
+w2 msg: Plain message 2 

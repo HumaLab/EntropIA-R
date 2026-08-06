@@ -1,0 +1,6 @@
+pkgload::load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+res <- devtools::check("G:/EntropIA-Stack/EntropIA-R", manual = FALSE, cran = FALSE, error_on = "never")
+cat("\n=== CHECK SUMMARY ===\n")
+cat("errors:", length(res$errors), "warnings:", length(res$warnings), "notes:", length(res$notes), "\n")
+cat("--- notes ---\n")
+if (length(res$notes)) print(res$notes)

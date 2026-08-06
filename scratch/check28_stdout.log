@@ -1,0 +1,20 @@
+> Sys.setenv(NOT_CRAN = "true")
+> Sys.setenv(RSTUDIO_PANDOC = "C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools")
+> res <- devtools::check("G:/EntropIA-Stack/EntropIA-R", cran = FALSE,
++                        args = "--no-manual", error_on = "never",
++                        quiet = TRUE)
+ℹ Loading entropiaR
+> cat("\n=== CHECK SUMMARY ===\n")
+
+=== CHECK SUMMARY ===
+> cat("errors:", length(res$errors), "\n")
+errors: 0 
+> if (length(res$errors)) print(res$errors)
+> cat("warnings:", length(res$warnings), "\n")
+warnings: 0 
+> if (length(res$warnings)) print(res$warnings)
+> cat("notes:", length(res$notes), "\n")
+notes: 1 
+> if (length(res$notes)) print(res$notes)
+[1] "checking dependencies in R code ... NOTE\nNamespace in Imports field not imported from: 'stringr'\n  All declared Imports should be used."
+> 

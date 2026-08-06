@@ -1,0 +1,6 @@
+library(devtools)
+load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+res <- devtools::test(reporter = "summary")
+df <- as.data.frame(res)
+cat("\n=== TOTAL: FAILED:", sum(df$failed), " WARNED:", sum(df$warning), " PASSED:", sum(df$passed), " SKIPPED:", sum(df$skipped), "\n")
+if (any(df$failed > 0)) quit(status = 1)

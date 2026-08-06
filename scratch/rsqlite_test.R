@@ -1,0 +1,1 @@
+sink("scratch/rsqlite_test.log"); library(RSQLite); con <- dbConnect(SQLite(), ":memory:"); cat("in-memory ok\n"); dbDisconnect(con); con2 <- dbConnect(SQLite(), "scratch/t.db"); cat("file db ok\n"); dbDisconnect(con2); sink()

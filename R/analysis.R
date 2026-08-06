@@ -226,6 +226,11 @@ entropia_document_lengths <- function(x, text_var = "text") {
     )
   }
   d <- as.character(d)
+  # EntropIA corpus text can contain bytes that are not valid UTF-8 (RSQLite
+  # returns them as-is). nchar() and gregexpr() error on such strings, so
+  # replace invalid bytes with "?" before counting -- the same sanitisation
+  # pattern used by ent_sanitize_msg() for diagnostic messages.
+  d <- iconv(d, from = "UTF-8", to = "UTF-8", sub = "?")
   out <- tibble::as_tibble(x)
   out$n_chars <- nchar(d)
   out$n_words <- vapply(d, ent_n_words, integer(1), USE.NAMES = FALSE)

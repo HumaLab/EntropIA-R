@@ -34,16 +34,34 @@ ent_sql_fragments <- function() {
   )
 }
 
+# Escape a user query for safe FTS5 MATCH: split on whitespace, wrap each
+# token in double-quotes (escaping any embedded double-quote by doubling it),
+# and join with spaces. This preserves the implicit-AND token semantics while
+# preventing FTS5 syntax errors from characters that the FTS5 query expression
+# parser cannot handle (notably apostrophes in "O'Brien", "l'assemblée").
+ent_escape_fts5 <- function(query) {
+  tokens <- strsplit(trimws(query), "\\s+")[[1L]]
+  tokens <- tokens[nzchar(tokens)]
+  escaped <- vapply(tokens, function(t) {
+    t <- gsub('"', '""', t, fixed = TRUE)
+    paste0('"', t, '"')
+  }, character(1L), USE.NAMES = FALSE)
+  paste(escaped, collapse = " ")
+}
+
 # Build the parameter-safe FTS5 search query for `index`. The user query is
-# escaped with DBI::dbQuoteString() into a SQL string literal before splicing
-# into MATCH, so it can never break out of the literal (injection-safe). The
-# `items` index joins fts_items.rowid -> items.rowid (the contentless FTS5
-# contract); the `chunks` index joins rag_chunks_fts.chunk_id -> rag_chunks.id.
-# Both order by bm25() rank ascending (best first). `limit` is a validated
-# positive integer, never user text, so it is interpolated directly.
+# first escaped against FTS5 special characters by wrapping each whitespace
+# token in double-quotes (see ent_escape_fts5()), then the resulting FTS5-safe
+# string is escaped with DBI::dbQuoteString() into a SQL string literal before
+# splicing into MATCH, so it can never break out of the literal
+# (injection-safe). The `items` index joins fts_items.rowid -> items.rowid
+# (the contentless FTS5 contract); the `chunks` index joins
+# rag_chunks_fts.chunk_id -> rag_chunks.id. Both order by bm25() rank
+# ascending (best first). `limit` is a validated positive integer, never user
+# text, so it is interpolated directly.
 ent_search_sql <- function(con, query, index = c("items", "chunks"), limit = NULL) {
   index <- match.arg(index)
-  q <- DBI::dbQuoteString(con, query)
+  q <- DBI::dbQuoteString(con, ent_escape_fts5(query))
   if (index == "items") {
     sql <- paste0(
       "SELECT i.*, bm25(fts_items) AS rank\n",

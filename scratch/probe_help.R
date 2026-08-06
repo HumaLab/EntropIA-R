@@ -1,0 +1,13 @@
+pkgload::load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+h <- utils::help("entropia_temporal_profile", package = "entropiaR")
+cat("help path:", paste(h, collapse = " | "), "\n")
+rd <- utils:::.getHelpFile(h)
+txt <- paste(capture.output(tools::Rd2txt(rd)), collapse = "\n")
+cat("txt contains Experimental:", grepl("Experimental", txt, fixed = TRUE), "\n")
+cat("txt contains lifecycle:", grepl("lifecycle", txt, fixed = TRUE), "\n")
+# also the package doc
+h2 <- utils::help("entropiaR-package", package = "entropiaR")
+rd2 <- utils:::.getHelpFile(h2)
+txt2 <- paste(capture.output(tools::Rd2txt(rd2)), collapse = "\n")
+cat("pkg doc contains deprecate_warn:", grepl("deprecate_warn", txt2, fixed = TRUE), "\n")
+cat("pkg doc contains Lifecycle:", grepl("Lifecycle", txt2, fixed = TRUE), "\n")

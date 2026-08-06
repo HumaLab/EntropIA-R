@@ -1,0 +1,12 @@
+> pkgload::load_all("G:/EntropIA-Stack/EntropIA-R", quiet = TRUE)
+> cat("test_path():", testthat::test_path(), "\n")
+test_path(): tests/testthat 
+> cat("test_path(..):", testthat::test_path(".."), "\n")
+test_path(..): tests/testthat/.. 
+> cat("test_path(..,..):", testthat::test_path("..", ".."), "\n")
+test_path(..,..): tests/testthat/../.. 
+> cat("getwd():", getwd(), "\n")
+getwd(): G:/EntropIA-Stack/EntropIA-R 
+> cat("man exists:", file.exists("man"), "\n")
+man exists: TRUE 
+> 

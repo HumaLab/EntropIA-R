@@ -1,0 +1,12 @@
+> sink("G:/EntropIA-Stack/EntropIA-R/scratch/cliwarn.log")
+> library(cli)
+> msg <- "Unmatched } and { special: <br>"
+> w <- tryCatch(cli::cli_warn("Malformed JSON, returning NA: {msg}", class = "entropia_warn_malformed_json"), warning = function(w) w)
+> cat("class:", paste(class(w), collapse = ","), "\n")
+> cat("msg:", conditionMessage(w), "\n")
+> # also test the direct sprintf-free approach with literal braces in template only
+> w2 <- tryCatch(cli::cli_warn("Plain message {1+1}", class = "ent_warn_test"), warning = function(w) w)
+> cat("w2 class:", paste(class(w2), collapse = ","), "\n")
+> cat("w2 msg:", conditionMessage(w2), "\n")
+> sink()
+> 
