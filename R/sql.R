@@ -34,6 +34,39 @@ ent_sql_fragments <- function() {
   )
 }
 
+# Build the parameter-safe FTS5 search query for `index`. The user query is
+# escaped with DBI::dbQuoteString() into a SQL string literal before splicing
+# into MATCH, so it can never break out of the literal (injection-safe). The
+# `items` index joins fts_items.rowid -> items.rowid (the contentless FTS5
+# contract); the `chunks` index joins rag_chunks_fts.chunk_id -> rag_chunks.id.
+# Both order by bm25() rank ascending (best first). `limit` is a validated
+# positive integer, never user text, so it is interpolated directly.
+ent_search_sql <- function(con, query, index = c("items", "chunks"), limit = NULL) {
+  index <- match.arg(index)
+  q <- DBI::dbQuoteString(con, query)
+  if (index == "items") {
+    sql <- paste0(
+      "SELECT i.*, bm25(fts_items) AS rank\n",
+      "FROM fts_items\n",
+      "JOIN items i ON i.rowid = fts_items.rowid\n",
+      "WHERE fts_items MATCH ", q, "\n",
+      "ORDER BY rank"
+    )
+  } else {
+    sql <- paste0(
+      "SELECT c.*, bm25(rag_chunks_fts) AS rank\n",
+      "FROM rag_chunks_fts\n",
+      "JOIN rag_chunks c ON c.id = rag_chunks_fts.chunk_id\n",
+      "WHERE rag_chunks_fts MATCH ", q, "\n",
+      "ORDER BY rank"
+    )
+  }
+  if (!is.null(limit)) {
+    sql <- paste0(sql, "\nLIMIT ", as.integer(limit))
+  }
+  dbplyr::sql(sql)
+}
+
 # Resolve a versioned SQL fragment. When the database version predates one or
 # more `pre-<migration>` variants, the variant with the highest migration
 # (closest to the database) wins; an NA/unknown version falls back to the
