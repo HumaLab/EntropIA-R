@@ -34,7 +34,9 @@ test_that("analysis dataset is a typed tibble with correct provenance fields", {
     expect_identical(prov$filters, "asset_type == \"image\"")
     expect_identical(prov$package_version, as.character(utils::packageVersion("entropiaR")))
     expect_match(prov$built_at, "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}")
-    expect_match(prov$r_version, "^R version")
+    # R devel reports "R Under development (unstable) ..." instead of
+    # "R version X.Y.Z ..."; accept both formats.
+    expect_match(prov$r_version, "^(R version|R Under development)")
   })
 })
 
