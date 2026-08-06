@@ -1,0 +1,134 @@
+---
+title: "Extracting texts and metadata"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Extracting texts and metadata}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(entropiaR)
+```
+
+# The text layers
+
+An asset can have up to three machine-readable text layers, stored in three
+1:1 tables:
+
+| Table | Meaning | Main columns |
+| --- | --- | --- |
+| `extractions` | OCR / PDF text extraction | `text_content`, `method`, `confidence` |
+| `transcriptions` | Speech-to-text for audio | `text_content`, `language`, `duration_ms`, `segments` |
+| `layouts` | Layout analysis (regions/blocks) | `regions`, `blocks`, `image_width`, `image_height` |
+
+Each row is keyed deterministically to its asset (`ext-`, `trx-`, `lay-` plus
+the asset id), so the layer tables join 1:1 to `assets` with no fan-out.
+
+```{r}
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
+entropia_extractions(con) |> entropia_collect()
+entropia_transcriptions(con) |> entropia_collect()
+entropia_layouts(con) |> entropia_collect()
+```
+
+# The best text per asset
+
+`entropia_text()` returns one row per asset with a single `text` column — the
+best available text per asset. `source` selects the layer:
+
+- `"extraction"` — the OCR/PDF extraction text only;
+- `"transcription"` — the audio transcription text only;
+- `"auto"` (default) — extraction when present, otherwise transcription (this
+  mirrors the rule EntropIA's own full-text index uses).
+
+```{r}
+entropia_text(con) |> entropia_collect()
+```
+
+Assets with neither layer keep their row and get `NA` text:
+
+```{r}
+entropia_text(con) |> entropia_collect() |> dplyr::filter(is.na(text))
+```
+
+# OCR markers
+
+EntropIA's PDF extraction embeds *image markers* in the text —
+`![](page=n,bbox=[...])` — one per embedded page image. They are noise for text
+analysis, so `entropia_text()` strips them by default. See the raw text first:
+
+```{r}
+raw <- entropia_text(con, strip_markers = FALSE) |> entropia_collect()
+raw$text[1]
+```
+
+And the stripped version:
+
+```{r}
+clean <- entropia_text(con) |> entropia_collect()
+clean$text[1]
+```
+
+The stripping happens in SQL (a recursive CTE), so it stays lazy and
+composable — you can `filter`/`mutate` on top of `entropia_text()` and the whole
+query still runs on SQLite.
+
+# Restricting to specific assets
+
+`assets` accepts a character vector of asset ids or a lazy `tbl_sql`:
+
+```{r}
+ids <- entropia_assets(con) |> dplyr::filter(type == "audio") |> dplyr::pull(id)
+entropia_text(con, assets = ids) |> entropia_collect()
+```
+
+# JSON columns become list-columns
+
+`entropia_collect()` applies the column contract. JSON-in-TEXT columns become
+list-columns via `jsonlite`, so `transcriptions.segments` (an array of
+`{start_ms, end_ms, text}` objects) comes back as a list of data frames:
+
+```{r}
+trx <- entropia_transcriptions(con) |> entropia_collect()
+trx$segments[[1]]
+```
+
+The same applies to `items.metadata`, `rag_messages.sources`, and
+`llm_results.result`.
+
+# Metadata
+
+`entropia_metadata()` parses `items.metadata` into tidy rows (see
+`vignette("corpus")`):
+
+```{r}
+entropia_metadata(con)
+```
+
+Malformed JSON never fails the collect — it warns and yields `NA`, and the raw
+value stays reachable via `parse = FALSE`.
+
+# Coverage at a glance
+
+To see which assets are missing a text layer, use the coverage helpers:
+
+```{r}
+entropia_ocr_coverage(con, by = "asset") |> entropia_collect()
+```
+
+Or the combined quality report:
+
+```{r}
+entropia_corpus_quality(con)
+```
+
+# Cleaning up
+
+```{r}
+entropia_disconnect(con)
+```
+
+Next: `vignette("dplyr")` for composing lazy queries, or
+`vignette("datasets")` for building reproducible analysis datasets.

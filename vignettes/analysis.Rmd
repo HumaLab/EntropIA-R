@@ -1,0 +1,161 @@
+---
+title: "A complete reproducible analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A complete reproducible analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4)
+library(entropiaR)
+library(dplyr)
+```
+
+This vignette walks one end-to-end analysis: snapshot the database, build a
+provenance-stamped dataset, profile it, and export — everything documented so
+the result can be reproduced later.
+
+# 1. Snapshot, then connect
+
+The database may be live under EntropIA. Before analysis, take a snapshot with
+`entropia_copy()` and run against *that*, so the analysis is immune to writes
+landing mid-run and the provenance records a stable source.
+
+```{r}
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
+snap <- tempfile(fileext = ".sqlite")
+entropia_copy(con, snap)
+snap_con <- entropia_connect(snap)
+entropia_disconnect(con)          # original connection no longer needed
+```
+
+# 2. Build the analysis dataset
+
+`entropia_analysis_dataset()` applies filters to the corpus, collects it, and
+stamps provenance. This is the boundary: everything after it is ordinary
+tibble work, and everything before it is recorded.
+
+```{r}
+corpus <- entropia_analysis_dataset(snap_con, name = "corpus_full")
+corpus
+```
+
+```{r}
+entropia_provenance(corpus)
+```
+
+# 3. Temporal profile
+
+When were assets created? `entropia_temporal_profile()` buckets a date column.
+Collect the asset accessor directly — `entropia_collect()` types its
+millisecond timestamps to `POSIXct`, which the profiler requires:
+
+```{r}
+assets <- entropia_assets(snap_con) |> entropia_collect()
+temporal <- entropia_temporal_profile(assets, created_at, unit = "second")
+temporal
+```
+
+# 4. Document lengths
+
+`entropia_document_lengths()` appends character and word counts per document to
+any tibble carrying a text column:
+
+```{r}
+texts <- entropia_text(snap_con) |> entropia_collect()
+lengths <- entropia_document_lengths(texts)
+lengths |> select(id, n_chars, n_words)
+```
+
+Empty text counts as 0; `NA` text stays `NA`.
+
+# 5. Entities
+
+`entropia_entities()` excludes soft-deleted rows by default and surfaces
+provenance (source model) per entity. `entropia_entity_frequency()` tallies
+them by type:
+
+```{r}
+entities <- entropia_entities(snap_con) |> entropia_collect()
+entropia_entity_frequency(entities)
+```
+
+# 6. Topics
+
+Topics are normalized UPPERCASE names. Join `item_topics` to `topics`, then
+tally:
+
+```{r}
+item_topics <- entropia_item_topics(snap_con) |> entropia_collect()
+topics <- entropia_topics(snap_con) |> entropia_collect()
+entropia_topic_frequency(left_join(item_topics, topics, by = c("topic_id" = "id")))
+```
+
+# 7. Collections side by side
+
+`entropia_compare_collections()` summarizes the corpus per collection:
+
+```{r}
+entropia_compare_collections(corpus)
+```
+
+# 8. Corpus quality
+
+`entropia_corpus_quality()` reports OCR coverage, transcription presence,
+metadata coverage and empty texts, per asset type:
+
+```{r}
+quality <- entropia_corpus_quality(snap_con)
+quality
+```
+
+# 9. Visualize
+
+`entropia_plot_*` helpers wrap the analysis summaries in ggplot2 (Suggests) and
+return ordinary `ggplot` objects you can extend:
+
+```{r}
+entropia_plot_temporal(temporal)
+```
+
+```{r}
+entropia_plot_entities(entropia_entity_frequency(entities))
+```
+
+```{r}
+entropia_plot_coverage(quality)
+```
+
+# 10. Export with provenance
+
+The dataset exports as-is (RDS keeps its class and provenance; CSV is streamed
+for lazy inputs). Always write the provenance sidecar alongside:
+
+```{r}
+export_path <- tempfile(fileext = ".csv")
+entropia_export(entropia_corpus(snap_con), export_path)
+
+rds_path <- tempfile(fileext = ".rds")
+entropia_export(corpus, rds_path, format = "rds")
+prov_path <- tempfile(fileext = "-prov.json")
+entropia_write_provenance(corpus, prov_path)
+```
+
+The RDS round-trips with its provenance intact:
+
+```{r}
+back <- readRDS(rds_path)
+entropia_provenance(back)[["name"]]
+```
+
+# Cleanup
+
+```{r}
+entropia_disconnect(snap_con)
+```
+
+That is the loop: snapshot → build a stamped dataset → analyze → export with a
+sidecar. Each step uses functions documented elsewhere in this site; the
+provenance records the whole chain.

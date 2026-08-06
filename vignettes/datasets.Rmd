@@ -1,0 +1,133 @@
+---
+title: "Reproducible analysis datasets"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reproducible analysis datasets}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(entropiaR)
+```
+
+# Why provenance?
+
+A research corpus changes over time: EntropIA keeps syncing, the schema
+evolves, and a "just filter and collect" workflow makes it impossible to say
+later *which* data produced a result. `entropiaR` solves this at the boundary
+where a query becomes a dataset: `entropia_analysis_dataset()` records exactly
+what went in.
+
+```{r}
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
+```
+
+# Building a dataset
+
+`entropia_analysis_dataset()` takes a connection, applies filter expressions to
+the corpus, collects it, and stamps provenance:
+
+```{r}
+ds <- entropia_analysis_dataset(con, name = "pdf_documents", asset_type == "pdf")
+ds
+```
+
+The result is a tibble with class `entropia_dataset`, plus an `entropia_prov`
+attribute recording the schema version, the content hash of the source schema,
+the source path, the filter expressions, the package version, a build timestamp,
+and the R version.
+
+```{r}
+entropia_provenance(ds)
+```
+
+Multiple filters compose, and they push down to SQL before the collect:
+
+```{r}
+entropia_analysis_dataset(con, name = "audio_items", asset_type == "audio") |>
+  nrow()
+```
+
+# Determinism
+
+Identical inputs produce identical datasets. The corpus is always arranged on
+`asset_id` before collecting, so row order never depends on the physical layout
+of the database:
+
+```{r}
+a <- entropia_analysis_dataset(con, asset_type == "image")
+b <- entropia_analysis_dataset(con, asset_type == "image")
+identical(a, b)            # data bytes identical
+identical(entropia_provenance(a)[["content_hash"]],
+          entropia_provenance(b)[["content_hash"]])
+```
+
+Only `built_at` differs between builds.
+
+# Provenance sidecars
+
+`entropia_write_provenance()` writes the provenance as a JSON sidecar, so a
+dataset and its `-prov.json` file travel together and survive email, archives,
+and other people's machines:
+
+```{r}
+prov_path <- tempfile(fileext = "-prov.json")
+entropia_write_provenance(ds, prov_path)
+readLines(prov_path)[1:9]
+```
+
+# Exporting
+
+`entropia_export()` writes a dataset or a lazy query to disk. Delimited formats
+(csv/tsv) are *streamed* for lazy inputs — they fetch in chunks and never
+collect the whole result — and the output is deterministically ordered. JSON,
+RDS, parquet and arrow are whole-file formats.
+
+```{r}
+csv_path <- tempfile(fileext = ".csv")
+entropia_export(entropia_corpus(con), csv_path)      # lazy input, streamed
+read.csv(csv_path) |> nrow()
+```
+
+```{r}
+rds_path <- tempfile(fileext = ".rds")
+entropia_export(ds, rds_path, format = "rds")          # class + provenance intact
+back <- readRDS(rds_path)
+class(back)
+```
+
+```{r}
+json_path <- tempfile(fileext = ".json")
+entropia_export(entropia_collect(entropia_corpus(con)), json_path, format = "json")
+jsonlite::fromJSON(json_path) |> nrow()
+```
+
+parquet/arrow are available when the `arrow` package is installed (it is a
+Suggests dependency, so `entropia_export` fails with clear guidance rather than
+a load error when it is not).
+
+# Recommended workflow
+
+For anything that will take a while, snapshot the database first, then build
+datasets against the snapshot. The provenance then records the *snapshot* as
+the source, so the analysis is immune to writes landing in the meantime:
+
+```{r}
+snap <- tempfile(fileext = ".sqlite")
+entropia_copy(con, snap)
+snap_con <- entropia_connect(snap)
+stable <- entropia_analysis_dataset(snap_con, name = "stable", asset_type == "pdf")
+entropia_provenance(stable)[["source_path"]] == snap
+entropia_disconnect(snap_con)
+```
+
+# Cleaning up
+
+```{r}
+entropia_disconnect(con)
+```
+
+Next: `vignette("analysis")` for a complete end-to-end analysis, or
+`vignette("administration")` for the safety model around the database.

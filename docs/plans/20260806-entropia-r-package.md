@@ -724,11 +724,12 @@ starts. Parallelizable groups noted per phase.
   - Verified 2026-08-06 with R 4.5.2: every one of the 60 exported functions has an Rd `\examples{}` section (grep over `man/`); `pkgdown::build_site()` builds the full site under `pkgdown/` (reference index grouped by the 10 API capabilities, 12 groups); `devtools::check()` runs all examples against the packaged example DB (`checking examples ... OK` in 16s) with the 2 known baseline notes only; the example DB round-trips through `entropia_connect`/`entropia_status`/`entropia_search`.
 
 ### Task 27: Vignettes (7)
-- [ ] write `connect.Rmd`, `corpus.Rmd`, `text.Rmd`, `dplyr.Rmd`, `datasets.Rmd`, `analysis.Rmd`, `administration.Rmd` per Documentation
-- [ ] vignettes knit cleanly against fixtures (never the user DB)
-- [ ] write tests: vignette build in check (implicit); spelling pass on vignettes
-- [ ] run tests — must pass before Task 28
+- [x] write `connect.Rmd`, `corpus.Rmd`, `text.Rmd`, `dplyr.Rmd`, `datasets.Rmd`, `analysis.Rmd`, `administration.Rmd` per Documentation (all seven written in `vignettes/` against the packaged `inst/extdata/entropia-example.sqlite` — never the user DB; `VignetteBuilder: knitr` + `Language: en-US` added to DESCRIPTION; `articles:` section registered in `_pkgdown.yml`)
+- [x] vignettes knit cleanly against fixtures (never the user DB) (each vignette renders end-to-end via `rmarkdown::render` against the installed package in a clean session — no dplyr attached; R CMD check re-builds all 7 with 0 errors; the analysis vignette ends in a provenance-stamped dataset via `entropia_analysis_dataset()` + `entropia_write_provenance()`)
+- [x] write tests: vignette build in check (implicit); spelling pass on vignettes (R CMD check `checking re-building of vignette outputs ... OK`; `spelling::spell_check_package(vignettes = TRUE)` → 0 flagged words after committing `inst/WORDLIST`; full testthat suite 0 failures / 0 warnings / 1 pre-existing vdiffr skip)
+- [x] run tests — must pass before Task 28 (full suite green; `devtools::check()` → 0 errors / 0 warnings / 1 known baseline note — unused Imports lifecycle/stringr reserved for Task 28)
 - **Acceptance:** all 7 vignettes render in CI; the analysis vignette is a complete reproducible workflow ending in a provenance-stamped dataset.
+  - Verified 2026-08-06 with R 4.5.2 / RStudio-bundled pandoc: all 7 vignettes knit cleanly (connect, corpus, text, dplyr, datasets, analysis, administration) against the packaged example DB; R CMD check re-builds them without error; the analysis vignette runs snapshot → `entropia_analysis_dataset()` → temporal/length/entity/topic/collection profiles → quality report → plots → RDS export with a provenance sidecar; two local bugs found and fixed during validation (bare `collect()` in text.Rmd without dplyr attached; `format = "rds"` missing on the RDS export chunks in datasets.Rmd/analysis.Rmd).
 
 ### Task 28: Lifecycle + error message audit
 - [ ] add lifecycle badges (experimental on analysis layer); `lifecycle::deprecate_warn` scaffolding documented

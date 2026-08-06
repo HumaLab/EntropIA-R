@@ -3,6 +3,18 @@ destination: pkgdown
 template:
   bootstrap: 5
 
+articles:
+- title: Using entropiaR
+  desc: End-to-end workflows: connect, explore, extract, query, and analyze.
+  contents:
+  - connect
+  - corpus
+  - text
+  - dplyr
+  - datasets
+  - analysis
+  - administration
+
 reference:
 - title: Connection & administration
   desc: >

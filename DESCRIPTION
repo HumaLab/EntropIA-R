@@ -11,7 +11,9 @@ Description: Tidyverse-style, read-only interface between R and the SQLite
     metadata helpers, corpus quality diagnostics, analysis helpers, and
     reproducible export with provenance.
 License: MIT + file LICENSE
+Language: en-US
 Encoding: UTF-8
+VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Depends: R (>= 4.1)

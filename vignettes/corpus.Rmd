@@ -1,0 +1,138 @@
+---
+title: "Exploring the corpus"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring the corpus}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(entropiaR)
+library(dplyr)
+```
+
+# The domain model
+
+EntropIA organizes your research material in a three-level hierarchy:
+
+```
+collections ──→ items ──→ assets
+```
+
+- a **collection** is a research project or folder (e.g. "Conflicto SOIP 1965-66");
+- an **item** is one document inside a collection (a newspaper page, a letter, a photo);
+- an **asset** is one physical file belonging to an item — an image, a PDF, or an
+  audio recording. A PDF item usually has one asset *per page*; PDF page assets
+  point at their parent asset via `parent_asset_id` and carry a `page_number`.
+
+Everything else hangs off this spine: text layers (`extractions`,
+`transcriptions`, `layouts`), entities and triples, notes and annotations,
+topics, LLM results, and RAG artifacts.
+
+# Accessors are lazy
+
+Every accessor returns a lazy `tbl_sql` — a query that has *not* run yet. SQLite
+does the work when you collect. Nothing is loaded into R memory until you ask:
+
+```{r}
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
+items <- entropia_items(con)
+items
+```
+
+Because these are `tbl_sql`, you can pipe them straight into dplyr verbs and the
+whole query is translated to SQL (see `vignette("dplyr")`).
+
+# The three spine accessors
+
+```{r}
+entropia_collections(con) |> collect()
+```
+
+```{r}
+entropia_items(con) |> collect()
+```
+
+```{r}
+entropia_assets(con) |> collect()
+```
+
+Notice the PDF pages: assets `...3332` and `...3333` carry a
+`parent_asset_id` and a `page_number`, while the top-level PDF asset does not.
+You can join pages back to their parent:
+
+```{r}
+assets <- entropia_assets(con) |> collect()
+assets |>
+  filter(!is.na(page_number)) |>
+  select(asset_id = id, page_number, parent_asset_id) |>
+  left_join(select(assets, id, type), by = c("parent_asset_id" = "id"))
+```
+
+The asset accessor never selects BLOB columns such as `embedding` — those are
+opt-in (see `entropia_embeddings()` / `entropia_chunks()`).
+
+# The corpus view
+
+`entropia_corpus()` is the workhorse: it joins items, collections and assets in
+one lazy query, one row per asset, and appends the best available text per
+asset:
+
+```{r}
+corpus <- entropia_corpus(con)
+corpus |> colnames()
+```
+
+```{r}
+corpus |>
+  select(item_title, asset_type, page_number, text) |>
+  collect()
+```
+
+Assets with no text layer keep their row and get `NA` text — no rows are lost.
+
+## Filtering
+
+`collections` and `asset_types` accept character vectors and push the filter
+down to SQL:
+
+```{r}
+entropia_corpus(con, asset_types = "pdf") |> collect() |> nrow()
+entropia_corpus(con, collections = "Archivo de prueba") |> collect() |> nrow()
+```
+
+By default the corpus includes PDF *page* assets. Set `page_assets = FALSE` to
+see only top-level assets:
+
+```{r}
+entropia_corpus(con) |> collect() |> nrow()
+entropia_corpus(con, page_assets = FALSE) |> collect() |> nrow()
+```
+
+`include_deleted = FALSE` (the default) excludes soft-deleted entities from any
+downstream joins that touch entities.
+
+# Item metadata
+
+`entropia_metadata()` parses the JSON inside `items.metadata` into tidy rows:
+the `__entropia_file_metadata` fields become proper columns (`original_name`,
+`original_path`, `imported_at` as a `POSIXct`), and any remaining top-level keys
+become list-columns. Items without metadata get a row with `NA`s rather than
+disappearing:
+
+```{r}
+entropia_metadata(con)
+```
+
+Pass `parse = FALSE` to see the raw JSON text instead.
+
+# Cleaning up
+
+```{r}
+entropia_disconnect(con)
+```
+
+Next: `vignette("text")` for text extraction and metadata, or
+`vignette("dplyr")` for composing lazy queries.
