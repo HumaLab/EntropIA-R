@@ -543,13 +543,13 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** opening the real `data-test/entropia.sqlite` read-only succeeds and `summary()` renders; a `dbWriteTable` attempt fails cleanly. (Verified 2026-08-06 on the 29 MB reference DB: `schema_version = 0029_rag_chunks`, `summary()` renders, `dbWriteTable` → "attempt to write a readonly database".)
 
 ### Task 5: Schema introspection + column contract
-- [ ] implement internal `ent_current_version(con)` (MAX `_migrations.name`) and `ent_tables(con)` / `ent_columns(con, table)` via `PRAGMA` 
-- [ ] implement `entropia_schema_version()`, `entropia_schema_info()` (tables + columns + contract types)
-- [ ] author `inst/schemas/manifest.json`: full column contract for all 20+ readable tables per the type map in Technical Details, tagged min-migration
-- [ ] implement manifest loader `ent_manifest()` with live `PRAGMA table_info` re-check
-- [ ] write tests: version detection on each fixture; manifest covers every fixture table; missing-column detection on legacy variants
-- [ ] run tests — must pass before Task 6
-- **Acceptance:** `entropia_schema_info(entropia_connect("data-test/entropia.sqlite"))` lists every table in the Context with correct types.
+- [x] implement internal `ent_current_version(con)` (MAX `_migrations.name`) and `ent_tables(con)` / `ent_columns(con, table)` via `PRAGMA` (`ent_current_version` carried from Task 4's `R/utils.R`; `ent_tables`/`ent_columns` added in `R/schema.R` via `sqlite_master` + `PRAGMA table_xinfo`, FTS shadow tables + `sqlite_*` excluded, generated columns included, `entropia_error_table_missing` for unknown tables)
+- [x] implement `entropia_schema_version()`, `entropia_schema_info()` (tables + columns + contract types) (exported; `schema_info` merges live PRAGMA with the manifest contract, `source` = `manifest`/`schema`, column-level `min_version` overrides table-level)
+- [x] author `inst/schemas/manifest.json`: full column contract for all 20+ readable tables per the type map in Technical Details, tagged min-migration (26 tables, generated reproducibly by `data-raw/make_manifest.R` from the full fixture + declared contract maps; `manifest_version: 1`, `schema_head: 0029_rag_chunks`, per-column `type`/`required`/`contract`/`values`, migration-tagged `min_version`, repair/sync tables carry no migration)
+- [x] implement manifest loader `ent_manifest()` with live `PRAGMA table_info` re-check (loader reads `inst/schemas/manifest.json`; `ent_schema_gaps()` re-checks every manifest column against live `PRAGMA table_xinfo` and flags expected-vs-not with version gating — the raw material for Task 6)
+- [x] write tests: version detection on each fixture; manifest covers every fixture table; missing-column detection on legacy variants (`test-schema.R`: per-fixture version, `ent_tables` excludes sqlite_/FTS shadows, generated `search_text` visible, manifest covers all accessor tables, contract types spot-checked, legacy-pre0019 target_type/manual_* gaps with `expected = FALSE`, scratch-DB genuine required-column gap with `expected = TRUE`)
+- [x] run tests — must pass before Task 6 (190 pass, 0 fail; lintr clean on all new files; `devtools::check()` 0 errors / 0 warnings / 1 note — the known unused-Imports baseline, resolves as later tasks land)
+- **Acceptance:** `entropia_schema_info(entropia_connect("data-test/entropia.sqlite"))` lists every table in the Context with correct types. (Verified 2026-08-06 on the 29 MB reference DB: 30 tables, all Context tables present, `entities.created_at`→`datetime_auto`, `items.metadata`→`json`, `vec_assets.embedding`→`blob_f32`, `collections.created_at`→`datetime_ms`; `ent_schema_gaps()` = 0.)
 
 ### Task 6: Compatibility layer + policies
 - [ ] implement `entropia_schema_compat(con)` returning `known/unknown/older/newer` + required-column check

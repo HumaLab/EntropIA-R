@@ -12,6 +12,25 @@ ent_abort <- function(class, message, ..., .envir = parent.frame()) {
   cli::cli_abort(message, class = class, ..., .envir = .envir)
 }
 
+# NULL-defaulting operator (rlang::`%||%` without the dependency).
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+# Require a live entropiaR connection. Every exported function that takes a
+# connection starts with this so the error message is stable and actionable.
+ent_require_conn <- function(con) {
+  ok <- tryCatch(DBI::dbIsValid(con), error = function(e) FALSE)
+  if (!isTRUE(ok)) {
+    ent_abort(
+      "entropia_error_invalid_connection",
+      c(
+        "Argument {.arg con} must be an open connection.",
+        i = "Create one with {.fn entropia_connect}."
+      )
+    )
+  }
+  invisible(con)
+}
+
 # Safely read an attribute with a default. Attributes may be missing on
 # hand-built objects, so never index them blindly.
 ent_attr <- function(x, name, default = NA_character_) {
