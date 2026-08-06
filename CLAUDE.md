@@ -95,7 +95,11 @@ Known classes: `entropia_error_not_found`, `entropia_error_not_sqlite`,
 `entropia_error_schema_incompatible`, `entropia_error_locked`,
 `entropia_error_table_missing`, `entropia_error_column_missing`,
 `entropia_error_write_disabled`, `entropia_error_invalid_argument`,
-`entropia_error_missing_dependency`, `entropia_warn_malformed_json`.
+`entropia_error_missing_dependency`, `entropia_warn_malformed_json`,
+`entropia_error_invalid_connection`, `entropia_error_unsupported`,
+`entropia_error_copy_failed`, `entropia_error_dest_exists`,
+`entropia_error_manifest_missing`, `entropia_warn_schema`,
+`entropia_error_sql_fragment_missing`.
 
 ### Schema compatibility
 
@@ -138,7 +142,7 @@ Known classes: `entropia_error_not_found`, `entropia_error_not_sqlite`,
 **Imports:** DBI, RSQLite, dbplyr, dplyr, tibble, rlang, cli, lifecycle, jsonlite,
 tidyselect, digest, methods.
 
-**Suggests:** testthat, ggplot2, tidyr, lubridate, forcats, arrow, duckdb, knitr,
-rmarkdown, pkgdown, covr, lintr, styler, spelling, withr, vdiffr.
+**Suggests:** testthat, ggplot2, tidyr, lubridate, forcats, arrow, bit64, duckdb,
+knitr, rmarkdown, pkgdown, covr, lintr, styler, spelling, withr, vdiffr.
 
 Minimum R ≥ 4.1. CI tests release/oldrel/devel × 3 OS.

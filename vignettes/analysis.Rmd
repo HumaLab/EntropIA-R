@@ -104,7 +104,7 @@ entropia_compare_collections(corpus)
 # 8. Corpus quality
 
 `entropia_corpus_quality()` reports OCR coverage, transcription presence,
-metadata coverage and empty texts, per asset type:
+and empty texts per asset type, plus metadata coverage per collection:
 
 ```{r}
 quality <- entropia_corpus_quality(snap_con)

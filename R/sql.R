@@ -76,6 +76,16 @@ ent_search_sql <- function(con, query, index = c("items", "chunks"), limit = NUL
 # n) of each `id` chain, so the result has exactly one row per input row.
 # `sub_sql` is the rendered inner query (its output columns must be `cols`).
 ent_strip_markers_sql <- function(cols, sub_sql) {
+  # The recursive CTE emits the substr(text, ...) expression in the position
+  # where "text" appears in the column list, so text MUST be last for the
+  # column signatures to align across the anchor and recursive members.
+  # entropia_text() guarantees this; assert it here so a future caller that
+  # violates the assumption fails fast rather than silently misaligning columns.
+  stopifnot(
+    "text" %in% cols,
+    identical(tail(cols, 1L), "text"),
+    length(cols) >= 2L
+  )
   strip_cols <- paste0('"', cols, '"', collapse = ", ")
   inner_cols <- paste0('"', setdiff(cols, "text"), '"', collapse = ", ")
   paste0(

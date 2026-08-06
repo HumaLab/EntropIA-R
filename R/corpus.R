@@ -527,10 +527,14 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   })
   fm <- lapply(parsed, function(p) p[["__entropia_file_metadata"]])
 
+  # Guard against a scalar __entropia_file_metadata value: $[[ on an atomic
+  # vector raises "subscript out of bounds". Tolerate it by treating the row
+  # as if file_metadata were absent, consistent with the non-object metadata
+  # posture above.
   out$original_name <- vapply(
     fm,
     function(x) {
-      if (is.null(x[["original_name"]])) {
+      if (!is.list(x) || is.null(x[["original_name"]])) {
         NA_character_
       } else {
         as.character(x[["original_name"]])
@@ -541,7 +545,7 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   out$original_path <- vapply(
     fm,
     function(x) {
-      if (is.null(x[["original_path"]])) {
+      if (!is.list(x) || is.null(x[["original_path"]])) {
         NA_character_
       } else {
         as.character(x[["original_path"]])
@@ -551,7 +555,13 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   )
   iso <- vapply(
     fm,
-    function(x) if (is.null(x[["importedAt"]])) NA_character_ else as.character(x[["importedAt"]]),
+    function(x) {
+      if (!is.list(x) || is.null(x[["importedAt"]])) {
+        NA_character_
+      } else {
+        as.character(x[["importedAt"]])
+      }
+    },
     character(1)
   )
   # suppressWarnings: a malformed importedAt is not a reason to fail the parse;

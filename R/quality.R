@@ -422,7 +422,8 @@ ent_orphan_llm <- function(con) {
     tp <- refs$type[i] # hoisted: a scalar, so dbplyr escapes it as a literal
     child <- dplyr::tbl(con, "llm_results") |>
       dplyr::filter(.data$target_type == tp) |>
-      dplyr::select(id = "id", fk = "target_id")
+      dplyr::select(id = "id", fk = "target_id") |>
+      dplyr::filter(!is.na(.data$fk))
     parent <- dplyr::select(dplyr::tbl(con, ref), pk = "id")
     bad <- dplyr::collect(dplyr::anti_join(child, parent, by = c("fk" = "pk")))
     if (nrow(bad) > 0L) {

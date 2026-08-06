@@ -186,7 +186,12 @@ ent_export_ordered <- function(x) {
   if (!grepl("(?i)ORDER[[:space:]]+BY", sql, perl = TRUE)) {
     cols <- colnames(x)
     if (length(cols) > 0L) {
-      x <- dplyr::arrange(x, !!rlang::sym(cols[[1L]]))
+      # Single arrange() call with both columns so dbplyr emits one ORDER BY
+      # clause. When only one column exists, it is the sole sort key. Two
+      # columns produce a deterministic total order even when the first column
+      # has ties (e.g. corpus queries where item_id repeats across assets).
+      extra <- if (length(cols) > 1L) list(rlang::sym(cols[[2L]])) else list()
+      x <- dplyr::arrange(x, !!rlang::sym(cols[[1L]]), !!!extra)
     }
   }
   x

@@ -195,34 +195,15 @@ entropia_validate <- function(con) {
   out
 }
 
-# Sync freshness for entropia_status(): the whitelisted sync_meta fields,
-# coerced to their natural types. last_sync_at is epoch milliseconds (per the
-# column contract); capture_enabled and triggers_version are small integers.
+# Sync freshness for entropia_status(): delegates to the shared coercion
+# framework in R/sync.R rather than duplicating the ms->POSIXct/integer/bool
+# logic. Only the three status-visible keys are surfaced.
 ent_status_sync <- function(con) {
-  sm <- ent_sync_meta(con)
-  # Single-bracket indexing: a missing key yields NA ([[ would throw).
-  last_raw <- sm["last_sync_at"]
-  last_sync_at <- if (!is.na(last_raw) && nzchar(last_raw)) {
-    as.POSIXct(as.numeric(last_raw) / 1000, origin = "1970-01-01", tz = "UTC")
-  } else {
-    NA_real_
-  }
-  cap_raw <- sm["capture_enabled"]
-  capture_enabled <- if (!is.na(cap_raw) && nzchar(cap_raw)) {
-    as.integer(cap_raw) == 1L
-  } else {
-    NA
-  }
-  trg_raw <- sm["triggers_version"]
-  triggers_version <- if (!is.na(trg_raw) && nzchar(trg_raw)) {
-    as.integer(trg_raw)
-  } else {
-    NA_integer_
-  }
+  vals <- ent_sync_info_values(con)
   list(
-    last_sync_at = last_sync_at,
-    capture_enabled = capture_enabled,
-    triggers_version = triggers_version
+    last_sync_at = vals$last_sync_at,
+    capture_enabled = vals$capture_enabled,
+    triggers_version = vals$triggers_version
   )
 }
 

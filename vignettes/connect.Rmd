@@ -147,7 +147,7 @@ working copy:
 copy_path <- tempfile(fileext = ".sqlite")
 entropia_copy(con, copy_path)
 copy_con <- entropia_connect(copy_path)
-entropia_status(copy_con)$`row counts`
+entropia_status(copy_con)$row_counts
 entropia_disconnect(copy_con)
 ```
 

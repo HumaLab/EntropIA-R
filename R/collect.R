@@ -23,9 +23,16 @@ ent_infer_base_table <- function(x) {
   if (grepl("(?i)JOIN", sql, perl = TRUE)) {
     return(NULL)
   }
+  # Two regexes search for a top-level FROM clause. The first matches quoted
+  # identifiers (dbplyr renders these as `"tablename"`). The second is a
+  # fallback for bare identifiers and deliberately rejects FROM followed by
+  # '(' (subquery) so a derived query's inner table name isn't misidentified
+  # as the contract source. Neither regex matches a FROM that appears inside
+  # a string literal (a rare corner case — the WHERE clause is after the FROM
+  # in RSQLite renders, so the first FROM the regexes see is the real one).
   m <- regexpr("(?i)FROM\\s+[`\"]([^`\"]+)[`\"]", sql, perl = TRUE)
   if (m == -1L) {
-    m <- regexpr("(?i)FROM\\s+([A-Za-z_][A-Za-z0-9_]*)", sql, perl = TRUE)
+    m <- regexpr("(?i)FROM\\s+([A-Za-z_][A-Za-z0-9_]*)(?!\\s*\\()", sql, perl = TRUE)
     if (m == -1L) {
       return(NULL)
     }

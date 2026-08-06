@@ -119,8 +119,8 @@ entropia_corpus(con, page_assets = FALSE) |>
   nrow()
 ```
 
-`include_deleted = FALSE` (the default) excludes soft-deleted entities from any
-downstream joins that touch entities.
+`include_deleted` is reserved for the v2 read-write release; in v1 the flag has
+no effect (the corpus carries no soft-delete marker).
 
 # Item metadata
 
