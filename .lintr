@@ -2,4 +2,4 @@ linters: linters_with_defaults(
     line_length_linter(100L)
   )
 exclusions: list("tests/testthat/fixtures")
-encoding: UTF-8
+encoding: "UTF-8"

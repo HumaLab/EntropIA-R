@@ -534,13 +534,13 @@ starts. Parallelizable groups noted per phase.
 ### Phase 1 — Connection & schema core (after 1–3; tasks 4–8 serial)
 
 ### Task 4: entropia_connect read-only + S3 class
-- [ ] implement `entropia_connect()`: DBI connect with `flags = SQLITE_RO_V2`, `PRAGMA query_only = ON`, class `c("entropia_conn", class(con))`, attributes `path/mode/schema_version/content_hash`; `path = ":memory:"` support
-- [ ] implement `entropia_disconnect()`, `print.entropia_conn()`, `summary.entropia_conn()`, `format.entropia_conn()`, `dbIsValid.entropia_conn()`, `collect.entropia_conn()` (guidance error)
-- [ ] implement `entropia_copy()` (WAL-aware: copy `-wal`/`-shm` too when present, via `PRAGMA wal_checkpoint` best-effort or file copy + reopen)
-- [ ] write tests: read-only enforced (write attempt errors even with `write = FALSE`), `:memory:` works, class/methods behave, disconnect idempotent, copy works with and without sidecars
-- [ ] write tests: error paths — missing file (`entropia_error_not_found`), non-SQLite file (`entropia_error_not_sqlite`), locked DB simulation
-- [ ] run tests — must pass before Task 5
-- **Acceptance:** opening the real `data-test/entropia.sqlite` read-only succeeds and `summary()` renders; a `dbWriteTable` attempt fails cleanly.
+- [x] implement `entropia_connect()`: DBI connect with `flags = SQLITE_RO_V2`, `PRAGMA query_only = ON`, class `c("entropia_conn", class(con))`, attributes `path/mode/schema_version/content_hash`; `path = ":memory:"` support (RSQLite 2.4.3 exposes `SQLITE_RO`, not `SQLITE_RO_V2` — used `SQLITE_RO` + `PRAGMA query_only = ON`; connection typed as an S4 subclass `entropia_conn < SQLiteConnection` because prepending a plain S3 class breaks S4 dispatch on DBI generics; attributes verified on the real DB)
+- [x] implement `entropia_disconnect()`, `print.entropia_conn()`, `summary.entropia_conn()`, `format.entropia_conn()`, `dbIsValid.entropia_conn()`, `collect.entropia_conn()` (guidance error) (`dbIsValid` works via inherited SQLiteConnection S4 method — reports closed state; `collect()` errors with `entropia_error_unsupported` + guidance)
+- [x] implement `entropia_copy()` (WAL-aware: copy `-wal`/`-shm` too when present, via `PRAGMA wal_checkpoint` best-effort or file copy + reopen) (implemented via SQLite `VACUUM INTO` — reads through live `-wal`/`-shm`, emits a single self-contained snapshot; verified with sidecars present)
+- [x] write tests: read-only enforced (write attempt errors even with `write = FALSE`), `:memory:` works, class/methods behave, disconnect idempotent, copy works with and without sidecars
+- [x] write tests: error paths — missing file (`entropia_error_not_found`), non-SQLite file (`entropia_error_not_sqlite`), locked DB simulation
+- [x] run tests — must pass before Task 5 (86 pass, 0 fail; `devtools::check()` 0 errors / 0 warnings / 2 notes — the two known baseline notes)
+- **Acceptance:** opening the real `data-test/entropia.sqlite` read-only succeeds and `summary()` renders; a `dbWriteTable` attempt fails cleanly. (Verified 2026-08-06 on the 29 MB reference DB: `schema_version = 0029_rag_chunks`, `summary()` renders, `dbWriteTable` → "attempt to write a readonly database".)
 
 ### Task 5: Schema introspection + column contract
 - [ ] implement internal `ent_current_version(con)` (MAX `_migrations.name`) and `ent_tables(con)` / `ent_columns(con, table)` via `PRAGMA` 

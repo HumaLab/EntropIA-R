@@ -57,7 +57,7 @@ test_that("full fixture carries the complete post-0029 surface", {
     expect_equal(sum(grepl("^trg_sync_", trg)), 48)
     expect_equal(sum(grepl("^collection_activity_", trg)), 33)
     expect_true("target_type" %in%
-      DBI::dbGetQuery(con, "PRAGMA table_info(llm_results)")$name)
+                  DBI::dbGetQuery(con, "PRAGMA table_info(llm_results)")$name)
   })
 })
 

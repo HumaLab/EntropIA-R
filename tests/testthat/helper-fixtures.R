@@ -12,6 +12,10 @@
 # Fixture inventory: mini, full, legacy-pre0019, legacy-seconds,
 # unknown-version, corrupt, notsqlite.
 
+# Test helpers are defined here (helper-fixtures.R) but used across test-*.R
+# files; declare them so static analysis (lintr object_usage) can resolve them.
+utils::globalVariables(c("ent_fixture", "ent_connect_fixture", "ent_fixture_version"))
+
 # Map of fixture name -> on-disk file inside tests/testthat/fixtures/.
 ent_fixture_files <- function() {
   c(
@@ -73,7 +77,7 @@ ent_fixture <- function(name) {
 ent_connect_fixture <- function(name) {
   path <- ent_fixture(name)
   if (exists("entropia_connect", mode = "function")) {
-    return(entropia_connect(path))
+    return(entropiaR::entropia_connect(path))
   }
   DBI::dbConnect(RSQLite::SQLite(), path, flags = RSQLite::SQLITE_RO)
 }
