@@ -393,3 +393,124 @@ entropia_compare_collections <- function(x, by = "collection_name") {
   )
   dplyr::arrange(out, !!!rlang::syms(by_col))
 }
+
+# --- Task 22: reproducible datasets + provenance ------------------------------
+
+# Validate the `name` argument of entropia_analysis_dataset(): NULL (unnamed)
+# or a single non-NA character string.
+ent_validate_dataset_name <- function(name) {
+  if (is.null(name)) return(name)
+  if (!is.character(name) || length(name) != 1L || is.na(name)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg name} must be {.code NULL} or a single name for the dataset."
+    )
+  }
+  name
+}
+
+#' Build a reproducible analysis dataset
+#'
+#' The dataset boundary of the package: assembles the lazy corpus
+#' ([entropia_corpus()]), applies any filter expressions passed in `...`, and
+#' materialises the result with a deterministic row order (arranged by
+#' `asset_id`). The returned tibble carries class `entropia_dataset` and an
+#' `entropia_prov` attribute recording everything needed to reconstruct the
+#' dataset:
+#'
+#' - `name`: the human label passed to `name` (`NULL` for unnamed);
+#' - `schema_version`: the database schema head (e.g. `"0029_rag_chunks"`);
+#' - `content_hash`: the connection's schema content hash (see
+#'   [entropia_connect()]);
+#' - `source_path`: the database file the dataset was built from;
+#' - `filters`: the deparsed filter expressions captured from `...`;
+#' - `package_version`: the entropiaR version used;
+#' - `built_at`: the build timestamp (ISO-8601, UTC);
+#' - `r_version`: the R version used.
+#'
+#' Building the same dataset twice against an unchanged database yields
+#' byte-identical rows (deterministic ordering) and identical provenance apart
+#' from `built_at`. Read the stamp with [entropia_provenance()] and persist it
+#' as a JSON sidecar with [entropia_write_provenance()].
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @param ... Filter expressions applied to the corpus, e.g.
+#'   `asset_type == "image"`. Column names resolve against the lazy corpus
+#'   (see [entropia_corpus()] for the full column set). Must be unnamed.
+#' @param name Optional human-readable label stored in the provenance.
+#' @return A [tibble::tibble()] of class `entropia_dataset`, one row per asset,
+#'   with the `entropia_prov` attribute.
+#' @export
+entropia_analysis_dataset <- function(con, ..., name = NULL) {
+  ent_require_conn(con)
+  name <- ent_validate_dataset_name(name)
+  filters <- rlang::enquos(...)
+  if (any(rlang::names2(filters) != "")) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg ...} filter expressions must be unnamed (a name was provided)."
+    )
+  }
+
+  corpus <- entropia_corpus(con)
+  if (length(filters) > 0L) {
+    corpus <- dplyr::filter(corpus, !!!filters)
+  }
+  # Deterministic row order: arrange on the corpus's always-present asset_id so
+  # identical inputs yield identical datasets regardless of the physical row
+  # order SQLite happens to return. No sampling, no dependence on row order.
+  corpus <- dplyr::arrange(corpus, .data$asset_id)
+  data <- entropia_collect(corpus)
+
+  prov <- list(
+    name = name,
+    schema_version = ent_attr(con, "schema_version"),
+    content_hash = ent_attr(con, "content_hash"),
+    source_path = ent_attr(con, "path"),
+    filters = vapply(filters, rlang::as_label, character(1), USE.NAMES = FALSE),
+    package_version = as.character(utils::packageVersion("entropiaR")),
+    built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%OS3Z", tz = "UTC"),
+    r_version = R.version.string
+  )
+  attr(data, "entropia_prov") <- prov
+  class(data) <- c("entropia_dataset", class(data))
+  data
+}
+
+#' @export
+print.entropia_dataset <- function(x, ...) {
+  prov <- attr(x, "entropia_prov", exact = TRUE)
+  nm <- if (is.null(prov) || is.null(prov$name)) "<unnamed>" else prov$name
+  cat(sprintf("entropia_dataset: %s\n", nm))
+  if (!is.null(prov)) {
+    ver <- prov$schema_version
+    if (length(ver) != 1L || is.na(ver)) ver <- "unknown"
+    hash <- prov$content_hash
+    hash_short <- if (length(hash) != 1L || is.na(hash)) "n/a" else substr(hash, 1L, 12L)
+    cat(sprintf("  schema: %s  content: %s\n", ver, hash_short))
+    if (length(prov$filters) > 0L) {
+      cat("  filters: ", paste(prov$filters, collapse = "; "), "\n", sep = "")
+    }
+  }
+  nxt <- x
+  class(nxt) <- setdiff(class(x), "entropia_dataset")
+  print(nxt, ...)
+  invisible(x)
+}
+
+#' @exportS3Method pillar::glimpse
+glimpse.entropia_dataset <- function(x, ...) {
+  prov <- attr(x, "entropia_prov", exact = TRUE)
+  nm <- if (is.null(prov) || is.null(prov$name)) "<unnamed>" else prov$name
+  cat(sprintf("entropia_dataset: %s\n", nm))
+  nxt <- x
+  class(nxt) <- setdiff(class(x), "entropia_dataset")
+  dplyr::glimpse(nxt, ...)
+}
+
+#' @exportS3Method tibble::as_tibble
+as_tibble.entropia_dataset <- function(x, ...) {
+  attr(x, "entropia_prov") <- NULL
+  class(x) <- setdiff(class(x), "entropia_dataset")
+  tibble::as_tibble(x, ...)
+}
