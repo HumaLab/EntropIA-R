@@ -1,4 +1,4 @@
-# Analysis layer (Task 20): pure functions on collected tibbles.
+# Analysis layer (Tasks 20-21): pure functions on collected tibbles.
 #
 # These helpers operate on materialised tibbles (the output of
 # entropia_collect() or dplyr::collect()), never on lazy tables: temporal
@@ -208,4 +208,188 @@ entropia_document_lengths <- function(x, text_var = "text") {
   out$n_chars <- nchar(d)
   out$n_words <- vapply(d, ent_n_words, integer(1), USE.NAMES = FALSE)
   out
+}
+
+# --- Task 21: frequency + collection comparison ------------------------------
+
+# Require specific columns on an analysis tibble. The frequency helpers need a
+# fixed shape (entity_type/value, topic name); missing columns abort with the
+# package's error class and an actionable list of what is actually present.
+ent_require_analysis_cols <- function(x, cols, fn) {
+  missing <- setdiff(cols, names(x))
+  if (length(missing) > 0L) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      c(
+        paste0(
+          "{.fn {fn}} requires {length(cols)} column{?s} on {.arg x}: ",
+          "{.val {cols}}."
+        ),
+        i = "Missing here: {.val {missing}}.",
+        i = "Columns available: {.val {names(x)}}."
+      )
+    )
+  }
+  invisible(x)
+}
+
+#' Entity frequency (top entities by type)
+#'
+#' Counts entity occurrences from a collected entities tibble: for every
+#' distinct `entity_type` x `value` pair, the number of rows carrying it. The
+#' result is ordered by `entity_type` then descending count, so the top
+#' entities of each type read off the top of each block. Pass the collected
+#' output of [entropia_entities()] directly, or join it to `items` and
+#' `collections` first and pass `by` to break the counts down further (e.g. by
+#' `collection_name`). Soft-deleted rows are whatever the input carries -- use
+#' `include_deleted = TRUE` on [entropia_entities()] to count them.
+#'
+#' @param x A data frame or tibble of collected entity rows, carrying
+#'   `entity_type` and `value` columns.
+#' @param by Optional column(s) to break the counts by, selected by name or
+#'   bare (tidyselect). `NULL` (default) produces one row per
+#'   `entity_type` x `value`.
+#' @return A tibble with the `by` columns (when given), `entity_type`, `value`
+#'   and `n` (row count), ordered by `entity_type` then `n` descending then
+#'   `value`.
+#' @export
+entropia_entity_frequency <- function(x, by = NULL) {
+  x <- ent_require_tibble(x)
+  ent_require_analysis_cols(x, c("entity_type", "value"), "entropia_entity_frequency")
+  by_cols <- ent_select_cols(x, rlang::enquo(by), "by")
+  if ("n" %in% by_cols) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      paste0(
+        "{.code n} is reserved for the count column; rename the column ",
+        "selected by {.arg by}."
+      )
+    )
+  }
+  groups <- c(by_cols, "entity_type", "value")
+  out <- dplyr::summarise(
+    dplyr::group_by(x, dplyr::across(dplyr::all_of(groups))),
+    n = dplyr::n(),
+    .groups = "drop"
+  )
+  dplyr::arrange(
+    out,
+    !!!rlang::syms(by_cols),
+    .data$entity_type,
+    dplyr::desc(.data$n),
+    .data$value
+  )
+}
+
+#' Topic frequency (items per topic)
+#'
+#' Counts rows per topic from a collected tibble carrying a topic `name`
+#' column. The natural input is `item_topics` joined to `topics` (e.g.
+#' `dplyr::left_join(entropia_collect(entropia_item_topics(con)),
+#' entropia_collect(entropia_topics(con)), by = c("topic_id" = "id"))`).
+#' Because `item_topics` has a `UNIQUE(item_id, topic_id)` constraint, counting
+#' rows per topic counts items per topic. The result is ordered by descending
+#' count then topic name (deterministic).
+#'
+#' @param x A data frame or tibble with a `name` column holding topic names.
+#' @param by Optional column(s) to break the counts by, selected by name or
+#'   bare (tidyselect). `NULL` (default) produces one row per topic.
+#' @return A tibble with the `by` columns (when given), `name` and `n` (item
+#'   count), ordered by `n` descending then `name`.
+#' @export
+entropia_topic_frequency <- function(x, by = NULL) {
+  x <- ent_require_tibble(x)
+  ent_require_analysis_cols(x, "name", "entropia_topic_frequency")
+  by_cols <- ent_select_cols(x, rlang::enquo(by), "by")
+  if ("n" %in% by_cols) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      paste0(
+        "{.code n} is reserved for the count column; rename the column ",
+        "selected by {.arg by}."
+      )
+    )
+  }
+  groups <- c(by_cols, "name")
+  out <- dplyr::summarise(
+    dplyr::group_by(x, dplyr::across(dplyr::all_of(groups))),
+    n = dplyr::n(),
+    .groups = "drop"
+  )
+  dplyr::arrange(out, !!!rlang::syms(by_cols), dplyr::desc(.data$n), .data$name)
+}
+
+#' Compare collections (per-collection summary)
+#'
+#' Summarises a collected tibble one row per collection. The natural input is
+#' the collected corpus (`dplyr::collect(entropia_corpus(con))`), which carries
+#' `collection_name`, `item_id` and `asset_id`; pass `by` to group by a
+#' different collection column (e.g. `collection_id`).
+#'
+#' Each row reports `n` (rows of `x` in that collection) plus `n_items` and
+#' `n_assets` (distinct `item_id` / `asset_id` values, `NA` excluded) when the
+#' input carries those columns. On the collected corpus `n` equals the number
+#' of assets in the collection. Rows are ordered by the collection column
+#' (deterministic).
+#'
+#' @param x A data frame or tibble with a collection column.
+#' @param by The collection column, selected by name or bare (tidyselect).
+#'   Default `"collection_name"`.
+#' @return A tibble with the `by` column, `n_items`/`n_assets` (when `x` carries
+#'   those id columns) and `n`, ordered by the collection column.
+#' @export
+entropia_compare_collections <- function(x, by = "collection_name") {
+  x <- ent_require_tibble(x)
+  by_col <- ent_select_cols(x, rlang::enquo(by), "by", exactly = 1L)
+  if (identical(by_col, "n")) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      paste0(
+        "{.code n} is reserved for the row-count column; rename the column ",
+        "selected by {.arg by}."
+      )
+    )
+  }
+  has_item <- "item_id" %in% names(x)
+  has_asset <- "asset_id" %in% names(x)
+  if (has_item && "n_items" %in% names(x)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      c(
+        paste0(
+          "{.arg x} already has a {.code n_items} column, which ",
+          "{.fn entropia_compare_collections} creates from {.code item_id}."
+        ),
+        i = "Drop or rename it before calling {.fn entropia_compare_collections}."
+      )
+    )
+  }
+  if (has_asset && "n_assets" %in% names(x)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      c(
+        paste0(
+          "{.arg x} already has a {.code n_assets} column, which ",
+          "{.fn entropia_compare_collections} creates from {.code asset_id}."
+        ),
+        i = "Drop or rename it before calling {.fn entropia_compare_collections}."
+      )
+    )
+  }
+
+  sum_exprs <- list()
+  if (has_item) {
+    sum_exprs[["n_items"]] <- rlang::expr(dplyr::n_distinct(.data$item_id, na.rm = TRUE))
+  }
+  if (has_asset) {
+    sum_exprs[["n_assets"]] <- rlang::expr(dplyr::n_distinct(.data$asset_id, na.rm = TRUE))
+  }
+  sum_exprs[["n"]] <- rlang::expr(dplyr::n())
+
+  out <- dplyr::summarise(
+    dplyr::group_by(x, dplyr::across(dplyr::all_of(by_col))),
+    !!!sum_exprs,
+    .groups = "drop"
+  )
+  dplyr::arrange(out, !!!rlang::syms(by_col))
 }
