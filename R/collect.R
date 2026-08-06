@@ -54,6 +54,85 @@ ent_datetime_auto <- function(x) {
   as.POSIXct(x, origin = "1970-01-01", tz = "UTC")
 }
 
+# Parse ISO-8601 timestamp strings (e.g. "2026-01-15T12:05:00Z") to POSIXct
+# (UTC). Base-R equivalent of lubridate::as_datetime; used for ISO-8601
+# strings embedded in JSON columns such as
+# items.metadata.__entropia_file_metadata.importedAt.
+ent_datetime_iso <- function(x) {
+  as.POSIXct(x, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")
+}
+
+# Validate that `x` is a timestamp-like vector the datetime helpers can
+# convert: numeric, integer64 (as RSQLite returns for large integers), POSIXct
+# (passed through unchanged by the internal converters), or an all-numeric
+# character vector.
+ent_validate_dt_input <- function(x) {
+  ok <- is.numeric(x) || inherits(x, "integer64") || inherits(x, "POSIXct")
+  if (!ok && is.character(x)) {
+    ok <- !anyNA(suppressWarnings(as.numeric(x)))
+  }
+  if (!ok) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      c(
+        "{.arg x} must be a numeric vector of epoch timestamps.",
+        i = "Received {.cls {class(x)}}."
+      )
+    )
+  }
+  invisible(x)
+}
+
+#' Convert epoch-millisecond timestamps to `POSIXct`
+#'
+#' Pure helper converting epoch-millisecond timestamps (13-digit integers, as
+#' stored in `created_at`/`updated_at` on most EntropIA tables) to `POSIXct`
+#' in the UTC timezone. Handles `integer64` vectors as returned by RSQLite.
+#'
+#' @param x A numeric (or `integer64`) vector of epoch-millisecond timestamps.
+#' @return A `POSIXct` vector (UTC).
+#' @examples
+#' entropia_datetime(1768478460000)
+#' @export
+entropia_datetime <- function(x) {
+  ent_validate_dt_input(x)
+  ent_datetime_ms(x)
+}
+
+#' Convert epoch-second timestamps to `POSIXct`
+#'
+#' Pure helper converting epoch-second timestamps (10-digit integers, as used
+#' by `_migrations.applied_at`) to `POSIXct` in the UTC timezone.
+#'
+#' @param x A numeric (or `integer64`) vector of epoch-second timestamps.
+#' @return A `POSIXct` vector (UTC).
+#' @examples
+#' entropia_datetime_s(1768478400)
+#' @export
+entropia_datetime_s <- function(x) {
+  ent_validate_dt_input(x)
+  ent_datetime_s(x)
+}
+
+#' Convert timestamps to `POSIXct` with a magnitude guard
+#'
+#' Pure helper for columns whose unit is not guaranteed (currently
+#' `entities.created_at` and `triples.created_at`, whose DDL default is epoch
+#' seconds but which the app writes in milliseconds). Values below `1e12` are
+#' treated as epoch seconds, everything else as epoch milliseconds -- the same
+#' guard EntropIA migration 0019 used.
+#'
+#' @param x A numeric (or `integer64`) vector of timestamps.
+#' @return A `POSIXct` vector (UTC).
+#' @examples
+#' entropia_datetime_auto(1768478400)    # seconds
+#' entropia_datetime_auto(1768478400000) # milliseconds
+#' @export
+entropia_datetime_auto <- function(x) {
+  ent_validate_dt_input(x)
+  ent_datetime_auto(x)
+}
+
 # Parse a JSON-in-TEXT column into a list-column. Each cell becomes one element
 # (data.frame for arrays of objects, named list for objects, vector for simple
 # arrays/scalars). Malformed JSON warns and yields NA rather than failing the

@@ -611,12 +611,12 @@ starts. Parallelizable groups noted per phase.
 - **Acceptance:** `entropia_chunks(con)` on real DB returns 1648 rows on collect with no BLOB column by default. (Verified 2026-08-06 on the 29 MB reference DB via a `VACUUM INTO` copy: `entropia_chunks()` → 1648 rows, no `embedding` column by default; `llm_results` 147 rows with `target_type`; `rag_messages` 102 rows; `embeddings` 270 rows, no BLOB by default.)
 
 ### Task 13: entropia_collect + datetime/JSON/BLOB typing
-- [ ] implement `entropia_collect()` applying the column contract: datetime cols → POSIXct (ms / `datetime_auto` guard), JSON TEXT → list-columns via jsonlite, BLOB → raw passthrough
-- [ ] implement `entropia_datetime()`, `entropia_datetime_s()`, `entropia_datetime_auto()` helpers
-- [ ] write tests: ms→POSIXct, seconds→POSIXct, auto-guard on both magnitudes, ISO-8601 inside metadata parsed to POSIXct
-- [ ] write tests: JSON parse shapes (metadata object, segments array, sources array, result text) incl. malformed JSON → warning + NA
-- [ ] run tests — must pass before Task 14
-- **Acceptance:** `entropia_collect(entropia_items(con))` yields `created_at` as POSIXct with correct dates on both ms and seconds fixtures.
+- [x] implement `entropia_collect()` applying the column contract: datetime cols → POSIXct (ms / `datetime_auto` guard), JSON TEXT → list-columns via jsonlite, BLOB → raw passthrough (carried from Task 10's `R/collect.R`; `ent_infer_base_table` resolves the base table for raw accessors and single-table derived queries, `ent_apply_contract` applies the manifest contract, BLOB columns pass through as raw vectors)
+- [x] implement `entropia_datetime()`, `entropia_datetime_s()`, `entropia_datetime_auto()` helpers (exported pure wrappers in `R/collect.R` over the internal `ent_datetime_ms/s/auto`; shared `ent_validate_dt_input` accepts numeric/`integer64`/`POSIXct`/numeric-character and errors `entropia_error_invalid_argument`; internal `ent_datetime_iso()` added for ISO-8601 strings inside JSON, used by `entropia_metadata` in Task 16)
+- [x] write tests: ms→POSIXct, seconds→POSIXct, auto-guard on both magnitudes, ISO-8601 inside metadata parsed to POSIXct (`tests/testthat/test-collect.R`: exact POSIXct equality against fixture epoch 1768478400; integer64 passthrough; POSIXct idempotence + bad-input classes; `items.metadata.importedAt` "2026-01-15T12:05:00Z" → 12:05:00; fractional-seconds ISO)
+- [x] write tests: JSON parse shapes (metadata object, segments array, sources array, result text) incl. malformed JSON → warning + NA (metadata → named list with `__entropia_file_metadata`/`page_count`, segments/sources → data.frames, llm result → named list; malformed JSON warns "Malformed JSON" and yields NA without failing the collect; idempotence on already-parsed lists)
+- [x] run tests — must pass before Task 14 (full suite green, 0 fail; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes — env clock + unused Imports lifecycle/stringr/tidyselect reserved for later tasks; `bit64` added to Suggests for the integer64 test)
+- **Acceptance:** `entropia_collect(entropia_items(con))` yields `created_at` as POSIXct with correct dates on both ms and seconds fixtures. (Verified 2026-08-06 with R 4.5.2 on the fixtures: items `created_at` → 2026-01-15 12:01:00/12:03:00/12:05:00 UTC from ms; entities `datetime_auto` lands at 12:10:00/12:10:10/12:10:20 on BOTH `full` (ms) and `legacy-seconds` (seconds) fixtures, soft-deleted entity excluded.)
 
 ### Task 14: entropia_search (FTS5)
 - [ ] implement `entropia_search()` with `index = "items"` (rowid join to items) and `"chunks"` (chunk_id join), `limit`, injection-safe `dbQuoteString` + `MATCH`
