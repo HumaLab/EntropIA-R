@@ -88,11 +88,17 @@ entropia_write_provenance <- function(x, path) {
 
 # --- Task 24: entropia_export ------------------------------------------------
 
+# Is the arrow package available? Extracted behind a named internal so the
+# missing-dependency error path is testable (tests mock this seam).
+ent_arrow_available <- function() {
+  requireNamespace("arrow", quietly = TRUE)
+}
+
 # Require the arrow package (Suggests) for the parquet/arrow formats, with the
 # same clear, actionable missing-dependency error as ent_require_ggplot2() in
 # the plotting module.
 ent_require_arrow <- function() {
-  if (!requireNamespace("arrow", quietly = TRUE)) {
+  if (!ent_arrow_available()) {
     ent_abort(
       "entropia_error_missing_dependency",
       c(

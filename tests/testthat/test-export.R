@@ -222,6 +222,30 @@ test_that("parquet and arrow export round-trip (arrow present)", {
   })
 })
 
+test_that("parquet/arrow raise a clear missing-dependency error without arrow", {
+  # Simulate the arrow Suggests being absent by mocking the ent_arrow_available
+  # seam (requireNamespace is a base function with no package-namespace binding,
+  # so it cannot be mocked directly). The other formats must be unaffected.
+  local_mocked_bindings(ent_arrow_available = function() FALSE,
+                        .package = "entropiaR")
+  df <- tibble::tibble(a = 1:2)
+  for (fmt in c("parquet", "arrow")) {
+    expect_error(
+      entropia_export(df, tempfile(fileext = ".parquet"), fmt),
+      class = "entropia_error_missing_dependency"
+    )
+    expect_error(
+      entropia_export(df, tempfile(fileext = ".parquet"), fmt),
+      "arrow",
+      class = "entropia_error_missing_dependency"
+    )
+  }
+  # the always-available formats still work with the mock active
+  p <- tempfile(fileext = ".csv")
+  entropia_export(df, p, "csv")
+  expect_equal(nrow(utils::read.csv(p, check.names = FALSE)), 2L)
+})
+
 # --- validation ----------------------------------------------------------------
 
 test_that("export validates format, path, x and chunk_size", {
