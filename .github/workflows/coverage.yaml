@@ -11,6 +11,12 @@ name: coverage
 
 permissions: read-all
 
+# Cancel a superseded run (e.g. a newer push to the same ref) so its minutes
+# are not wasted completing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-coverage:
     runs-on: ubuntu-latest

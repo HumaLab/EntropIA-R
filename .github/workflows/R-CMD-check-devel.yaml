@@ -1,20 +1,20 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# R-devel matrix, run off the push critical path.
+#
+# R-devel on macOS/Ubuntu takes 30-40 min per job, which dominates CI minutes.
+# devel is checked here on a schedule (2x/week, after CRAN's daily devel
+# snapshot) and on demand via workflow_dispatch, instead of gating every push.
+# release/oldrel still run on every push in R-CMD-check.yaml.
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+  schedule:
+    - cron: '17 5 * * 3,0'
   workflow_dispatch:
 
-name: R-CMD-check
+name: R-CMD-check-devel
 
 permissions: read-all
 
-# Cancel a superseded run (e.g. a newer push to the same ref) so its minutes
-# are not wasted completing.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
@@ -27,15 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # 3 OS x release + oldrel gate every push. devel runs on all 3 OS in
-          # R-CMD-check-devel.yaml on a schedule + workflow_dispatch, keeping
-          # the per-push footprint small (devel on macOS/Ubuntu is 30-40 min/job).
-          - {os: ubuntu-latest,  r: release}
-          - {os: windows-latest, r: release}
-          - {os: macos-latest,   r: release}
-          - {os: ubuntu-latest,  r: oldrel-1, http-user-agent: 'release'}
-          - {os: windows-latest, r: oldrel-1, http-user-agent: 'release'}
-          - {os: macos-latest,   r: oldrel-1, http-user-agent: 'release'}
+          - {os: ubuntu-latest,  r: devel, http-user-agent: 'release'}
+          - {os: windows-latest, r: devel, http-user-agent: 'release'}
+          - {os: macos-latest,   r: devel, http-user-agent: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
