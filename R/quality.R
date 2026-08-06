@@ -339,3 +339,173 @@ entropia_corpus_quality <- function(con) {
   class(rows) <- c("entropia_corpus_quality", class(rows))
   rows
 }
+
+# --- Orphaned references ----------------------------------------------------
+
+# One conceptual-FK orphan check. `table` holds its own PK in `id` and the FK
+# in `fk`, which must reference `ref_table`'s `id`. Rows whose fk is NULL are
+# skipped: NULL is the documented "item-level" value for the optional asset_id
+# columns, and the required FKs are NOT NULL in the schema, so a NULL never
+# indicates a broken reference. The check is a single SQL anti-join pushed down
+# to SQLite; only the (usually empty) orphan rows are collected. Returns NULL
+# when the tables/columns are absent (schema degrades gracefully) or nothing is
+# broken.
+ent_orphan_check <- function(con, table, fk, ref_table, kind) {
+  if (!ent_has_columns(con, table, c("id", fk))) return(NULL)
+  if (!DBI::dbExistsTable(con, ref_table)) return(NULL)
+  child <- dplyr::select(
+    dplyr::tbl(con, table),
+    id = "id", fk = dplyr::all_of(fk)
+  )
+  parent <- dplyr::select(dplyr::tbl(con, ref_table), pk = "id")
+  bad <- dplyr::collect(
+    dplyr::anti_join(child, parent, by = c("fk" = "pk")) |>
+      dplyr::filter(!is.na(.data$fk))
+  )
+  if (nrow(bad) == 0L) return(NULL)
+  data.frame(
+    kind = kind,
+    table = table,
+    id = as.character(bad$id),
+    column = fk,
+    ref_table = ref_table,
+    message = sprintf(
+      "%s %s references %s via %s = %s, which does not exist.",
+      table, bad$id, ref_table, fk, bad$fk
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+# llm_results.target_id points at whichever table target_type names; the three
+# known types resolve to the core tables. Rows whose target_type is NULL or
+# outside the enum (e.g. the protocol's "unknown") have no determinable target
+# and are not checkable, so they are skipped (documented).
+ent_orphan_llm <- function(con) {
+  if (!ent_has_columns(con, "llm_results", c("id", "target_id", "target_type"))) {
+    return(NULL)
+  }
+  refs <- data.frame(
+    type = c("asset", "item", "collection"),
+    ref_table = c("assets", "items", "collections"),
+    stringsAsFactors = FALSE
+  )
+  out <- list()
+  for (i in seq_len(nrow(refs))) {
+    ref <- refs$ref_table[i]
+    if (!DBI::dbExistsTable(con, ref)) next
+    tp <- refs$type[i] # hoisted: a scalar, so dbplyr escapes it as a literal
+    child <- dplyr::tbl(con, "llm_results") |>
+      dplyr::filter(.data$target_type == tp) |>
+      dplyr::select(id = "id", fk = "target_id")
+    parent <- dplyr::select(dplyr::tbl(con, ref), pk = "id")
+    bad <- dplyr::collect(dplyr::anti_join(child, parent, by = c("fk" = "pk")))
+    if (nrow(bad) > 0L) {
+      out[[length(out) + 1L]] <- data.frame(
+        kind = "llm_target",
+        table = "llm_results",
+        id = as.character(bad$id),
+        column = "target_id",
+        ref_table = ref,
+        message = sprintf(
+          paste0(
+            "llm_results %s (target_type = %s) references %s ",
+            "via target_id = %s, which does not exist."
+          ),
+          bad$id, tp, ref, bad$fk
+        ),
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  if (length(out) == 0L) NULL else do.call(rbind, out)
+}
+
+#' Detect orphaned rows (broken conceptual foreign keys)
+#'
+#' EntropIA declares most relationships only conceptually (many have no
+#' physical foreign-key constraint), so a row can silently point at a parent
+#' that does not exist. `entropia_orphans()` scans every conceptual foreign key
+#' in the schema and reports one row per broken reference:
+#'
+#' - `items.collection_id` -> `collections.id`
+#' - `assets.item_id` -> `items.id` and `assets.parent_asset_id` -> `assets.id`
+#' - `extractions`/`transcriptions`/`layouts`.`asset_id` -> `assets.id`
+#' - `entities.item_id` -> `items.id` (and `asset_id` -> `assets.id` when set)
+#' - `triples.item_id` -> `items.id` (and `asset_id` -> `assets.id` when set)
+#' - `notes.item_id` -> `items.id` (and `asset_id` -> `assets.id` when set)
+#' - `annotations.asset_id` -> `assets.id`
+#' - `llm_results.target_id` -> the table named by `target_type`
+#'   (`asset`/`item`/`collection`; `unknown` and NULL targets are not checkable)
+#' - `rag_messages.conversation_id` -> `rag_conversations.id`
+#' - `rag_chunks.item_id`/`asset_id` -> `items.id`/`assets.id`
+#' - `item_topics.item_id`/`topic_id` -> `items.id`/`topics.id`
+#'
+#' NULL foreign keys are never reported: they are the documented "item-level"
+#' value for the optional `asset_id` columns, and the required FKs are `NOT
+#' NULL` in the schema. Tables absent from the database are skipped, so minimal
+#' and legacy schemas degrade gracefully. The result is materialised (it is a
+#' small diagnostic, like [entropia_validate()] findings) and carries the
+#' `entropia_orphans` class.
+#'
+#' @param con A connection returned by [entropia_connect()].
+#' @return A tibble of class `entropia_orphans` with columns `kind`, `table`,
+#'   `id`, `column`, `ref_table` and `message`, ordered by `kind` then `id`.
+#' @export
+entropia_orphans <- function(con) {
+  ent_require_conn(con)
+  checks <- list(
+    ent_orphan_check(con, "items", "collection_id", "collections", "item_collection"),
+    ent_orphan_check(con, "assets", "item_id", "items", "asset_item"),
+    ent_orphan_check(con, "assets", "parent_asset_id", "assets", "asset_parent"),
+    ent_orphan_check(con, "extractions", "asset_id", "assets", "extraction_asset"),
+    ent_orphan_check(con, "transcriptions", "asset_id", "assets", "transcription_asset"),
+    ent_orphan_check(con, "layouts", "asset_id", "assets", "layout_asset"),
+    ent_orphan_check(con, "entities", "item_id", "items", "entity_item"),
+    ent_orphan_check(con, "entities", "asset_id", "assets", "entity_asset"),
+    ent_orphan_check(con, "triples", "item_id", "items", "triple_item"),
+    ent_orphan_check(con, "triples", "asset_id", "assets", "triple_asset"),
+    ent_orphan_check(con, "notes", "item_id", "items", "note_item"),
+    ent_orphan_check(con, "notes", "asset_id", "assets", "note_asset"),
+    ent_orphan_check(con, "annotations", "asset_id", "assets", "annotation_asset"),
+    ent_orphan_check(
+      con, "rag_messages", "conversation_id", "rag_conversations",
+      "message_conversation"
+    ),
+    ent_orphan_check(con, "rag_chunks", "item_id", "items", "chunk_item"),
+    ent_orphan_check(con, "rag_chunks", "asset_id", "assets", "chunk_asset"),
+    ent_orphan_check(con, "item_topics", "item_id", "items", "item_topic_item"),
+    ent_orphan_check(con, "item_topics", "topic_id", "topics", "item_topic_topic"),
+    ent_orphan_llm(con)
+  )
+  checks <- Filter(Negate(is.null), checks)
+  if (length(checks) == 0L) {
+    out <- data.frame(
+      kind = character(), table = character(), id = character(),
+      column = character(), ref_table = character(), message = character(),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    out <- do.call(rbind, checks)
+  }
+  out <- out[order(out$kind, out$table, out$id), , drop = FALSE]
+  rownames(out) <- NULL
+  out <- tibble::as_tibble(out)
+  class(out) <- c("entropia_orphans", class(out))
+  out
+}
+
+#' @export
+print.entropia_orphans <- function(x, ...) {
+  if (nrow(x) == 0L) {
+    cli::cli_inform("No orphaned rows detected.")
+    return(invisible(x))
+  }
+  kinds <- unique(x$kind)
+  cat(sprintf("Found %d orphaned row(s):\n", nrow(x)))
+  for (k in kinds) {
+    cat(sprintf("  %-22s %d\n", k, sum(x$kind == k)))
+  }
+  cat("\n")
+  NextMethod("print")
+}
