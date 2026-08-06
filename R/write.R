@@ -50,6 +50,13 @@ ent_write_disabled <- function(verb) {
 #' @param data Data to insert (data frame/tibble).
 #' @param dry_run Logical. In v2, validate without writing when `TRUE` (default).
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' err <- tryCatch(entropia_insert(con, "items", data.frame(id = "x")), error = identity)
+#' class(err)          # "entropia_error_write_disabled"
+#' conditionMessage(err)
+#' entropia_disconnect(con)
 #' @export
 entropia_insert <- function(con, table, data, dry_run = TRUE) {
   ent_write_disabled("entropia_insert")
@@ -71,6 +78,14 @@ entropia_insert <- function(con, table, data, dry_run = TRUE) {
 #' @param by Column name(s) identifying the rows to update (required in v2).
 #' @param dry_run Logical. In v2, validate without writing when `TRUE` (default).
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' err <- tryCatch(entropia_update(con, "items", data.frame(id = "x"), by = "id"),
+#'   error = identity)
+#' class(err)          # "entropia_error_write_disabled"
+#' conditionMessage(err)
+#' entropia_disconnect(con)
 #' @export
 entropia_update <- function(con, table, data, by, dry_run = TRUE) {
   ent_write_disabled("entropia_update")
@@ -93,6 +108,14 @@ entropia_update <- function(con, table, data, by, dry_run = TRUE) {
 #' @param by Column name(s) identifying the conflict key (required in v2).
 #' @param dry_run Logical. In v2, validate without writing when `TRUE` (default).
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' err <- tryCatch(entropia_upsert(con, "items", data.frame(id = "x"), by = "id"),
+#'   error = identity)
+#' class(err)          # "entropia_error_write_disabled"
+#' conditionMessage(err)
+#' entropia_disconnect(con)
 #' @export
 entropia_upsert <- function(con, table, data, by, dry_run = TRUE) {
   ent_write_disabled("entropia_upsert")
@@ -117,6 +140,14 @@ entropia_upsert <- function(con, table, data, by, dry_run = TRUE) {
 #'   `FALSE`).
 #' @param confirm Logical. In v2, must be `TRUE` for a delete to run.
 #' @return Never returns: aborts with `entropia_error_write_disabled`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' err <- tryCatch(entropia_delete(con, "items", id == "x", confirm = TRUE),
+#'   error = identity)
+#' class(err)          # "entropia_error_write_disabled"
+#' conditionMessage(err)
+#' entropia_disconnect(con)
 #' @export
 entropia_delete <- function(con, table, filter, all = FALSE, confirm = FALSE) {
   ent_write_disabled("entropia_delete")

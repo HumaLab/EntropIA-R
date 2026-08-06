@@ -19,3 +19,9 @@ for every readable table (descending), sync freshness from \code{sync_meta}, and
 WAL state (journal mode + sidecar files). Unlike \code{\link[=entropia_validate]{entropia_validate()}},
 \code{status()} never reports findings -- it describes the database.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_status(con)
+entropia_disconnect(con)
+}

@@ -82,6 +82,11 @@ ent_findings_tibble <- function(findings) {
 #' @param con A connection returned by [entropia_connect()].
 #' @return A tibble of findings with columns `severity`, `kind`, `table`,
 #'   `column` and `message`, plus `row_counts` and `schema_version` attributes.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_validate(con) # zero findings on the example database
+#' entropia_disconnect(con)
 #' @export
 entropia_validate <- function(con) {
   ent_require_conn(con)
@@ -256,6 +261,11 @@ ent_status_wal <- function(con, path) {
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `entropia_status` list with elements `path`, `mode`,
 #'   `schema_version`, `row_counts`, `sync`, `wal` and `valid`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_status(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_status <- function(con) {
   ent_require_conn(con)

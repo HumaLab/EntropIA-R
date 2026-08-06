@@ -20,6 +20,12 @@
 #' @param x An object carrying a provenance stamp, e.g. the output of
 #'   [entropia_analysis_dataset()].
 #' @return A list of class `entropia_provenance`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' ds <- entropia_analysis_dataset(con, asset_type == "image")
+#' entropia_provenance(ds)
+#' entropia_disconnect(con)
 #' @export
 entropia_provenance <- function(x) {
   prov <- attr(x, "entropia_prov", exact = TRUE)
@@ -69,6 +75,14 @@ print.entropia_provenance <- function(x, ...) {
 #' @param x An object carrying a provenance stamp (see [entropia_provenance()]).
 #' @param path Destination file path. Must be a single path.
 #' @return The normalized `path`, invisibly.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' ds <- entropia_analysis_dataset(con, asset_type == "image")
+#' path <- tempfile(fileext = ".json")
+#' entropia_write_provenance(ds, path)
+#' readLines(path)
+#' entropia_disconnect(con)
 #' @export
 entropia_write_provenance <- function(x, path) {
   if (!is.character(path) || length(path) != 1L || is.na(path)) {

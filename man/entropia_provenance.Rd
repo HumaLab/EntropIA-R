@@ -21,3 +21,10 @@ captured \code{filters}, the \code{package_version}, the \code{built_at} timesta
 \code{r_version}. Aborts with \code{entropia_error_invalid_argument} when \code{x} carries
 no provenance stamp.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+ds <- entropia_analysis_dataset(con, asset_type == "image")
+entropia_provenance(ds)
+entropia_disconnect(con)
+}

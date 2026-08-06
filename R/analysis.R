@@ -99,6 +99,12 @@ ent_floor_date <- function(d, unit) {
 #'   bare (tidyselect). `NULL` (default) produces a single time series.
 #' @return A tibble with the bucket column, the `by` columns (when given), and
 #'   a count column `n`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' items <- entropia_collect(entropia_items(con))
+#' entropia_temporal_profile(items, created_at, unit = "month")
+#' entropia_disconnect(con)
 #' @export
 entropia_temporal_profile <- function(x, date_var, unit = "month", by = NULL) {
   x <- ent_require_tibble(x)
@@ -176,6 +182,12 @@ ent_n_words <- function(z) {
 #'   (tidyselect). Default `"text"`.
 #' @return `x` with two appended columns: `n_chars` (characters) and `n_words`
 #'   (whitespace-separated tokens).
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' text_layer <- entropia_collect(entropia_text(con))
+#' entropia_document_lengths(text_layer)
+#' entropia_disconnect(con)
 #' @export
 entropia_document_lengths <- function(x, text_var = "text") {
   x <- ent_require_tibble(x)
@@ -252,6 +264,12 @@ ent_require_analysis_cols <- function(x, cols, fn) {
 #' @return A tibble with the `by` columns (when given), `entity_type`, `value`
 #'   and `n` (row count), ordered by `entity_type` then `n` descending then
 #'   `value`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entities <- entropia_collect(entropia_entities(con))
+#' entropia_entity_frequency(entities)
+#' entropia_disconnect(con)
 #' @export
 entropia_entity_frequency <- function(x, by = NULL) {
   x <- ent_require_tibble(x)
@@ -296,6 +314,14 @@ entropia_entity_frequency <- function(x, by = NULL) {
 #'   bare (tidyselect). `NULL` (default) produces one row per topic.
 #' @return A tibble with the `by` columns (when given), `name` and `n` (item
 #'   count), ordered by `n` descending then `name`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' item_topics <- entropia_collect(entropia_item_topics(con))
+#' topics <- entropia_collect(entropia_topics(con))
+#' joined <- dplyr::left_join(item_topics, topics, by = c("topic_id" = "id"))
+#' entropia_topic_frequency(joined)
+#' entropia_disconnect(con)
 #' @export
 entropia_topic_frequency <- function(x, by = NULL) {
   x <- ent_require_tibble(x)
@@ -337,6 +363,12 @@ entropia_topic_frequency <- function(x, by = NULL) {
 #'   Default `"collection_name"`.
 #' @return A tibble with the `by` column, `n_items`/`n_assets` (when `x` carries
 #'   those id columns) and `n`, ordered by the collection column.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' corpus <- entropia_collect(entropia_corpus(con))
+#' entropia_compare_collections(corpus)
+#' entropia_disconnect(con)
 #' @export
 entropia_compare_collections <- function(x, by = "collection_name") {
   x <- ent_require_tibble(x)
@@ -440,6 +472,12 @@ ent_validate_dataset_name <- function(name) {
 #' @param name Optional human-readable label stored in the provenance.
 #' @return A [tibble::tibble()] of class `entropia_dataset`, one row per asset,
 #'   with the `entropia_prov` attribute.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' ds <- entropia_analysis_dataset(con, asset_type == "pdf", name = "PDF corpus")
+#' entropia_provenance(ds)
+#' entropia_disconnect(con)
 #' @export
 entropia_analysis_dataset <- function(con, ..., name = NULL) {
   ent_require_conn(con)

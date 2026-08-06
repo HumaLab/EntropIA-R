@@ -16,3 +16,9 @@ A \code{tbl_sql} on \code{rag_conversations}.
 A lazy \code{\link[dplyr:tbl]{dplyr::tbl()}} over the \code{rag_conversations} table: one row per
 retrieval-augmented chat session.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_rag_conversations(con))
+entropia_disconnect(con)
+}

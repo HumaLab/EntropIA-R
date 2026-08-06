@@ -32,3 +32,9 @@ The required-column check uses the manifest contract: columns tagged
 version must exist in the live schema. Missing ones are listed in
 \code{required_missing} and make the database incompatible.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_schema_compat(con)
+entropia_disconnect(con)
+}

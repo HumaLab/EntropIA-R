@@ -20,3 +20,9 @@ audio transcription of one asset; \code{id} is deterministic
 \verb{\{start_ms, end_ms, text\}}); it stays raw until \code{\link[=entropia_collect]{entropia_collect()}}
 applies the column contract.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_transcriptions(con)) # segments -> list-column
+entropia_disconnect(con)
+}

@@ -20,3 +20,10 @@ databases the columns are simply absent. No BLOB column is ever selected:
 \code{assets} carries none, and the accessor never pulls one even if a future
 schema adds it.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_assets(con)
+entropia_collect(entropia_assets(con))
+entropia_disconnect(con)
+}

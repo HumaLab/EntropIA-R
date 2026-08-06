@@ -23,3 +23,10 @@ whitespace-only text yields 0 chars and 0 words. Words are
 whitespace-separated tokens (multiple spaces collapse; punctuation stays
 attached to its token).
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+text_layer <- entropia_collect(entropia_text(con))
+entropia_document_lengths(text_layer)
+entropia_disconnect(con)
+}

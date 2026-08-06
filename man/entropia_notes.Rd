@@ -17,3 +17,9 @@ A lazy \code{\link[dplyr:tbl]{dplyr::tbl()}} over the \code{notes} table. Notes 
 default; when \code{asset_id} is present (migration 0014) the note is scoped to
 a specific asset instead. \code{asset_id} is NULL for item-level notes.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_notes(con))
+entropia_disconnect(con)
+}

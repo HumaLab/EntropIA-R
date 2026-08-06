@@ -29,3 +29,9 @@ is not a simple single-table read (joins, subqueries) the columns are
 returned as SQLite produced them -- keep filters/selects inside the lazy
 query for best results.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_items(con)) # created_at -> POSIXct, metadata -> list-column
+entropia_disconnect(con)
+}

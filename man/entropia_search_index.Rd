@@ -19,3 +19,10 @@ selecting its columns directly reads \code{NULL}. To get searchable text, join t
 \code{\link[=entropia_items]{entropia_items()}} on rowid (\verb{items i ON i.rowid = fts_items.rowid}) or use
 \code{entropia_search()}.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+# Raw contentless table: columns read NULL; join to items on rowid for text.
+entropia_collect(entropia_search_index(con))
+entropia_disconnect(con)
+}

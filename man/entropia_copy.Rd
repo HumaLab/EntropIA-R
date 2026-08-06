@@ -21,3 +21,13 @@ SQLite itself it reads through any live \code{-wal}/\code{-shm} sidecars, so it 
 to run while EntropIA is holding the WAL. The destination must not already
 exist.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+dest <- tempfile(fileext = ".sqlite")
+entropia_copy(con, dest)
+copy_con <- entropia_connect(dest)
+entropia_status(copy_con)
+entropia_disconnect(copy_con)
+entropia_disconnect(con)
+}

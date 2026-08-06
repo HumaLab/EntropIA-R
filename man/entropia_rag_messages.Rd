@@ -19,3 +19,9 @@ order within a conversation. The \code{sources} column is JSON-in-TEXT (an array
 of \verb{\{chunk_id, text, score\}} citations on assistant messages), parsed by
 \code{\link[=entropia_collect]{entropia_collect()}} into a list-column.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_rag_messages(con)) # sources -> list-column
+entropia_disconnect(con)
+}

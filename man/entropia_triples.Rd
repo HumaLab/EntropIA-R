@@ -17,3 +17,9 @@ A lazy \code{\link[dplyr:tbl]{dplyr::tbl()}} over the \code{triples} table (subj
 extractions). \code{created_at} uses the magnitude-guarded \code{datetime_auto}
 contract; \code{asset_id} is NULL for item-level triples.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_triples(con))
+entropia_disconnect(con)
+}

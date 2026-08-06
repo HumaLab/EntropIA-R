@@ -23,3 +23,9 @@ With \code{by = "collection"} (default) each row is one collection with
 \code{by = "item"} each row is one item with its collection context and a
 \code{has_metadata} flag (0/1 integer). The result is lazy (\code{tbl_sql}).
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_metadata_coverage(con))
+entropia_disconnect(con)
+}

@@ -34,3 +34,9 @@ collection.
 is a small aggregate, like \code{\link[=entropia_validate]{entropia_validate()}} findings) and carries the
 \code{entropia_corpus_quality} class.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_corpus_quality(con)
+entropia_disconnect(con)
+}

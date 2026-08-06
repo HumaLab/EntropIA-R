@@ -167,6 +167,11 @@ ent_schema_gaps <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A single string, or `NA_character_`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_schema_version(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_schema_version <- function(con) {
   ent_require_conn(con)
@@ -187,6 +192,11 @@ entropia_schema_version <- function(con) {
 #' @param con A connection returned by [entropia_connect()].
 #' @return A tibble with columns `table`, `column`, `type`, `required`,
 #'   `contract`, `min_version` and `source`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_schema_info(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_schema_info <- function(con) {
   ent_require_conn(con)
@@ -270,6 +280,11 @@ ent_compat_status <- function(ver, head) {
 #' @return A list of class `entropia_schema_compat` with elements `status`,
 #'   `version`, `manifest_head`, `gaps` (the full expected-but-absent column
 #'   table), `required_missing`, `optional_missing` and `compatible`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_schema_compat(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_schema_compat <- function(con) {
   ent_require_conn(con)

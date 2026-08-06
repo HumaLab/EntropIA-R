@@ -20,3 +20,9 @@ enum: \code{lww_lost} (lost the last-writer-wins race), \code{parent_deleted},
 \code{blob_hash_mismatch}. \code{created_at} is epoch milliseconds; \code{loser_payload}
 and \code{winner_summary} are JSON text.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_conflicts(con))
+entropia_disconnect(con)
+}

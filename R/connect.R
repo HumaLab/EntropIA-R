@@ -45,6 +45,11 @@ NULL
 #'   never silenced).
 #'
 #' @return An `entropia_conn` object (S4, `SQLiteConnection` subclass).
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_status(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE) {
   if (!is.character(path) || length(path) != 1L || is.na(path)) {
@@ -176,6 +181,11 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
 #'
 #' @param con An `entropia_conn` (or any DBI connection).
 #' @return `con`, invisibly.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_disconnect(con)
+#' entropia_disconnect(con) # idempotent: safe on a closed connection
 #' @export
 entropia_disconnect <- function(con) {
   if (inherits(con, "DBIConnection") && DBI::dbIsValid(con)) {
@@ -195,6 +205,15 @@ entropia_disconnect <- function(con) {
 #' @param con An `entropia_conn` (or any DBI connection).
 #' @param dest Destination file path. Must not exist.
 #' @return The normalized `dest` path, invisibly.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' dest <- tempfile(fileext = ".sqlite")
+#' entropia_copy(con, dest)
+#' copy_con <- entropia_connect(dest)
+#' entropia_status(copy_con)
+#' entropia_disconnect(copy_con)
+#' entropia_disconnect(con)
 #' @export
 entropia_copy <- function(con, dest) {
   if (!is.character(dest) || length(dest) != 1L || is.na(dest)) {

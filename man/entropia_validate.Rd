@@ -33,3 +33,9 @@ or \code{entropia_error_column_missing}: structural gaps are findings, not error
 The one exception is an unreadable (corrupt) file, which yields a single
 \code{"unreadable"} finding of severity \code{"error"}.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_validate(con) # zero findings on the example database
+entropia_disconnect(con)
+}

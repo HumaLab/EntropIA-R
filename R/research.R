@@ -93,6 +93,12 @@ ent_require_search_tables <- function(con, index) {
 #' @return A `tbl_sql`. The `items` index returns item rows (via the
 #'   `fts_items.rowid = items.rowid` join) plus a `rank` column; the `chunks`
 #'   index returns `rag_chunks` rows plus `rank`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_search(con, "huelga"))
+#' entropia_collect(entropia_search(con, "huelga", index = "chunks", limit = 5))
+#' entropia_disconnect(con)
 #' @export
 entropia_search <- function(con, query, index = c("items", "chunks"), limit = NULL) {
   ent_require_conn(con)
@@ -155,6 +161,11 @@ ent_validate_conversation_id <- function(id) {
 #' @param con A connection returned by [entropia_connect()].
 #' @param id A single conversation id (a value of `rag_conversations.id`).
 #' @return A list of class `entropia_conversation`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_conversation(con, "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1")
+#' entropia_disconnect(con)
 #' @export
 entropia_conversation <- function(con, id) {
   ent_require_conn(con)
@@ -234,6 +245,11 @@ print.entropia_conversation <- function(x, ...) {
 #' @param min_confidence Unused in the current schema (triples carry no
 #'   confidence column); must be `NULL` (the default).
 #' @return A `tbl_sql`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_entity_relations(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_entity_relations <- function(con, min_confidence = NULL) {
   ent_require_conn(con)
@@ -309,6 +325,11 @@ ent_resolve_llm_target <- function(con, type, id) {
 #' @param job_type Optional character vector of job types to keep. `NULL` (the
 #'   default) keeps all.
 #' @return A tibble of class `entropia_reconstruction`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_reconstruct_analysis(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_reconstruct_analysis <- function(con, target = NULL, job_type = NULL) {
   ent_require_conn(con)

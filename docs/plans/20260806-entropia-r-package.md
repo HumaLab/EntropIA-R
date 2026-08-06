@@ -716,11 +716,12 @@ starts. Parallelizable groups noted per phase.
 ### Phase 6 — Docs & polish (after 16; tasks 26–28)
 
 ### Task 26: README + pkgdown + API reference
-- [ ] write README (10-line getting-started with real-DB example), NEWS.md initial entry, `_pkgdown.yml` with grouped reference index
-- [ ] roxygen2 docs + runnable examples on every exported function (in-memory fixture examples)
-- [ ] write tests: examples run in `R CMD check` (implicit); pkgdown builds locally
-- [ ] run tests — must pass before Task 27
+- [x] write README (10-line getting-started with real-DB example), NEWS.md initial entry, `_pkgdown.yml` with grouped reference index (README rewritten with a `Getting started` block using the packaged example DB; NEWS.md first entry written; `_pkgdown.yml` written with the 12-grouped reference index and `destination: pkgdown` so the site builds without clobbering `docs/plans/`; `.gitignore` gains `pkgdown/`)
+- [x] roxygen2 docs + runnable examples on every exported function (in-memory fixture examples) (new `data-raw/make_example_db.R` emits `inst/extdata/entropia-example.sqlite` — the full post-0029 schema, 3–5 rows/table, fake `*_api_key` app_settings rows stripped; every one of the 60 exported functions now carries a runnable `@examples` block that connects to `system.file("extdata/entropia-example.sqlite", package = "entropiaR")`; write stubs demonstrate their `entropia_error_write_disabled` class via `tryCatch`)
+- [x] write tests: examples run in `R CMD check` (implicit); pkgdown builds locally (verified via `devtools::check()` — `checking examples ... OK`; `pkgdown::build_site()` succeeds against RStudio-bundled pandoc via `RSTUDIO_PANDOC`; 0 errors / 0 warnings)
+- [x] run tests — must pass before Task 27 (full suite 1491 pass / 0 fail / 0 warn / 1 vdiffr skip; `devtools::check()` 0 errors / 0 warnings / 2 known baseline notes — env clock + unused Imports lifecycle/stringr reserved for Tasks 27–28)
 - **Acceptance:** `pkgdown::build_site()` succeeds; every exported fn documented with a runnable example.
+  - Verified 2026-08-06 with R 4.5.2: every one of the 60 exported functions has an Rd `\examples{}` section (grep over `man/`); `pkgdown::build_site()` builds the full site under `pkgdown/` (reference index grouped by the 10 API capabilities, 12 groups); `devtools::check()` runs all examples against the packaged example DB (`checking examples ... OK` in 16s) with the 2 known baseline notes only; the example DB round-trips through `entropia_connect`/`entropia_status`/`entropia_search`.
 
 ### Task 27: Vignettes (7)
 - [ ] write `connect.Rmd`, `corpus.Rmd`, `text.Rmd`, `dplyr.Rmd`, `datasets.Rmd`, `analysis.Rmd`, `administration.Rmd` per Documentation

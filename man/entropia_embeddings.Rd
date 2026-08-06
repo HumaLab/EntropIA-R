@@ -22,3 +22,10 @@ to select it. The embedding contract columns (\code{embedding_model},
 \code{embedding_contract}, \code{dimensions}) arrived with migration 0028 and are
 simply absent on older databases.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_embeddings(con)) # no embedding BLOB by default
+entropia_collect(entropia_embeddings(con, with_vector = TRUE))
+entropia_disconnect(con)
+}

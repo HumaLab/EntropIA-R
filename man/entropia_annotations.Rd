@@ -18,3 +18,9 @@ marks on a PDF page). \code{kind} is an enum (\code{rectangle}, \code{underline}
 \code{erase}, \code{rotation}); \code{page} is 1-based and \code{x}/\code{y}/\code{width}/\code{height} are
 coordinates in page units.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_annotations(con))
+entropia_disconnect(con)
+}

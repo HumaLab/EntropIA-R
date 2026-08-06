@@ -97,6 +97,11 @@ ent_sync_info_values <- function(con) {
 #'   `server_url`, `last_sync_at`, `server_epoch`, `triggers_version` and
 #'   `capture_enabled`. Keys absent from the database are `NA` of the correct
 #'   type.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_sync_info(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_sync_info <- function(con) {
   ent_require_conn(con)
@@ -113,6 +118,11 @@ entropia_sync_info <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `sync_row_versions`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_sync_versions(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_sync_versions <- function(con) {
   ent_require_conn(con)
@@ -131,6 +141,11 @@ entropia_sync_versions <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `sync_conflicts`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_conflicts(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_conflicts <- function(con) {
   ent_require_conn(con)

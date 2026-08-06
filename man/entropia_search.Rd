@@ -34,3 +34,10 @@ The \code{items} index is the contentless \code{fts_items} table, so the join to
 every declared column. The \code{chunks} index joins \code{rag_chunks_fts.chunk_id} to
 \code{rag_chunks.id}; the \code{embedding} BLOB is never selected (BLOB discipline).
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_search(con, "huelga"))
+entropia_collect(entropia_search(con, "huelga", index = "chunks", limit = 5))
+entropia_disconnect(con)
+}

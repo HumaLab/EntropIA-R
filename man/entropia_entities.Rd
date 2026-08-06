@@ -36,3 +36,11 @@ threshold.
 writes epoch milliseconds, the DDL default is seconds); \code{asset_id} is NULL
 for item-level entities.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_entities(con))        # soft-deleted rows excluded
+entropia_collect(entropia_entities(con, include_deleted = TRUE))
+entropia_collect(entropia_entities(con, min_confidence = 0.9))
+entropia_disconnect(con)
+}

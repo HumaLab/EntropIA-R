@@ -191,6 +191,11 @@ ent_apply_contract <- function(out, columns) {
 #' @param n Maximum number of rows to fetch, passed to [dplyr::collect()].
 #' @param ... Additional arguments passed to [dplyr::collect()].
 #' @return A [tibble::tibble()] with the column contract applied.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_items(con)) # created_at -> POSIXct, metadata -> list-column
+#' entropia_disconnect(con)
 #' @export
 entropia_collect <- function(x, n = Inf, ...) {
   if (!inherits(x, "tbl_sql")) {

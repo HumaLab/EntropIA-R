@@ -747,7 +747,6 @@ finish_db <- function(con) {
 
 build_mini <- function() {
   con <- new_db("mini.sqlite")
-  on.exit(dbDisconnect(con), add = TRUE)
   for (ddl in c(T_MIGRATIONS, T_COLLECTIONS, T_ITEMS, T_ASSETS_PRE0019, T_NOTES)) {
     dbExecute(con, ddl)
   }

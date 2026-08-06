@@ -18,3 +18,9 @@ analysis of one asset; \code{id} is deterministic (\code{lay-{asset_id}}) and
 \code{asset_id} is UNIQUE (1:1 with \code{\link[=entropia_assets]{entropia_assets()}}). \code{regions} and \code{blocks}
 are JSON-in-TEXT columns, parsed by \code{\link[=entropia_collect]{entropia_collect()}}.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_layouts(con))
+entropia_disconnect(con)
+}

@@ -16,3 +16,9 @@ A \code{tbl_sql} on \code{item_topics}.
 A lazy \code{\link[dplyr:tbl]{dplyr::tbl()}} over the \code{item_topics} join table, linking items to
 topics (one row per \verb{(item_id, topic_id)} pair, UNIQUE in the app schema).
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_item_topics(con))
+entropia_disconnect(con)
+}

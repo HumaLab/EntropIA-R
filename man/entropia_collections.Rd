@@ -18,3 +18,10 @@ access time: \code{\link[dplyr:filter]{dplyr::filter()}}, \code{\link[dplyr:sele
 friends are translated to SQL and run in SQLite when the result is
 collected.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collections(con) # lazy; nothing fetched until collected
+entropia_collect(entropia_collections(con))
+entropia_disconnect(con)
+}

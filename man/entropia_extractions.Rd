@@ -19,3 +19,9 @@ is UNIQUE, so the table joins 1:1 to \code{\link[=entropia_assets]{entropia_asse
 may embed PDF page markers (\verb{![](page=n,bbox=...)}) which the text layer
 (\code{entropia_text()}) can strip.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_extractions(con))
+entropia_disconnect(con)
+}

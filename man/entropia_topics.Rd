@@ -17,3 +17,9 @@ A lazy \code{\link[dplyr:tbl]{dplyr::tbl()}} over the \code{topics} table. Topic
 UPPERCASE by the app (UNIQUE constraint); the accessor returns them exactly
 as stored and never re-normalises.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_topics(con))
+entropia_disconnect(con)
+}

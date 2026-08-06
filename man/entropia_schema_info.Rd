@@ -23,3 +23,9 @@ surface). \code{min_version} is the migration that guarantees the column, and
 \code{required} marks columns whose absence is a compatibility failure once the
 database reaches that version.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_schema_info(con)
+entropia_disconnect(con)
+}

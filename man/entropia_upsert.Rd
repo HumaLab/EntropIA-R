@@ -31,3 +31,12 @@ In v2, \code{entropia_upsert()} implements upserts as
 \verb{INSERT ... ON CONFLICT(id) DO UPDATE} — never \verb{INSERT OR REPLACE}, whose
 rowid reassignment would break the contentless FTS5 tables.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+err <- tryCatch(entropia_upsert(con, "items", data.frame(id = "x"), by = "id"),
+  error = identity)
+class(err)          # "entropia_error_write_disabled"
+conditionMessage(err)
+entropia_disconnect(con)
+}

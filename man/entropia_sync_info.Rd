@@ -27,3 +27,9 @@ as an integer; \code{capture_enabled} as a logical.
 \code{app_settings} is never part of this surface: it stores API secrets
 (\verb{*_api_key}) and is deliberately not surfaced raw.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_sync_info(con)
+entropia_disconnect(con)
+}

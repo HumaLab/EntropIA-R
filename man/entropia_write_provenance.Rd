@@ -21,3 +21,12 @@ JSON \code{null} and \code{NA} values as \code{null}, so the file round-trips th
 \code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}} back to the same structure (apart from the list
 class). The file is UTF-8.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+ds <- entropia_analysis_dataset(con, asset_type == "image")
+path <- tempfile(fileext = ".json")
+entropia_write_provenance(ds, path)
+readLines(path)
+entropia_disconnect(con)
+}

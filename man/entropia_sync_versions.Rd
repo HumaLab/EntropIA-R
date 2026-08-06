@@ -19,3 +19,9 @@ The result is uncollected, so filtering, joining and aggregating happen in
 SQLite; call \code{entropia_collect()} (or \code{dplyr::collect()}) to bring rows into
 R.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_sync_versions(con))
+entropia_disconnect(con)
+}

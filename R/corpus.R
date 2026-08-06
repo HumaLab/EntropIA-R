@@ -119,6 +119,12 @@ ent_resolve_text_base <- function(con, assets) {
 #' @param strip_markers Remove OCR page markers (`![](page=n,bbox=[...])`) from
 #'   the text. Default `TRUE`.
 #' @return A `tbl_sql` with the input asset columns plus `text`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_text(con)
+#' entropia_text(con, source = "extraction", strip_markers = TRUE)
+#' entropia_disconnect(con)
 #' @export
 entropia_text <- function(con, assets = NULL, source = "auto", strip_markers = TRUE) {
   ent_require_conn(con)
@@ -337,6 +343,12 @@ ent_append_text_layer <- function(base, con, source) {
 #' @return A `tbl_sql` with one row per asset and prefixed, non-colliding
 #'   columns from `items`, `collections` and `assets`, plus `text` unless
 #'   `text = FALSE`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_corpus(con)
+#' entropia_corpus(con, collections = "Archivo de prueba", asset_types = "pdf")
+#' entropia_disconnect(con)
 #' @export
 entropia_corpus <- function(con, collections = NULL, asset_types = NULL,
                             text = "auto", page_assets = TRUE, include_deleted = FALSE) {
@@ -462,6 +474,12 @@ ent_resolve_item_base <- function(con, items) {
 #' @param parse When `TRUE` (default) parse `metadata` into the tidy field
 #'   columns; when `FALSE` return the raw `metadata` text column.
 #' @return A [tibble::tibble()] with one row per item.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_metadata(con)
+#' entropia_metadata(con, parse = FALSE) # raw metadata text
+#' entropia_disconnect(con)
 #' @export
 entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   ent_require_conn(con)

@@ -41,3 +41,9 @@ and legacy schemas degrade gracefully. The result is materialised (it is a
 small diagnostic, like \code{\link[=entropia_validate]{entropia_validate()}} findings) and carries the
 \code{entropia_orphans} class.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_orphans(con) # zero findings on the example database
+entropia_disconnect(con)
+}

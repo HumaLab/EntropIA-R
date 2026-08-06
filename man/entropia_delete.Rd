@@ -33,3 +33,12 @@ In v2, \code{entropia_delete()} deletes rows matched by \code{filter} inside a
 transaction. A full-table delete is refused unless \code{all = TRUE}, and every
 delete requires \code{confirm = TRUE}.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+err <- tryCatch(entropia_delete(con, "items", id == "x", confirm = TRUE),
+  error = identity)
+class(err)          # "entropia_error_write_disabled"
+conditionMessage(err)
+entropia_disconnect(con)
+}

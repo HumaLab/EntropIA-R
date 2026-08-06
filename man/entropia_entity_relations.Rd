@@ -36,3 +36,9 @@ layer, but the current schema's \code{triples} table has no confidence column, s
 passing a non-\code{NULL} value errors with guidance rather than silently doing
 nothing.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_entity_relations(con))
+entropia_disconnect(con)
+}

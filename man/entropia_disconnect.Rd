@@ -16,3 +16,9 @@ entropia_disconnect(con)
 Closes a connection opened by \code{\link[=entropia_connect]{entropia_connect()}}. Idempotent: calling it
 again on an already-closed connection is a no-op.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_disconnect(con)
+entropia_disconnect(con) # idempotent: safe on a closed connection
+}

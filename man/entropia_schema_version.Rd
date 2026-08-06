@@ -17,3 +17,9 @@ Returns the authoritative schema version: the lexicographic maximum of the
 \verb{_migrations} table (e.g. \code{"0029_rag_chunks"}). \code{NA_character_} when the
 database has no \verb{_migrations} table.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_schema_version(con)
+entropia_disconnect(con)
+}

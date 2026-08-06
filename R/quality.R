@@ -111,6 +111,12 @@ ent_ocr_summary <- function(base, groups) {
 #' @param con A connection returned by [entropia_connect()].
 #' @param by Grouping: `"collection"` (default), `"item"`, or `"asset"`.
 #' @return A `tbl_sql`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_ocr_coverage(con))
+#' entropia_collect(entropia_ocr_coverage(con, by = "asset"))
+#' entropia_disconnect(con)
 #' @export
 entropia_ocr_coverage <- function(con, by = "collection") {
   ent_require_conn(con)
@@ -172,6 +178,11 @@ ent_metadata_summary <- function(base, groups) {
 #' @param con A connection returned by [entropia_connect()].
 #' @param by Grouping: `"collection"` (default) or `"item"`.
 #' @return A `tbl_sql`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_metadata_coverage(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_metadata_coverage <- function(con, by = "collection") {
   ent_require_conn(con)
@@ -274,6 +285,11 @@ ent_text_layer_base <- function(con) {
 #' @param con A connection returned by [entropia_connect()].
 #' @return A tibble of class `entropia_corpus_quality` with columns `metric`,
 #'   `group`, `n`, `total` and `pct`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_corpus_quality(con)
+#' entropia_disconnect(con)
 #' @export
 entropia_corpus_quality <- function(con) {
   ent_require_conn(con)
@@ -451,6 +467,11 @@ ent_orphan_llm <- function(con) {
 #' @param con A connection returned by [entropia_connect()].
 #' @return A tibble of class `entropia_orphans` with columns `kind`, `table`,
 #'   `id`, `column`, `ref_table` and `message`, ordered by `kind` then `id`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_orphans(con) # zero findings on the example database
+#' entropia_disconnect(con)
 #' @export
 entropia_orphans <- function(con) {
   ent_require_conn(con)

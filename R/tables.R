@@ -56,6 +56,12 @@ ent_tbl <- function(con, table, required = ent_manifest_required(table)) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `collections`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collections(con) # lazy; nothing fetched until collected
+#' entropia_collect(entropia_collections(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_collections <- function(con) {
   ent_tbl(con, "collections")
@@ -70,6 +76,12 @@ entropia_collections <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `items`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_items(con)
+#' entropia_collect(entropia_items(con)) # metadata -> list-column, created_at -> POSIXct
+#' entropia_disconnect(con)
 #' @export
 entropia_items <- function(con) {
   ent_tbl(con, "items")
@@ -86,6 +98,12 @@ entropia_items <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `assets`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_assets(con)
+#' entropia_collect(entropia_assets(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_assets <- function(con) {
   ent_tbl(con, "assets")
@@ -101,6 +119,11 @@ entropia_assets <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `extractions`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_extractions(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_extractions <- function(con) {
   ent_tbl(con, "extractions")
@@ -117,6 +140,11 @@ entropia_extractions <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `transcriptions`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_transcriptions(con)) # segments -> list-column
+#' entropia_disconnect(con)
 #' @export
 entropia_transcriptions <- function(con) {
   ent_tbl(con, "transcriptions")
@@ -131,6 +159,11 @@ entropia_transcriptions <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `layouts`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_layouts(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_layouts <- function(con) {
   ent_tbl(con, "layouts")
@@ -159,6 +192,13 @@ entropia_layouts <- function(con) {
 #'   `confidence < min_confidence` are excluded. `NULL` (default) keeps all
 #'   confidence levels.
 #' @return A `tbl_sql` on `entities`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_entities(con))        # soft-deleted rows excluded
+#' entropia_collect(entropia_entities(con, include_deleted = TRUE))
+#' entropia_collect(entropia_entities(con, min_confidence = 0.9))
+#' entropia_disconnect(con)
 #' @export
 entropia_entities <- function(con, include_deleted = FALSE, min_confidence = NULL) {
   ent_require_conn(con)
@@ -198,6 +238,11 @@ entropia_entities <- function(con, include_deleted = FALSE, min_confidence = NUL
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `triples`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_triples(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_triples <- function(con) {
   ent_tbl(con, "triples")
@@ -211,6 +256,11 @@ entropia_triples <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `topics`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_topics(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_topics <- function(con) {
   ent_tbl(con, "topics")
@@ -223,6 +273,11 @@ entropia_topics <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `item_topics`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_item_topics(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_item_topics <- function(con) {
   ent_tbl(con, "item_topics")
@@ -236,6 +291,11 @@ entropia_item_topics <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `notes`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_notes(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_notes <- function(con) {
   ent_tbl(con, "notes")
@@ -250,6 +310,11 @@ entropia_notes <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `annotations`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_annotations(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_annotations <- function(con) {
   ent_tbl(con, "annotations")
@@ -277,6 +342,12 @@ entropia_annotations <- function(con) {
 #' @param job_type Optional character vector of job types to keep, or `NULL`
 #'   (default) for all.
 #' @return A `tbl_sql` on `llm_results`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_llm_results(con))
+#' entropia_collect(entropia_llm_results(con, target_type = "item"))
+#' entropia_disconnect(con)
 #' @export
 entropia_llm_results <- function(con, target_type = NULL, job_type = NULL) {
   ent_require_conn(con)
@@ -341,6 +412,11 @@ entropia_llm_results <- function(con, target_type = NULL, job_type = NULL) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `rag_conversations`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_rag_conversations(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_rag_conversations <- function(con) {
   ent_tbl(con, "rag_conversations")
@@ -356,6 +432,11 @@ entropia_rag_conversations <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `rag_messages`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_rag_messages(con)) # sources -> list-column
+#' entropia_disconnect(con)
 #' @export
 entropia_rag_messages <- function(con) {
   ent_tbl(con, "rag_messages")
@@ -373,6 +454,12 @@ entropia_rag_messages <- function(con) {
 #' @param con A connection returned by [entropia_connect()].
 #' @param with_vector Include the `embedding` BLOB column. Default `FALSE`.
 #' @return A `tbl_sql` on `vec_assets`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_embeddings(con)) # no embedding BLOB by default
+#' entropia_collect(entropia_embeddings(con, with_vector = TRUE))
+#' entropia_disconnect(con)
 #' @export
 entropia_embeddings <- function(con, with_vector = FALSE) {
   ent_require_conn(con)
@@ -400,6 +487,12 @@ entropia_embeddings <- function(con, with_vector = FALSE) {
 #' @param con A connection returned by [entropia_connect()].
 #' @param with_vector Include the `embedding` BLOB column. Default `FALSE`.
 #' @return A `tbl_sql` on `rag_chunks`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' entropia_collect(entropia_chunks(con)) # chunking contract columns exposed
+#' entropia_collect(entropia_chunks(con, with_vector = TRUE))
+#' entropia_disconnect(con)
 #' @export
 entropia_chunks <- function(con, with_vector = FALSE) {
   ent_require_conn(con)
@@ -426,6 +519,12 @@ entropia_chunks <- function(con, with_vector = FALSE) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A `tbl_sql` on `fts_items`.
+#' @examples
+#' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+#'   package = "entropiaR"))
+#' # Raw contentless table: columns read NULL; join to items on rowid for text.
+#' entropia_collect(entropia_search_index(con))
+#' entropia_disconnect(con)
 #' @export
 entropia_search_index <- function(con) {
   ent_tbl(con, "fts_items")

@@ -24,3 +24,12 @@ Because \code{item_topics} has a \code{UNIQUE(item_id, topic_id)} constraint, co
 rows per topic counts items per topic. The result is ordered by descending
 count then topic name (deterministic).
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+item_topics <- entropia_collect(entropia_item_topics(con))
+topics <- entropia_collect(entropia_topics(con))
+joined <- dplyr::left_join(item_topics, topics, by = c("topic_id" = "id"))
+entropia_topic_frequency(joined)
+entropia_disconnect(con)
+}

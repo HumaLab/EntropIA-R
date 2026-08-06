@@ -45,3 +45,10 @@ byte-identical rows (deterministic ordering) and identical provenance apart
 from \code{built_at}. Read the stamp with \code{\link[=entropia_provenance]{entropia_provenance()}} and persist it
 as a JSON sidecar with \code{\link[=entropia_write_provenance]{entropia_write_provenance()}}.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+ds <- entropia_analysis_dataset(con, asset_type == "pdf", name = "PDF corpus")
+entropia_provenance(ds)
+entropia_disconnect(con)
+}

@@ -30,3 +30,9 @@ Opens \code{path} as a read-only DBI connection. The returned object is an
 carrying the \code{path}, \code{mode}, \code{schema_version} and \code{content_hash}
 attributes. All DBI and dbplyr functions keep working on it.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_status(con)
+entropia_disconnect(con)
+}

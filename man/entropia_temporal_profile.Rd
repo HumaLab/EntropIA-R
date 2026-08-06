@@ -37,3 +37,10 @@ start of each unit (\code{POSIXct}, e.g. midnight for \code{unit = "day"}). Rows
 ordered by the \code{by} columns then the bucket, deterministically. Weeks start
 on Monday.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+items <- entropia_collect(entropia_items(con))
+entropia_temporal_profile(items, created_at, unit = "month")
+entropia_disconnect(con)
+}

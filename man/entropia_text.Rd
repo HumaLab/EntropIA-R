@@ -49,3 +49,10 @@ recursive query, so the result stays lazy and composable with
 \code{\link[dplyr:filter]{dplyr::filter()}} / \code{\link[dplyr:select]{dplyr::select()}} / friends. The marker itself is
 removed exactly; surrounding whitespace is preserved.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_text(con)
+entropia_text(con, source = "extraction", strip_markers = TRUE)
+entropia_disconnect(con)
+}

@@ -29,3 +29,10 @@ output of \code{\link[=entropia_entities]{entropia_entities()}} directly, or joi
 \code{collection_name}). Soft-deleted rows are whatever the input carries -- use
 \code{include_deleted = TRUE} on \code{\link[=entropia_entities]{entropia_entities()}} to count them.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entities <- entropia_collect(entropia_entities(con))
+entropia_entity_frequency(entities)
+entropia_disconnect(con)
+}

@@ -30,3 +30,12 @@ guidance: v1 is read-only, and write support arrives in v2 via
 In v2, \code{entropia_update()} updates rows matched by \code{by} (required) inside a
 transaction and never rewrites primary keys.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+err <- tryCatch(entropia_update(con, "items", data.frame(id = "x"), by = "id"),
+  error = identity)
+class(err)          # "entropia_error_write_disabled"
+conditionMessage(err)
+entropia_disconnect(con)
+}

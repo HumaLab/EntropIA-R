@@ -30,3 +30,9 @@ each row's target is looked up in the table its type names and returned as a
 Materialised (one row per \code{llm_results} row) and ordered deterministically
 by \code{id}; the result carries the \code{entropia_reconstruction} class.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_reconstruct_analysis(con)
+entropia_disconnect(con)
+}

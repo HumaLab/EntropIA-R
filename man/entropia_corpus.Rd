@@ -62,3 +62,10 @@ transcription -- the app's FTS rule, assembled as one SQL \code{COALESCE}
 expression. Markers are NOT stripped (use \code{\link[=entropia_text]{entropia_text()}} for stripped
 text). Pass \code{text = FALSE} to omit the text layer entirely.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_corpus(con)
+entropia_corpus(con, collections = "Archivo de prueba", asset_types = "pdf")
+entropia_disconnect(con)
+}

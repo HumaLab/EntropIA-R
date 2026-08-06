@@ -32,3 +32,10 @@ Unlike the lazy accessors this function materialises: parsing JSON to
 list-columns is an R-side step. \code{parse = FALSE} returns the raw
 \code{metadata} text alongside \code{item_id} instead.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_metadata(con)
+entropia_metadata(con, parse = FALSE) # raw metadata text
+entropia_disconnect(con)
+}

@@ -18,3 +18,10 @@ column is included (it is cheap -- stored, not computed on read). JSON in
 \code{metadata} stays raw text until \code{entropia_collect()} applies the column
 contract.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_items(con)
+entropia_collect(entropia_items(con)) # metadata -> list-column, created_at -> POSIXct
+entropia_disconnect(con)
+}

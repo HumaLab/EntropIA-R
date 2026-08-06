@@ -21,3 +21,10 @@ embeddings for retrieval. The chunking contract is exposed as columns
 The \code{embedding} BLOB is omitted by default; pass \code{with_vector = TRUE} to
 select it.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+entropia_collect(entropia_chunks(con)) # chunking contract columns exposed
+entropia_collect(entropia_chunks(con, with_vector = TRUE))
+entropia_disconnect(con)
+}

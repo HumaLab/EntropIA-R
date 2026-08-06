@@ -31,3 +31,11 @@ generating UUIDv4 primary keys for rows that do not carry one. It never uses
 (default) validates against the column contract without touching the
 database.
 }
+\examples{
+con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
+  package = "entropiaR"))
+err <- tryCatch(entropia_insert(con, "items", data.frame(id = "x")), error = identity)
+class(err)          # "entropia_error_write_disabled"
+conditionMessage(err)
+entropia_disconnect(con)
+}
