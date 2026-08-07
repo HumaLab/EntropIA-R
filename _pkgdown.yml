@@ -1,4 +1,4 @@
-url: https://github.com/HLab-MITI/EntropIA-R
+url: https://github.com/HumaLab/EntropIA-R
 destination: pkgdown
 template:
   bootstrap: 5
