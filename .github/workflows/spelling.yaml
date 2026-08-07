@@ -35,12 +35,33 @@ jobs:
           extra-packages: any::spelling
           needs: website
 
+      # Checks the English documentation only. spell_check_package() would also
+      # scan README.md (Spanish user-facing landing page) with the en-US
+      # dictionary and fail on legitimate Spanish words, so the file list is
+      # built explicitly instead: man/, vignettes/ and the English README.
       - name: Spelling
+        shell: Rscript {0}
         run: |
-          res <- spelling::spell_check_package(vignettes = TRUE)
+          files <- c(
+            list.files("man", pattern = "\\.Rd$", ignore.case = TRUE, full.names = TRUE),
+            list.files("vignettes", pattern = "\\.(Rmd|qmd|Rnw)$", ignore.case = TRUE,
+                       full.names = TRUE, recursive = TRUE),
+            "README.en.md"
+          )
+          words <- spelling::get_wordlist()
+          res <- spelling::spell_check_files(files, ignore = words)
+
+          # Keep the DESCRIPTION Title/Description coverage that
+          # spell_check_package() used to provide.
+          desc <- read.dcf("DESCRIPTION")[1, ]
+          res_desc <- spelling::spell_check_text(
+            paste(desc[["Title"]], desc[["Description"]]),
+            ignore = words
+          )
+
+          res <- rbind(res, res_desc)
           if (nrow(res) > 0) {
             print(res)
             stop("Spelling errors found (see inst/WORDLIST for accepted words).")
           }
           cat("No spelling errors found.\n")
-        shell: Rscript {0}
