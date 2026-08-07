@@ -48,12 +48,15 @@ jobs:
                        full.names = TRUE, recursive = TRUE),
             "README.en.md"
           )
-          words <- spelling::get_wordlist()
+          desc <- read.dcf("DESCRIPTION")[1, ]
+          # spell_check_package() auto-ignores the package name; replicate that
+          # so Rd files that reference the package name do not fail.
+          words <- unique(c(spelling::get_wordlist(), desc[["Package"]]))
+
           res <- spelling::spell_check_files(files, ignore = words)
 
           # Keep the DESCRIPTION Title/Description coverage that
           # spell_check_package() used to provide.
-          desc <- read.dcf("DESCRIPTION")[1, ]
           res_desc <- spelling::spell_check_text(
             paste(desc[["Title"]], desc[["Description"]]),
             ignore = words

@@ -11,6 +11,7 @@ LLM
 Lifecycle
 Materialised
 Materialises
+Nieto
 RSQLite
 SOIP
 Snapshotting
@@ -18,6 +19,7 @@ Summarises
 Tidyverse
 UUIDv
 Upsert
+Visualisation
 WAL
 analysed
 checkable
@@ -41,6 +43,8 @@ json
 labelled
 lexicographically
 lifecycle
+materialisation
+materialise
 materialised
 materialises
 natively

@@ -87,4 +87,4 @@ MIT.
 
 ---
 
-[Versión en español](https://github.com/HumaLab/EntropIA-R/blob/main/README.md)
+[Spanish version](https://github.com/HumaLab/EntropIA-R/blob/main/README.md)
