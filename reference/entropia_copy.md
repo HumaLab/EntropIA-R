@@ -37,7 +37,7 @@ entropia_copy(con, dest)
 copy_con <- entropia_connect(dest)
 entropia_status(copy_con)
 #> entropiaR status
-#>   path:           /tmp/RtmpOmHcq4/file19f44ecb5224.sqlite
+#>   path:           /tmp/RtmpWkGvlZ/file1a0d2d30ef.sqlite
 #>   mode:           read-only
 #>   schema version: 0029_rag_chunks
 #>   valid:          TRUE

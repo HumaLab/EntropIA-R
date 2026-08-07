@@ -55,7 +55,7 @@ entropia_provenance(ds)
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-07T00:43:58.344Z
+#>   built at:       2026-08-07T00:47:13.037Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
@@ -108,7 +108,7 @@ readLines(prov_path)[1:9]
 #> [5] "  \"source_path\": \"/home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite\","
 #> [6] "  \"filters\": \"asset_type == \\\"pdf\\\"\","                                                    
 #> [7] "  \"package_version\": \"0.0.0.9000\","                                                           
-#> [8] "  \"built_at\": \"2026-08-07T00:43:58.344Z\","                                                    
+#> [8] "  \"built_at\": \"2026-08-07T00:47:13.037Z\","                                                    
 #> [9] "  \"r_version\": \"R version 4.6.1 (2026-06-24)\""
 ```
 
