@@ -3,7 +3,7 @@
 Read-only snapshot of a connection: path, mode, schema version, row
 counts for every readable table (descending), sync freshness from
 `sync_meta`, and WAL state (journal mode + sidecar files). Unlike
-[`entropia_validate()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_validate.md),
+[`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md),
 `status()` never reports findings – it describes the database.
 
 ## Usage
@@ -17,7 +17,7 @@ entropia_status(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

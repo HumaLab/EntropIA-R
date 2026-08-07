@@ -1,7 +1,7 @@
 # Plot a temporal profile
 
 Plots the output of
-[`entropia_temporal_profile()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_temporal_profile.md)
+[`entropia_temporal_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_temporal_profile.md)
 – counts per time bucket – as a line chart. The date column is
 auto-detected when `x` carries exactly one `POSIXct`/`Date` column (the
 bucket); pass `date_var` when the profile carries several date-like
@@ -19,7 +19,7 @@ entropia_plot_temporal(x, date_var = NULL)
 
   A data frame or tibble with a `n` count column and a date column, e.g.
   the output of
-  [`entropia_temporal_profile()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_temporal_profile.md).
+  [`entropia_temporal_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_temporal_profile.md).
 
 - date_var:
 

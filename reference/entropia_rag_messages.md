@@ -5,7 +5,7 @@ over the `rag_messages` table: the ordered messages of a conversation.
 `role` is `user` or `assistant`; `sort_index` gives the order within a
 conversation. The `sources` column is JSON-in-TEXT (an array of
 `{chunk_id, text, score}` citations on assistant messages), parsed by
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 into a list-column.
 
 ## Usage
@@ -19,7 +19,7 @@ entropia_rag_messages(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

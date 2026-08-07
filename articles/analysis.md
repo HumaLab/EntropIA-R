@@ -8,7 +8,7 @@ documented so the result can be reproduced later.
 
 The database may be live under EntropIA. Before analysis, take a
 snapshot with
-[`entropia_copy()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_copy.md)
+[`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md)
 and run against *that*, so the analysis is immune to writes landing
 mid-run and the provenance records a stable source.
 
@@ -23,7 +23,7 @@ entropia_disconnect(con) # original connection no longer needed
 
 ## 2. Build the analysis dataset
 
-[`entropia_analysis_dataset()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_analysis_dataset.md)
+[`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
 applies filters to the corpus, collects it, and stamps provenance. This
 is the boundary: everything after it is ordinary tibble work, and
 everything before it is recorded.
@@ -56,18 +56,18 @@ entropia_provenance(corpus)
 #>   name:           corpus_full
 #>   schema version: 0029_rag_chunks
 #>   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
-#>   source path:    /tmp/RtmpNsompG/file1f861b336c33.sqlite
+#>   source path:    /tmp/RtmpI0hPm5/file1f1e1605a1aa.sqlite
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-07T00:07:27.793Z
+#>   built at:       2026-08-07T00:43:45.584Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
 ## 3. Temporal profile
 
 When were assets created?
-[`entropia_temporal_profile()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_temporal_profile.md)
+[`entropia_temporal_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_temporal_profile.md)
 buckets a date column. Collect the asset accessor directly —
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 types its millisecond timestamps to `POSIXct`, which the profiler
 requires:
 
@@ -88,7 +88,7 @@ temporal
 
 ## 4. Document lengths
 
-[`entropia_document_lengths()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_document_lengths.md)
+[`entropia_document_lengths()`](https://humalab.github.io/EntropIA-R/reference/entropia_document_lengths.md)
 appends character and word counts per document to any tibble carrying a
 text column:
 
@@ -111,10 +111,10 @@ Empty text counts as 0; `NA` text stays `NA`.
 
 ## 5. Entities
 
-[`entropia_entities()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entities.md)
+[`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
 excludes soft-deleted rows by default and surfaces provenance (source
 model) per entity.
-[`entropia_entity_frequency()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entity_frequency.md)
+[`entropia_entity_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_entity_frequency.md)
 tallies them by type:
 
 ``` r
@@ -148,7 +148,7 @@ entropia_topic_frequency(left_join(item_topics, topics, by = c("topic_id" = "id"
 
 ## 7. Collections side by side
 
-[`entropia_compare_collections()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_compare_collections.md)
+[`entropia_compare_collections()`](https://humalab.github.io/EntropIA-R/reference/entropia_compare_collections.md)
 summarizes the corpus per collection:
 
 ``` r
@@ -162,7 +162,7 @@ entropia_compare_collections(corpus)
 
 ## 8. Corpus quality
 
-[`entropia_corpus_quality()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus_quality.md)
+[`entropia_corpus_quality()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus_quality.md)
 reports OCR coverage, transcription presence, and empty texts per asset
 type, plus metadata coverage per collection:
 

@@ -4,7 +4,7 @@ A lazy [`dplyr::tbl()`](https://dplyr.tidyverse.org/reference/tbl.html)
 over the `items` table. The `search_text` generated column is included
 (it is cheap – stored, not computed on read). JSON in `metadata` stays
 raw text until
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 applies the column contract.
 
 ## Usage
@@ -18,7 +18,7 @@ entropia_items(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

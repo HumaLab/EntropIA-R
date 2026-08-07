@@ -13,14 +13,14 @@ entropia_analysis_dataset(con, ..., name = NULL)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 - ...:
 
   Filter expressions applied to the corpus, e.g.
   `asset_type == "image"`. Column names resolve against the lazy corpus
   (see
-  [`entropia_corpus()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus.md)
+  [`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)
   for the full column set). Must be unnamed.
 
 - name:
@@ -37,7 +37,7 @@ attribute.
 ## Details
 
 The dataset boundary of the package: assembles the lazy corpus
-([`entropia_corpus()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus.md)),
+([`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)),
 applies any filter expressions passed in `...`, and materialises the
 result with a deterministic row order (arranged by `asset_id`). The
 returned tibble carries class `entropia_dataset` and an `entropia_prov`
@@ -48,7 +48,7 @@ attribute recording everything needed to reconstruct the dataset:
 - `schema_version`: the database schema head (e.g. `"0029_rag_chunks"`);
 
 - `content_hash`: the connection's schema content hash (see
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md));
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md));
 
 - `source_path`: the database file the dataset was built from;
 
@@ -63,9 +63,9 @@ attribute recording everything needed to reconstruct the dataset:
 Building the same dataset twice against an unchanged database yields
 byte-identical rows (deterministic ordering) and identical provenance
 apart from `built_at`. Read the stamp with
-[`entropia_provenance()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_provenance.md)
+[`entropia_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_provenance.md)
 and persist it as a JSON sidecar with
-[`entropia_write_provenance()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_write_provenance.md).
+[`entropia_write_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_write_provenance.md).
 
 ## Examples
 
@@ -82,7 +82,7 @@ entropia_provenance(ds)
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-07T00:07:02.278Z
+#>   built at:       2026-08-07T00:43:22.066Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 entropia_disconnect(con)
 ```

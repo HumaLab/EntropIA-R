@@ -4,9 +4,9 @@ A lazy [`dplyr::tbl()`](https://dplyr.tidyverse.org/reference/tbl.html)
 over the contentless FTS5 table `fts_items`. This is an advanced, raw
 accessor: contentless FTS5 stores no column content, so selecting its
 columns directly reads `NULL`. To get searchable text, join to
-[`entropia_items()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_items.md)
+[`entropia_items()`](https://humalab.github.io/EntropIA-R/reference/entropia_items.md)
 on rowid (`items i ON i.rowid = fts_items.rowid`) or use
-[`entropia_search()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_search.md).
+[`entropia_search()`](https://humalab.github.io/EntropIA-R/reference/entropia_search.md).
 
 ## Usage
 
@@ -19,7 +19,7 @@ entropia_search_index(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

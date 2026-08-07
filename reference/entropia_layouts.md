@@ -4,9 +4,9 @@ A lazy [`dplyr::tbl()`](https://dplyr.tidyverse.org/reference/tbl.html)
 over the `layouts` table. Each row is the page-layout analysis of one
 asset; `id` is deterministic (`lay-{asset_id}`) and `asset_id` is UNIQUE
 (1:1 with
-[`entropia_assets()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_assets.md)).
+[`entropia_assets()`](https://humalab.github.io/EntropIA-R/reference/entropia_assets.md)).
 `regions` and `blocks` are JSON-in-TEXT columns, parsed by
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md).
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md).
 
 ## Usage
 
@@ -19,7 +19,7 @@ entropia_layouts(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

@@ -6,7 +6,7 @@ analyses, ...) linked to their target via `target_id` plus `target_type`
 (`asset`, `item`, `collection` or `unknown`). The `id` is deterministic:
 `llr-{target_type}-{target_id}-{job_type}`. The `result` column is
 JSON-in-TEXT, parsed by
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 into a list-column.
 
 ## Usage
@@ -20,7 +20,7 @@ entropia_llm_results(con, target_type = NULL, job_type = NULL)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 - target_type:
 

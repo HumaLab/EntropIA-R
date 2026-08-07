@@ -41,7 +41,7 @@ items
 
 Because these are `tbl_sql`, you can pipe them straight into dplyr verbs
 and the whole query is translated to SQL (see
-[`vignette("dplyr")`](https://github.com/HumaLab/EntropIA-R/articles/dplyr.md)).
+[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md)).
 
 ## The three spine accessors
 
@@ -99,13 +99,13 @@ assets |>
 
 The asset accessor never selects BLOB columns such as `embedding` —
 those are opt-in (see
-[`entropia_embeddings()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_embeddings.md)
+[`entropia_embeddings()`](https://humalab.github.io/EntropIA-R/reference/entropia_embeddings.md)
 /
-[`entropia_chunks()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_chunks.md)).
+[`entropia_chunks()`](https://humalab.github.io/EntropIA-R/reference/entropia_chunks.md)).
 
 ## The corpus view
 
-[`entropia_corpus()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus.md)
+[`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)
 is the workhorse: it joins items, collections and assets in one lazy
 query, one row per asset, and appends the best available text per asset:
 
@@ -177,7 +177,7 @@ flag has no effect (the corpus carries no soft-delete marker).
 
 ## Item metadata
 
-[`entropia_metadata()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_metadata.md)
+[`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
 parses the JSON inside `items.metadata` into tidy rows: the
 `__entropia_file_metadata` fields become proper columns
 (`original_name`, `original_path`, `imported_at` as a `POSIXct`), and
@@ -205,7 +205,7 @@ entropia_disconnect(con)
 ```
 
 Next:
-[`vignette("text")`](https://github.com/HumaLab/EntropIA-R/articles/text.md)
+[`vignette("text")`](https://humalab.github.io/EntropIA-R/articles/text.md)
 for text extraction and metadata, or
-[`vignette("dplyr")`](https://github.com/HumaLab/EntropIA-R/articles/dplyr.md)
+[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md)
 for composing lazy queries.

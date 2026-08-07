@@ -34,11 +34,11 @@ distinct `entity_type` x `value` pair, the number of rows carrying it.
 The result is ordered by `entity_type` then descending count, so the top
 entities of each type read off the top of each block. Pass the collected
 output of
-[`entropia_entities()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entities.md)
+[`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
 directly, or join it to `items` and `collections` first and pass `by` to
 break the counts down further (e.g. by `collection_name`). Soft-deleted
 rows are whatever the input carries – use `include_deleted = TRUE` on
-[`entropia_entities()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entities.md)
+[`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
 to count them.
 
 ## Examples

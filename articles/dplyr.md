@@ -86,7 +86,7 @@ entropia_entities(con) |>
 ```
 
 Note that
-[`entropia_entities()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entities.md)
+[`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
 excludes soft-deleted rows by default (`source = 'manual_deleted'`), and
 `min_confidence` filters on confidence — both push down to SQL.
 
@@ -109,7 +109,7 @@ entropia_assets(con) |>
 
 ## Parameter-safe full-text search
 
-[`entropia_search()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_search.md)
+[`entropia_search()`](https://humalab.github.io/EntropIA-R/reference/entropia_search.md)
 wraps SQLite’s FTS5 index and is injection-safe: your query text is
 escaped via `dbQuoteString` before it is spliced into `MATCH`. Results
 come back ranked by BM25.
@@ -143,7 +143,7 @@ the query itself is never interpolated into SQL.
 
 ## Collecting applies the column contract
 
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 is `collect()` plus the package’s column contract: millisecond
 timestamps become `POSIXct`, JSON-in-TEXT columns become list-columns,
 and embedding BLOBs stay `raw` (and are not selected unless you opt in).
@@ -194,11 +194,11 @@ metadata_col$metadata
 ```
 
 The pure timestamp helpers back this:
-[`entropia_datetime()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_datetime.md)
+[`entropia_datetime()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime.md)
 converts milliseconds,
-[`entropia_datetime_s()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_datetime_s.md)
+[`entropia_datetime_s()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime_s.md)
 seconds, and
-[`entropia_datetime_auto()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_datetime_auto.md)
+[`entropia_datetime_auto()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime_auto.md)
 uses a magnitude guard for columns whose units have drifted over time
 (used for `entities.created_at` and `triples.created_at`):
 
@@ -220,7 +220,7 @@ entropia_disconnect(con)
 ```
 
 Next:
-[`vignette("datasets")`](https://github.com/HumaLab/EntropIA-R/articles/datasets.md)
+[`vignette("datasets")`](https://humalab.github.io/EntropIA-R/articles/datasets.md)
 for building reproducible analysis datasets, or
-[`vignette("analysis")`](https://github.com/HumaLab/EntropIA-R/articles/analysis.md)
+[`vignette("analysis")`](https://humalab.github.io/EntropIA-R/articles/analysis.md)
 for a complete analysis workflow.

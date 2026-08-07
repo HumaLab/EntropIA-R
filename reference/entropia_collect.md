@@ -19,7 +19,7 @@ entropia_collect(x, n = Inf, ...)
 - x:
 
   A lazy table, e.g. from
-  [`entropia_items()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_items.md).
+  [`entropia_items()`](https://humalab.github.io/EntropIA-R/reference/entropia_items.md).
 
 - n:
 

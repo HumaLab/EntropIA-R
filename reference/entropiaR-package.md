@@ -14,13 +14,13 @@ with provenance.
 The public API follows the [lifecycle](https://lifecycle.r-lib.org/)
 stages. New capabilities ship as `experimental` and stabilise in later
 releases. In v1 the analysis layer is experimental:
-[`entropia_temporal_profile()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_temporal_profile.md),
-[`entropia_document_lengths()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_document_lengths.md),
-[`entropia_entity_frequency()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entity_frequency.md),
-[`entropia_topic_frequency()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_topic_frequency.md),
-[`entropia_compare_collections()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_compare_collections.md)
+[`entropia_temporal_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_temporal_profile.md),
+[`entropia_document_lengths()`](https://humalab.github.io/EntropIA-R/reference/entropia_document_lengths.md),
+[`entropia_entity_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_entity_frequency.md),
+[`entropia_topic_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_topic_frequency.md),
+[`entropia_compare_collections()`](https://humalab.github.io/EntropIA-R/reference/entropia_compare_collections.md)
 and
-[`entropia_analysis_dataset()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_analysis_dataset.md)
+[`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
 carry the experimental badge and are expected to stabilise in v2.
 
 Deprecations use

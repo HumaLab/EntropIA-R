@@ -57,11 +57,11 @@ files and be journaling in WAL mode. Reading through WAL is safe — a
 read-only client sees a consistent snapshot. Two practical rules:
 
 - **Never** copy the database with a file copy while sidecars exist; use
-  [`entropia_copy()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_copy.md),
+  [`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md),
   which reads *through* the sidecars and emits one self-contained
   snapshot via `VACUUM INTO`.
 - If the database is busy,
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md)
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md)
   raises `entropia_error_locked` with guidance to retry or snapshot.
 
 ``` r
@@ -107,13 +107,13 @@ entropia_delete(con, table, filter, all = FALSE, confirm = FALSE)
 
 - `dry_run = TRUE` is the default for writes: validate against the
   column contract, show what would change, change nothing.
-- [`entropia_update()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_update.md)
+- [`entropia_update()`](https://humalab.github.io/EntropIA-R/reference/entropia_update.md)
   requires `by` and never touches primary keys.
-- [`entropia_upsert()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_upsert.md)
+- [`entropia_upsert()`](https://humalab.github.io/EntropIA-R/reference/entropia_upsert.md)
   is implemented as `INSERT ... ON CONFLICT(id) DO UPDATE` — **never**
   `INSERT OR REPLACE`, because the sync engine bans it (rowid
   reassignment breaks FTS5 rowid joins).
-- [`entropia_delete()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_delete.md)
+- [`entropia_delete()`](https://humalab.github.io/EntropIA-R/reference/entropia_delete.md)
   requires a `filter`; deleting a whole table needs `all = TRUE` *and*
   `confirm = TRUE`.
 - Every verb runs inside
@@ -133,7 +133,7 @@ never introduce a row the reader cannot understand.
 
 For v1 you can treat the database as immutable input. Administer it with
 the EntropIA app, snapshot it with
-[`entropia_copy()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_copy.md)
+[`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md)
 for analysis, and know that `entropiaR` cannot corrupt it. When v2
 lands, the same verbs will be the safe, validated path — but until then
 the stubs are the guarantee.

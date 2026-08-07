@@ -27,9 +27,9 @@ entropia_export(
 - x:
 
   A data frame/tibble or a lazy `tbl_sql` table (e.g. from
-  [`entropia_corpus()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus.md)
+  [`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)
   or
-  [`entropia_items()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_items.md)).
+  [`entropia_items()`](https://humalab.github.io/EntropIA-R/reference/entropia_items.md)).
 
 - path:
 
@@ -54,7 +54,7 @@ The normalized `path`, invisibly.
 Lazy queries are exported in a deterministic row order: when the
 rendered SQL carries no `ORDER BY`, the export arranges by the first
 column before streaming. Queries with an explicit ordering (e.g.
-[`entropia_search()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_search.md)'s
+[`entropia_search()`](https://humalab.github.io/EntropIA-R/reference/entropia_search.md)'s
 rank order, or
 [`dplyr::arrange()`](https://dplyr.tidyverse.org/reference/arrange.html)
 applied first) are exported in that order. Materialised data is written
@@ -63,7 +63,7 @@ in the order it was given.
 The column contract is NOT applied by the export: a lazy query exports
 the raw values SQLite stores (epoch timestamps as integers, JSON-in-TEXT
 as text). Collect with
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 first – and pass the result as a tibble – to export typed values
 (`POSIXct` timestamps and JSON list-columns).
 

@@ -19,7 +19,7 @@ entropia_reconstruct_analysis(con, target = NULL, job_type = NULL)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 - target:
 

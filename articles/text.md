@@ -40,7 +40,7 @@ entropia_layouts(con) |> entropia_collect()
 
 ## The best text per asset
 
-[`entropia_text()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_text.md)
+[`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
 returns one row per asset with a single `text` column — the best
 available text per asset. `source` selects the layer:
 
@@ -83,7 +83,7 @@ entropia_text(con) |>
 EntropIA’s PDF extraction embeds *image markers* in the text —
 `![](page=n,bbox=[...])` — one per embedded page image. They are noise
 for text analysis, so
-[`entropia_text()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_text.md)
+[`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
 strips them by default. See the raw text first:
 
 ``` r
@@ -104,7 +104,7 @@ clean$text[1]
 
 The stripping happens in SQL (a recursive CTE), so it stays lazy and
 composable — you can `filter`/`mutate` on top of
-[`entropia_text()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_text.md)
+[`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
 and the whole query still runs on SQLite.
 
 ## Restricting to specific assets
@@ -126,7 +126,7 @@ entropia_text(con, assets = ids) |> entropia_collect()
 
 ## JSON columns become list-columns
 
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 applies the column contract. JSON-in-TEXT columns become list-columns
 via `jsonlite`, so `transcriptions.segments` (an array of
 `{start_ms, end_ms, text}` objects) comes back as a list of data frames:
@@ -145,9 +145,9 @@ The same applies to `items.metadata`, `rag_messages.sources`, and
 
 ## Metadata
 
-[`entropia_metadata()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_metadata.md)
+[`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
 parses `items.metadata` into tidy rows (see
-[`vignette("corpus")`](https://github.com/HumaLab/EntropIA-R/articles/corpus.md)):
+[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md)):
 
 ``` r
 
@@ -209,7 +209,7 @@ entropia_disconnect(con)
 ```
 
 Next:
-[`vignette("dplyr")`](https://github.com/HumaLab/EntropIA-R/articles/dplyr.md)
+[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md)
 for composing lazy queries, or
-[`vignette("datasets")`](https://github.com/HumaLab/EntropIA-R/articles/datasets.md)
+[`vignette("datasets")`](https://humalab.github.io/EntropIA-R/articles/datasets.md)
 for building reproducible analysis datasets.

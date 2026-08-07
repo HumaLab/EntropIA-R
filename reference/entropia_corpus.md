@@ -26,7 +26,7 @@ entropia_corpus(
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 - collections:
 
@@ -55,7 +55,7 @@ entropia_corpus(
   Reserved. The corpus tables carry no soft-delete marker in the
   reference schema, so the flag currently has no effect; it is validated
   and kept for API symmetry with
-  [`entropia_entities()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entities.md)
+  [`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
   and for forward compatibility with schemas that introduce one.
 
 ## Value
@@ -70,17 +70,17 @@ Column names are unambiguous across the three joined tables (e.g.
 `item_id`, `asset_id`, `collection_name`, `item_created_at`,
 `asset_created_at`), so there are no name collisions. `metadata` is the
 raw JSON text of `items.metadata`; use
-[`entropia_metadata()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_metadata.md)
+[`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
 for the parsed form. Because the query spans several tables, collecting
 it applies no column contract – timestamps stay raw integers and
 `metadata` stays text (see
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)).
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)).
 
 The `text` column is the asset's best text layer per `source`: `"auto"`
 (default) uses the extraction text when present, otherwise the
 transcription – the app's FTS rule, assembled as one SQL `COALESCE`
 expression. Markers are NOT stripped (use
-[`entropia_text()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_text.md)
+[`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
 for stripped text). Pass `text = FALSE` to omit the text layer entirely.
 
 ## Examples

@@ -39,7 +39,7 @@ count column `n`.
 Counts the rows of a collected tibble by a date/time column, bucketed to
 a chosen time unit. This is an R-side analysis helper: pass a
 materialised tibble (e.g. the output of
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md),
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md),
 where timestamps are `POSIXct`). `NA` timestamps are excluded – a row
 with an unknown date cannot be placed in time; grouping columns from
 `by` keep `NA` as their own group, following `dplyr` semantics.

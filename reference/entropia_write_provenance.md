@@ -19,7 +19,7 @@ entropia_write_provenance(x, path)
 - x:
 
   An object carrying a provenance stamp (see
-  [`entropia_provenance()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_provenance.md)).
+  [`entropia_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_provenance.md)).
 
 - path:
 
@@ -46,7 +46,7 @@ readLines(path)
 #>  [5] "  \"source_path\": \"/home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite\","
 #>  [6] "  \"filters\": \"asset_type == \\\"image\\\"\","                                                  
 #>  [7] "  \"package_version\": \"0.0.0.9000\","                                                           
-#>  [8] "  \"built_at\": \"2026-08-07T00:07:21.520Z\","                                                    
+#>  [8] "  \"built_at\": \"2026-08-07T00:43:40.365Z\","                                                    
 #>  [9] "  \"r_version\": \"R version 4.6.1 (2026-06-24)\""                                                
 #> [10] "}"                                                                                                
 entropia_disconnect(con)

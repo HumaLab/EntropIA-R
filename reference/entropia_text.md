@@ -14,7 +14,7 @@ entropia_text(con, assets = NULL, source = "auto", strip_markers = TRUE)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 - assets:
 

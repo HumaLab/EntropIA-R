@@ -15,7 +15,7 @@ entropia_corpus_quality(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 
@@ -39,7 +39,7 @@ A tibble of class `entropia_corpus_quality` with columns `metric`,
 
 `pct` is `n / total`, `NA` when `total` is 0. The report is materialised
 (it is a small aggregate, like
-[`entropia_validate()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_validate.md)
+[`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md)
 findings) and carries the `entropia_corpus_quality` class.
 
 ## Examples

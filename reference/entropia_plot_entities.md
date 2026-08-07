@@ -1,7 +1,7 @@
 # Plot entity frequencies
 
 Plots the output of
-[`entropia_entity_frequency()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entity_frequency.md)
+[`entropia_entity_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_entity_frequency.md)
 as a horizontal bar chart of the top entity values, filled by a column
 of `x` (by default `entity_type`). `value` is reordered by count so the
 most frequent entity sits at the top of the chart (via `coord_flip()`).
@@ -18,7 +18,7 @@ entropia_plot_entities(x, top = 10, fill = "entity_type")
 
   A data frame or tibble with `value` and `n` columns (and typically
   `entity_type`), e.g. the output of
-  [`entropia_entity_frequency()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_entity_frequency.md).
+  [`entropia_entity_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_entity_frequency.md).
 
 - top:
 

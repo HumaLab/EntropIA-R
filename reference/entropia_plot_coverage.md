@@ -1,7 +1,7 @@
 # Plot corpus coverage
 
 Plots the output of
-[`entropia_corpus_quality()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus_quality.md)
+[`entropia_corpus_quality()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus_quality.md)
 – coverage proportions per metric and group – as a bar chart. With a
 single `metric` the chart is a plain bar chart of the coverage
 proportion by group; with several metrics the bars are faceted by
@@ -19,7 +19,7 @@ entropia_plot_coverage(x, metric = NULL)
 
   A data frame or tibble with `metric`, `group` and `pct` columns, e.g.
   the output of
-  [`entropia_corpus_quality()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_corpus_quality.md).
+  [`entropia_corpus_quality()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus_quality.md).
 
 - metric:
 

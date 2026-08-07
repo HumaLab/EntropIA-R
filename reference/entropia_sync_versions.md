@@ -5,7 +5,7 @@ over `sync_row_versions`, which maps every synced row
 `(table_name, row_id)` to the server sequence number it was last seen
 at. The result is uncollected, so filtering, joining and aggregating
 happen in SQLite; call
-[`entropia_collect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_collect.md)
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
 (or
 [`dplyr::collect()`](https://dplyr.tidyverse.org/reference/compute.html))
 to bring rows into R.
@@ -21,7 +21,7 @@ entropia_sync_versions(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

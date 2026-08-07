@@ -6,7 +6,7 @@ A research corpus changes over time: EntropIA keeps syncing, the schema
 evolves, and a “just filter and collect” workflow makes it impossible to
 say later *which* data produced a result. `entropiaR` solves this at the
 boundary where a query becomes a dataset:
-[`entropia_analysis_dataset()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_analysis_dataset.md)
+[`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
 records exactly what went in.
 
 ``` r
@@ -16,7 +16,7 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", packag
 
 ## Building a dataset
 
-[`entropia_analysis_dataset()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_analysis_dataset.md)
+[`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
 takes a connection, applies filter expressions to the corpus, collects
 it, and stamps provenance:
 
@@ -55,7 +55,7 @@ entropia_provenance(ds)
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-07T00:07:41.088Z
+#>   built at:       2026-08-07T00:43:58.344Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
@@ -91,7 +91,7 @@ Only `built_at` differs between builds.
 
 ## Provenance sidecars
 
-[`entropia_write_provenance()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_write_provenance.md)
+[`entropia_write_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_write_provenance.md)
 writes the provenance as a JSON sidecar, so a dataset and its
 `-prov.json` file travel together and survive email, archives, and other
 people’s machines:
@@ -108,13 +108,13 @@ readLines(prov_path)[1:9]
 #> [5] "  \"source_path\": \"/home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite\","
 #> [6] "  \"filters\": \"asset_type == \\\"pdf\\\"\","                                                    
 #> [7] "  \"package_version\": \"0.0.0.9000\","                                                           
-#> [8] "  \"built_at\": \"2026-08-07T00:07:41.088Z\","                                                    
+#> [8] "  \"built_at\": \"2026-08-07T00:43:58.344Z\","                                                    
 #> [9] "  \"r_version\": \"R version 4.6.1 (2026-06-24)\""
 ```
 
 ## Exporting
 
-[`entropia_export()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_export.md)
+[`entropia_export()`](https://humalab.github.io/EntropIA-R/reference/entropia_export.md)
 writes a dataset or a lazy query to disk. Delimited formats (csv/tsv)
 are *streamed* for lazy inputs — they fetch in chunks and never collect
 the whole result — and the output is deterministically ordered. JSON,
@@ -175,7 +175,7 @@ entropia_disconnect(con)
 ```
 
 Next:
-[`vignette("analysis")`](https://github.com/HumaLab/EntropIA-R/articles/analysis.md)
+[`vignette("analysis")`](https://humalab.github.io/EntropIA-R/articles/analysis.md)
 for a complete end-to-end analysis, or
-[`vignette("administration")`](https://github.com/HumaLab/EntropIA-R/articles/administration.md)
+[`vignette("administration")`](https://humalab.github.io/EntropIA-R/articles/administration.md)
 for the safety model around the database.

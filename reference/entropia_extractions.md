@@ -4,10 +4,10 @@ A lazy [`dplyr::tbl()`](https://dplyr.tidyverse.org/reference/tbl.html)
 over the `extractions` table. Each row is the OCR text layer of one
 asset; `id` is deterministic (`ext-{asset_id}`) and `asset_id` is
 UNIQUE, so the table joins 1:1 to
-[`entropia_assets()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_assets.md).
+[`entropia_assets()`](https://humalab.github.io/EntropIA-R/reference/entropia_assets.md).
 `text_content` may embed PDF page markers (`![](page=n,bbox=...)`) which
 the text layer
-([`entropia_text()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_text.md))
+([`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md))
 can strip.
 
 ## Usage
@@ -21,7 +21,7 @@ entropia_extractions(con)
 - con:
 
   A connection returned by
-  [`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 
 ## Value
 

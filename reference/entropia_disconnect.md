@@ -1,7 +1,7 @@
 # Close an EntropIA connection
 
 Closes a connection opened by
-[`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md).
+[`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md).
 Idempotent: calling it again on an already-closed connection is a no-op.
 
 ## Usage

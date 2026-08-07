@@ -5,7 +5,7 @@
 EntropIA stores your corpus in a SQLite database. The `entropiaR`
 package is the tidy, typed interface to that database — and in v1 it is
 **read-only by construction**.
-[`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md)
+[`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md)
 opens the file with SQLite’s read-only flags and re-asserts
 `PRAGMA query_only = ON`, so nothing in this package can ever modify
 your database. This is deliberate: the database may be *live* under the
@@ -28,7 +28,7 @@ entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "en
 
 The package ships a small example database so you can follow along
 without your own data. Connect to it with
-[`entropia_connect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_connect.md):
+[`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md):
 
 ``` r
 
@@ -86,7 +86,7 @@ notsqlite <- tempfile(fileext = ".txt")
 writeLines("not a database", notsqlite)
 entropia_connect(notsqlite)
 #> Error in `entropia_connect()`:
-#> ! /tmp/RtmpNCGyYt/file1fc01441c95f.txt is not a SQLite database.
+#> ! /tmp/Rtmpo8CbJ6/file1f5779f1927d.txt is not a SQLite database.
 #> ℹ entropiaR reads EntropIA SQLite databases. The file does not begin with the
 #>   SQLite header.
 ```
@@ -103,7 +103,7 @@ entropia_schema_version(con)
 #> [1] "0029_rag_chunks"
 ```
 
-[`entropia_schema_compat()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_schema_compat.md)
+[`entropia_schema_compat()`](https://humalab.github.io/EntropIA-R/reference/entropia_schema_compat.md)
 classifies the database against the column contract shipped with the
 package (`known`, `newer`, `older`, or `unknown`) and reports any
 missing columns:
@@ -117,7 +117,7 @@ compat$compatible
 #> [1] TRUE
 ```
 
-[`entropia_schema_info()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_schema_info.md)
+[`entropia_schema_info()`](https://humalab.github.io/EntropIA-R/reference/entropia_schema_info.md)
 lists every readable table with the columns and the type contract the
 package will apply on collect:
 
@@ -142,7 +142,7 @@ head(schema, 10)
 
 ## A compact status report
 
-[`entropia_status()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_status.md)
+[`entropia_status()`](https://humalab.github.io/EntropIA-R/reference/entropia_status.md)
 gives you the headline numbers at a glance — path, mode, schema version,
 row counts, sync freshness, and WAL state:
 
@@ -181,7 +181,7 @@ options(entropiaR.schema_policy = "warn") # the default; scoped to this session
 
 ## Validating the database
 
-[`entropia_validate()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_validate.md)
+[`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md)
 runs a structural diagnostic: core tables present, required columns
 present, per-table row counts, empty-database detection, and
 relationship sanity. It returns a findings tibble — an empty one means a
@@ -200,7 +200,7 @@ findings
 
 If you are about to run something long or heavy, snapshot the database
 first with
-[`entropia_copy()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_copy.md).
+[`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md).
 It uses SQLite’s `VACUUM INTO`, which reads *through* any WAL sidecars
 and writes a single self-contained file — a safe, stable working copy:
 
@@ -238,7 +238,7 @@ entropia_disconnect(copy_con)
 ## Closing
 
 Close a connection with
-[`entropia_disconnect()`](https://github.com/HumaLab/EntropIA-R/reference/entropia_disconnect.md).
+[`entropia_disconnect()`](https://humalab.github.io/EntropIA-R/reference/entropia_disconnect.md).
 It is idempotent — closing twice is harmless — and after closing,
 `dbIsValid()` reports `FALSE`:
 
@@ -250,6 +250,6 @@ DBI::dbIsValid(con)
 ```
 
 That is the whole connection surface. Next, explore the corpus with
-[`vignette("corpus")`](https://github.com/HumaLab/EntropIA-R/articles/corpus.md),
+[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md),
 or pull text and metadata with
-[`vignette("text")`](https://github.com/HumaLab/EntropIA-R/articles/text.md).
+[`vignette("text")`](https://humalab.github.io/EntropIA-R/articles/text.md).
