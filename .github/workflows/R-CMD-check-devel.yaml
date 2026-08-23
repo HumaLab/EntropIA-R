@@ -46,6 +46,15 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      - name: Install macOS system dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install libpng
+          libpng_prefix="$(brew --prefix libpng)"
+          makevars="$RUNNER_TEMP/Makevars"
+          printf 'CPPFLAGS += -I%s/include\nLDFLAGS += -L%s/lib\n' "$libpng_prefix" "$libpng_prefix" > "$makevars"
+          echo "R_MAKEVARS_USER=$makevars" >> "$GITHUB_ENV"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
