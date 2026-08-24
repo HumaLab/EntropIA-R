@@ -19,3 +19,6 @@ tests/testthat/fixtures/
 
 # Local pkgdown build (rebuilt by pkgdown::build_site())
 pkgdown/
+
+# CodeGraph index (local only)
+.codegraph/
