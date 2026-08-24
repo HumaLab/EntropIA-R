@@ -46,7 +46,7 @@ readLines(path)
 #>  [5] "  \"source_path\": \"/home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite\","
 #>  [6] "  \"filters\": \"asset_type == \\\"image\\\"\","                                                  
 #>  [7] "  \"package_version\": \"0.0.0.9000\","                                                           
-#>  [8] "  \"built_at\": \"2026-08-23T21:33:40.390Z\","                                                    
+#>  [8] "  \"built_at\": \"2026-08-24T01:10:22.455Z\","                                                    
 #>  [9] "  \"r_version\": \"R version 4.6.1 (2026-06-24)\""                                                
 #> [10] "}"                                                                                                
 entropia_disconnect(con)

@@ -56,9 +56,9 @@ entropia_provenance(corpus)
 #>   name:           corpus_full
 #>   schema version: 0029_rag_chunks
 #>   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
-#>   source path:    /tmp/Rtmp6bw8i0/file1ff13fce71d9.sqlite
+#>   source path:    /tmp/RtmpG2NdhL/file1edd58424b23.sqlite
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-23T21:33:46.221Z
+#>   built at:       2026-08-24T01:10:27.977Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 

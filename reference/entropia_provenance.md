@@ -40,7 +40,7 @@ entropia_provenance(ds)
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "image"
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-23T21:33:35.048Z
+#>   built at:       2026-08-24T01:10:16.834Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 entropia_disconnect(con)
 ```
