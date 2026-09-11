@@ -64,7 +64,8 @@ query first.</p>
 <span>  <span class="va">x</span>,</span>
 <span>  <span class="va">path</span>,</span>
 <span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"csv"</span>, <span class="st">"tsv"</span>, <span class="st">"json"</span>, <span class="st">"rds"</span>, <span class="st">"parquet"</span>, <span class="st">"arrow"</span><span class="op">)</span>,</span>
-<span>  chunk_size <span class="op">=</span> <span class="fl">1000L</span></span>
+<span>  chunk_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
+<span>  order_by <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -91,6 +92,11 @@ created).</p></dd>
 <dd><p>Rows fetched per chunk when streaming a lazy input to a
 delimited format. Default <code>1000L</code>.</p></dd>
 
+
+<dt id="arg-order-by">order_by<a class="anchor" aria-label="anchor" href="#arg-order-by"></a></dt>
+<dd><p>Optional character vector of primary ordering columns.
+All comparable output columns are appended as tie-breakers.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -98,11 +104,13 @@ delimited format. Default <code>1000L</code>.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Lazy queries are exported in a deterministic row order: when the rendered
-SQL carries no <code>ORDER BY</code>, the export arranges by the first column before
-streaming. Queries with an explicit ordering (e.g. <code><a href="entropia_search.html">entropia_search()</a></code>'s
-rank order, or <code><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">dplyr::arrange()</a></code> applied first) are exported in that order.
-Materialised data is written in the order it was given.</p>
+    <p>Lazy queries retain ordering recorded in dbplyr's <code>lazy_query$order_by</code>,
+with all projected columns appended as tie-breakers. SQLite compares BLOBs
+bytewise. Ordering hidden inside opaque SQL or unknown query objects cannot
+be recovered: supply <code>order_by</code> explicitly in that case. Identical projected
+rows are interchangeable. Materialised data retains its input order unless
+<code>order_by</code> is supplied; list columns cannot be explicit in-memory sort keys.
+CSV and TSV use one UTF-8 file connection for the entire export.</p>
 <p>The column contract is NOT applied by the export: a lazy query exports the
 raw values SQLite stores (epoch timestamps as integers, JSON-in-TEXT as
 text). Collect with <code><a href="entropia_collect.html">entropia_collect()</a></code> first – and pass the result as a

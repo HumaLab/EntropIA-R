@@ -33,8 +33,11 @@ A `ggplot` object.
 ## Details
 
 The y axis is labelled as a percentage. `pct` is `NA` for groups with no
-total (e.g. a metric absent from a corpus); those bars are dropped by
-`ggplot2` like any `NA` aesthetic.
+total (e.g. a metric absent from a corpus); these rows receive an
+explicit annotation, using `status` when available, instead of a
+misleading zero bar. Optional `group_id` is displayed alongside the
+label; distinct IDs never merge. Empty selections produce a Spanish
+no-data annotation.
 
 ## Examples
 
@@ -46,8 +49,8 @@ q <- data.frame(
   total = c(2428L, 3L),
   pct = c(250 / 2428, 1)
 )
-p <- entropia_plot_coverage(q)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
-  p + ggplot2::labs(title = "Coverage")
+  p <- entropia_plot_coverage(q)
+  p + ggplot2::labs(title = "Cobertura")
 }
 ```

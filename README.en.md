@@ -30,7 +30,21 @@ database is opened **read-only**, never modified.
   detection and connection validation.
 - **Ready-made analysis**: temporal profiles, document lengths, entity
   and topic frequencies, collection comparison, and reproducible
-  datasets with provenance.
+  datasets with v2 provenance (schema, snapshot and data hashes).
+- **Shared EDA**:
+  [`entropia_overview()`](https://humalab.github.io/EntropIA-R/reference/entropia_overview.md)
+  SQL-aggregates the study universe (counts, collections, temporality,
+  eligibility-aware quality, entity and topic occurrence plus per-item
+  prevalence) and
+  [`entropia_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_profile.md)
+  profiles collected tibbles locally (missingness, distributions,
+  duplicates, reproducible sampling).
+- **Local dashboard and frozen reports**:
+  [`entropia_dashboard()`](https://humalab.github.io/EntropIA-R/reference/entropia_dashboard.md)
+  builds an optional Shiny app over a snapshot (isolated sessions, one
+  selection across panels, on-demand text, bounded downloads) and
+  [`entropia_report()`](https://humalab.github.io/EntropIA-R/reference/entropia_report.md)
+  renders a Quarto dashboard with optional redaction.
 - **Visualisation** with `ggplot2` (`entropia_plot_*`) and
   **reproducible export** to CSV, TSV, JSON, RDS, Parquet or Arrow, with
   provenance sidecars.

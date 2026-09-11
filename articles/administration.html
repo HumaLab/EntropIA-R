@@ -132,16 +132,21 @@ snapshot.</li>
 and acts on <code>options(entropiaR.schema_policy)</code>:</p>
 <ul>
 <li>
-<code>"warn"</code> (default) — warn and proceed for
-unknown/newer/older schemas, as long as required columns exist;</li>
+<code>"warn"</code> (default) — warn and proceed for older/newer
+schemas when core tables exist; <strong>missing
+<code>collections</code>/<code>items</code>/<code>assets</code> is an
+error</strong>;</li>
 <li>
-<code>"error"</code> — hard stop on an unknown (newer) schema;</li>
+<code>"error"</code> — hard stop on any incompatibility;</li>
 <li>
-<code>"allow"</code> — silent.</li>
+<code>"allow"</code> — silent open, then inspect with
+<code><a href="../reference/entropia_validate.html">entropia_validate()</a></code>.</li>
 </ul>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_schema_compat.html">entropia_schema_compat</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span><span class="op">$</span><span class="va">status</span></span>
-<span><span class="co">#&gt; [1] "known"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "known"</span></span>
+<span><span class="fu"><a href="../reference/entropia_schema_compat.html">entropia_schema_compat</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span><span class="op">$</span><span class="va">compatible</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-v2-write-design">The v2 write design<a class="anchor" aria-label="anchor" href="#the-v2-write-design"></a>

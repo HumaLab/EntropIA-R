@@ -52,7 +52,8 @@
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>
 <dd><p>The collection column, selected by name or bare (tidyselect).
-Default <code>"collection_name"</code>.</p></dd>
+Defaults to <code>collection_id</code> when available, otherwise <code>collection_name</code>.
+The default ID grouping retains <code>collection_name</code> as a display label.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -68,8 +69,8 @@ the collected corpus (<code>dplyr::collect(entropia_corpus(con))</code>), which 
 different collection column (e.g. <code>collection_id</code>).</p>
 <p>Each row reports <code>n</code> (rows of <code>x</code> in that collection) plus <code>n_items</code> and
 <code>n_assets</code> (distinct <code>item_id</code> / <code>asset_id</code> values, <code>NA</code> excluded) when the
-input carries those columns. On the collected corpus <code>n</code> equals the number
-of assets in the collection. Rows are ordered by the collection column
+input carries those columns. Corpus rows without assets count towards <code>n</code>
+but not <code>n_assets</code>. Rows are ordered by the collection column
 (deterministic).</p>
     </div>
 
@@ -80,10 +81,10 @@ of assets in the collection. Rows are ordered by the collection column
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="fu"><a href="entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">entropia_compare_collections</span><span class="op">(</span><span class="va">corpus</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   collection_name   n_items n_assets     n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Archivo de prueba       3        5     5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   collection_id                        collection_name   n_items n_assets     n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 11111111-1111-4111-8111-111111111111 Archivo de prueba       3        5     5</span>
 <span class="r-in"><span><span class="fu"><a href="entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

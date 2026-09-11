@@ -58,8 +58,8 @@ metadata):</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble of class <code>entropia_corpus_quality</code> with columns <code>metric</code>,
-<code>group</code>, <code>n</code>, <code>total</code> and <code>pct</code>.</p>
+    <p>A plain tibble with columns <code>metric</code>, <code>group_id</code>, <code>group</code>, <code>unit</code>,
+<code>n</code>, <code>total</code>, <code>pct</code> and <code>status</code> (<code>ok</code> or <code>no_data</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -70,11 +70,13 @@ assets, per asset type.</p></li>
 per asset type.</p></li>
 <li><p><code>metadata_coverage</code>: <code>n</code> items with metadata, <code>total</code> items, per
 collection.</p></li>
-<li><p><code>empty_text</code>: <code>n</code> assets whose best text layer is empty/whitespace-only,
-<code>total</code> assets with at least one text layer, per asset type.</p></li>
-</ul><p><code>pct</code> is <code>n / total</code>, <code>NA</code> when <code>total</code> is 0. The report is materialised (it
-is a small aggregate, like <code><a href="entropia_validate.html">entropia_validate()</a></code> findings) and carries the
-<code>entropia_corpus_quality</code> class.</p>
+<li><p><code>empty_text</code>: <code>n</code> assets with a text layer but no useful text in any
+layer, <code>total</code> assets with at least one text layer, per asset type.
+This legacy metric is not selected-source emptiness; see
+<code><a href="entropia_overview.html">entropia_overview()</a></code> for separate selected-source diagnostics.</p></li>
+</ul><p><code>pct</code> is <code>n / total</code>, <code>NA</code> when <code>total</code> is 0. Collection IDs are retained
+even when collection labels coincide. For a filtered study universe, use
+<code><a href="entropia_overview.html">entropia_overview()</a></code> and its <code>quality</code> element.</p>
     </div>
 
     <div class="section level2">
@@ -83,19 +85,19 @@ is a small aggregate, like <code><a href="entropia_validate.html">entropia_valid
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"entropiaR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">entropia_corpus_quality</span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    metric                 group                 n total    pct</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> empty_text             audio                 0     1  0    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> empty_text             image                 0     0 <span style="color: #BB0000;">NA</span>    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> empty_text             pdf                   0     2  0    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> metadata_coverage      Archivo de prueba     2     3  0.667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> ocr_coverage           audio                 0     1  0    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> ocr_coverage           image                 0     1  0    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> ocr_coverage           pdf                   2     3  0.667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> transcription_presence audio                 1     1  1    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> transcription_presence image                 0     1  0    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> transcription_presence pdf                   0     3  0    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 8</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    metric                 group_id         group unit      n total    pct status</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> empty_text             audio            audio asset     0     1  0     ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> empty_text             image            image asset     0     0 <span style="color: #BB0000;">NA</span>     no_da…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> empty_text             pdf              pdf   asset     0     2  0     ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> metadata_coverage      11111111-1111-4… Arch… item      2     3  0.667 ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> ocr_coverage           audio            audio asset     0     1  0     ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> ocr_coverage           image            image asset     0     1  0     ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> ocr_coverage           pdf              pdf   asset     2     3  0.667 ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> transcription_presence audio            audio asset     1     1  1     ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> transcription_presence image            image asset     0     1  0     ok    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> transcription_presence pdf              pdf   asset     0     3  0     ok    </span>
 <span class="r-in"><span><span class="fu"><a href="entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

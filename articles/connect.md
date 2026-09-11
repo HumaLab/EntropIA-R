@@ -42,7 +42,8 @@ con
 The result is an `entropia_conn`, a specialized DBI connection. It *is*
 a real `SQLiteConnection`, so every DBI function keeps working, and it
 carries a few extra attributes — the file path, the open mode, the
-schema version, and a content hash of the schema:
+schema version, and a **schema** hash (DDL + migrations, not row
+contents):
 
 ``` r
 
@@ -55,7 +56,7 @@ summary(con)
 #>   path:           /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   mode:           read-only
 #>   schema version: 0029_rag_chunks
-#>   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
+#>   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
 #>   valid:          TRUE
 DBI::dbIsValid(con)
 #> [1] TRUE
@@ -86,7 +87,7 @@ notsqlite <- tempfile(fileext = ".txt")
 writeLines("not a database", notsqlite)
 entropia_connect(notsqlite)
 #> Error in `entropia_connect()`:
-#> ! /tmp/RtmpYgeESj/file1f15b3c9b22.txt is not a SQLite database.
+#> ! /tmp/Rtmpdir4vY/file20c12d8c8e59.txt is not a SQLite database.
 #> ℹ entropiaR reads EntropIA SQLite databases. The file does not begin with the
 #>   SQLite header.
 ```
@@ -125,19 +126,19 @@ package will apply on collect:
 
 schema <- entropia_schema_info(con)
 head(schema, 10)
-#> # A tibble: 10 × 7
-#>    table       column     type    required contract   min_version      source  
-#>    <chr>       <chr>      <chr>   <lgl>    <chr>      <chr>            <chr>   
-#>  1 _migrations id         INTEGER TRUE     NA         0001_initial     manifest
-#>  2 _migrations name       TEXT    TRUE     NA         0001_initial     manifest
-#>  3 _migrations applied_at INTEGER TRUE     datetime_s 0001_initial     manifest
-#>  4 annotations id         TEXT    TRUE     NA         0007_annotations manifest
-#>  5 annotations asset_id   TEXT    TRUE     NA         0007_annotations manifest
-#>  6 annotations page       INTEGER TRUE     int        0007_annotations manifest
-#>  7 annotations kind       TEXT    TRUE     enum       0007_annotations manifest
-#>  8 annotations color      TEXT    TRUE     NA         0007_annotations manifest
-#>  9 annotations x          REAL    TRUE     dbl        0007_annotations manifest
-#> 10 annotations y          REAL    TRUE     dbl        0007_annotations manifest
+#> # A tibble: 10 × 9
+#>    table    column type  required contract min_version source presence live_type
+#>    <chr>    <chr>  <chr> <lgl>    <chr>    <chr>       <chr>  <lgl>    <chr>    
+#>  1 _migrat… id     INTE… TRUE     NA       0001_initi… manif… TRUE     INTEGER  
+#>  2 _migrat… name   TEXT  TRUE     NA       0001_initi… manif… TRUE     TEXT     
+#>  3 _migrat… appli… INTE… TRUE     datetim… 0001_initi… manif… TRUE     INTEGER  
+#>  4 annotat… id     TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#>  5 annotat… asset… TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#>  6 annotat… page   INTE… TRUE     int      0007_annot… manif… TRUE     INTEGER  
+#>  7 annotat… kind   TEXT  TRUE     enum     0007_annot… manif… TRUE     TEXT     
+#>  8 annotat… color  TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#>  9 annotat… x      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL     
+#> 10 annotat… y      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL
 ```
 
 ## A compact status report
@@ -165,19 +166,37 @@ entropia_status(con)
 Because EntropIA evolves, `entropiaR` checks the schema on open and
 behaves according to `options(entropiaR.schema_policy)`:
 
-- `"warn"` (default) — warns and proceeds, tolerating
-  unknown/newer/older schemas as long as the required columns exist;
-- `"error"` — hard stop on an unknown (newer) schema;
-- `"allow"` — silent, no warnings.
+- `"warn"` (default) — warn and proceed for older/newer schemas **when
+  the core tables `collections`, `items` and `assets` exist**;
+- `"error"` — hard stop on any incompatibility, including a missing core
+  table;
+- `"allow"` — open anyway so you can run
+  [`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md).
 
-The backward-compatible posture is the default: unknown columns are
-ignored, missing optional columns degrade gracefully, and only genuinely
-missing *required* columns raise `entropia_error_schema_incompatible`.
+A SQLite file that only has `_migrations` and no corpus tables is
+**not** compatible. That used to print `compatible = TRUE`; it no longer
+does.
 
 ``` r
 
 options(entropiaR.schema_policy = "warn") # the default; scoped to this session
+entropia_schema_info(con) |>
+  utils::head(8)
+#> # A tibble: 8 × 9
+#>   table     column type  required contract min_version source presence live_type
+#>   <chr>     <chr>  <chr> <lgl>    <chr>    <chr>       <chr>  <lgl>    <chr>    
+#> 1 _migrati… id     INTE… TRUE     NA       0001_initi… manif… TRUE     INTEGER  
+#> 2 _migrati… name   TEXT  TRUE     NA       0001_initi… manif… TRUE     TEXT     
+#> 3 _migrati… appli… INTE… TRUE     datetim… 0001_initi… manif… TRUE     INTEGER  
+#> 4 annotati… id     TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#> 5 annotati… asset… TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#> 6 annotati… page   INTE… TRUE     int      0007_annot… manif… TRUE     INTEGER  
+#> 7 annotati… kind   TEXT  TRUE     enum     0007_annot… manif… TRUE     TEXT     
+#> 8 annotati… color  TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT
 ```
+
+`schema_info` now distinguishes `presence` (column exists live) from the
+manifest `type` and the SQLite `live_type`.
 
 ## Validating the database
 

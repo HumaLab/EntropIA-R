@@ -49,7 +49,11 @@
 <li>
 <strong>Corpus diagnostics</strong>: OCR/metadata coverage, orphaned-reference detection and connection validation.</li>
 <li>
-<strong>Ready-made analysis</strong>: temporal profiles, document lengths, entity and topic frequencies, collection comparison, and reproducible datasets with provenance.</li>
+<strong>Ready-made analysis</strong>: temporal profiles, document lengths, entity and topic frequencies, collection comparison, and reproducible datasets with v2 provenance (schema, snapshot and data hashes).</li>
+<li>
+<strong>Shared EDA</strong>: <code><a href="reference/entropia_overview.html">entropia_overview()</a></code> SQL-aggregates the study universe (counts, collections, temporality, eligibility-aware quality, entity and topic occurrence plus per-item prevalence) and <code><a href="reference/entropia_profile.html">entropia_profile()</a></code> profiles collected tibbles locally (missingness, distributions, duplicates, reproducible sampling).</li>
+<li>
+<strong>Local dashboard and frozen reports</strong>: <code><a href="reference/entropia_dashboard.html">entropia_dashboard()</a></code> builds an optional Shiny app over a snapshot (isolated sessions, one selection across panels, on-demand text, bounded downloads) and <code><a href="reference/entropia_report.html">entropia_report()</a></code> renders a Quarto dashboard with optional redaction.</li>
 <li>
 <strong>Visualisation</strong> with <code>ggplot2</code> (<code>entropia_plot_*</code>) and <strong>reproducible export</strong> to CSV, TSV, JSON, RDS, Parquet or Arrow, with provenance sidecars.</li>
 </ul></div>

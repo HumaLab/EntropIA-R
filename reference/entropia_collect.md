@@ -11,7 +11,7 @@ unchanged.
 ## Usage
 
 ``` r
-entropia_collect(x, n = Inf, ...)
+entropia_collect(x, n = Inf, ..., schema = NULL)
 ```
 
 ## Arguments
@@ -31,6 +31,11 @@ entropia_collect(x, n = Inf, ...)
   Additional arguments passed to
   [`dplyr::collect()`](https://dplyr.tidyverse.org/reference/compute.html).
 
+- schema:
+
+  Optional named character vector mapping output columns to
+  `datetime_ms`, `datetime_s`, `datetime_auto`, `json`, or `raw`.
+
 ## Value
 
 A
@@ -39,10 +44,11 @@ with the column contract applied.
 
 ## Details
 
-The contract is resolved from the table's base table. For a lazy query
-that is not a simple single-table read (joins, subqueries) the columns
-are returned as SQLite produced them – keep filters/selects inside the
-lazy query for best results.
+Automatic contracts follow only proven untouched column references and
+rename aliases through supported dbplyr query nodes. Transformed
+expressions, joins, raw SQL and unknown query structures remain untyped.
+Explicit schema entries override inference for those columns; `"raw"`
+disables conversion.
 
 ## Examples
 

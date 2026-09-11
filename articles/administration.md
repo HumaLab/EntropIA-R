@@ -75,15 +75,19 @@ entropia_copy(con, copy_path)
 Because the database evolves, the package checks the schema on open and
 acts on `options(entropiaR.schema_policy)`:
 
-- `"warn"` (default) — warn and proceed for unknown/newer/older schemas,
-  as long as required columns exist;
-- `"error"` — hard stop on an unknown (newer) schema;
-- `"allow"` — silent.
+- `"warn"` (default) — warn and proceed for older/newer schemas when
+  core tables exist; **missing `collections`/`items`/`assets` is an
+  error**;
+- `"error"` — hard stop on any incompatibility;
+- `"allow"` — silent open, then inspect with
+  [`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md).
 
 ``` r
 
 entropia_schema_compat(con)$status
 #> [1] "known"
+entropia_schema_compat(con)$compatible
+#> [1] TRUE
 ```
 
 ## The v2 write design

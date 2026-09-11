@@ -107,7 +107,12 @@ those are opt-in (see
 
 [`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)
 is the workhorse: it joins items, collections and assets in one lazy
-query, one row per asset, and appends the best available text per asset:
+query. Grain is **one row per linked asset, plus one row per item that
+has no asset** (`asset_id` is then `NA`). Orphan assets (no parent item)
+and empty collections do not appear. Prefixed timestamps stay integers
+until you pass an explicit contract into
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
+— the join has no single-table contract.
 
 ``` r
 
@@ -125,8 +130,8 @@ corpus |> colnames()
 ``` r
 
 corpus |>
-  select(item_title, asset_type, page_number, text) |>
-  collect()
+  dplyr::select(item_title, asset_type, page_number, text) |>
+  dplyr::collect()
 #> # A tibble: 5 × 4
 #>   item_title              asset_type page_number text                           
 #>   <chr>                   <chr>            <int> <chr>                          
@@ -137,22 +142,20 @@ corpus |>
 #> 5 Fotografía de la marcha image               NA NA
 ```
 
-Assets with no text layer keep their row and get `NA` text — no rows are
-lost.
-
 ### Filtering
 
-`collections` and `asset_types` accept character vectors and push the
-filter down to SQL:
+`collections` matches `collections.name`. Prefer `collection_ids` when
+names can collide (the name is **not** unique in the schema):
 
 ``` r
 
 entropia_corpus(con, asset_types = "pdf") |>
-  collect() |>
+  dplyr::collect() |>
   nrow()
 #> [1] 3
-entropia_corpus(con, collections = "Archivo de prueba") |>
-  collect() |>
+ids <- entropia_collections(con) |> dplyr::collect() |> dplyr::pull(id)
+entropia_corpus(con, collection_ids = ids[1]) |>
+  dplyr::collect() |>
   nrow()
 #> [1] 5
 ```
@@ -187,12 +190,13 @@ get a row with `NA`s rather than disappearing:
 ``` r
 
 entropia_metadata(con)
-#> # A tibble: 3 × 5
-#>   item_id             original_name original_path imported_at         page_count
-#>   <chr>               <chr>         <chr>         <dttm>              <list>    
-#> 1 22222222-2222-4222… manifiesto.p… /docs/manifi… 2026-01-15 12:05:00 <int [1]> 
-#> 2 22222222-2222-4222… carta.mp3     /docs/carta.… 2026-01-15 12:06:00 <NULL>    
-#> 3 22222222-2222-4222… NA            NA            NA                  <NULL>
+#> # A tibble: 3 × 7
+#>   item_id           original_name original_path imported_at         raw_metadata
+#>   <chr>             <chr>         <chr>         <dttm>              <chr>       
+#> 1 22222222-2222-42… manifiesto.p… /docs/manifi… 2026-01-15 12:05:00 "{\"__entro…
+#> 2 22222222-2222-42… carta.mp3     /docs/carta.… 2026-01-15 12:06:00 "{\"__entro…
+#> 3 22222222-2222-42… NA            NA            NA                   NA         
+#> # ℹ 2 more variables: extra_metadata <list>, page_count <list>
 ```
 
 Pass `parse = FALSE` to see the raw JSON text instead.

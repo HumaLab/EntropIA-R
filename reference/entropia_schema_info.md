@@ -25,7 +25,9 @@ entropia_schema_info(con)
 ## Value
 
 A tibble with columns `table`, `column`, `type`, `required`, `contract`,
-`min_version` and `source`.
+`min_version`, `source`, `presence` (logical) and `live_type`. Absent
+manifest tables and columns have `presence = FALSE` and missing
+`live_type`; `type` retains the manifest declaration where available.
 
 ## Examples
 
@@ -34,19 +36,19 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
   package = "entropiaR"
 ))
 entropia_schema_info(con)
-#> # A tibble: 190 × 7
-#>    table       column     type    required contract   min_version      source  
-#>    <chr>       <chr>      <chr>   <lgl>    <chr>      <chr>            <chr>   
-#>  1 _migrations id         INTEGER TRUE     NA         0001_initial     manifest
-#>  2 _migrations name       TEXT    TRUE     NA         0001_initial     manifest
-#>  3 _migrations applied_at INTEGER TRUE     datetime_s 0001_initial     manifest
-#>  4 annotations id         TEXT    TRUE     NA         0007_annotations manifest
-#>  5 annotations asset_id   TEXT    TRUE     NA         0007_annotations manifest
-#>  6 annotations page       INTEGER TRUE     int        0007_annotations manifest
-#>  7 annotations kind       TEXT    TRUE     enum       0007_annotations manifest
-#>  8 annotations color      TEXT    TRUE     NA         0007_annotations manifest
-#>  9 annotations x          REAL    TRUE     dbl        0007_annotations manifest
-#> 10 annotations y          REAL    TRUE     dbl        0007_annotations manifest
+#> # A tibble: 190 × 9
+#>    table    column type  required contract min_version source presence live_type
+#>    <chr>    <chr>  <chr> <lgl>    <chr>    <chr>       <chr>  <lgl>    <chr>    
+#>  1 _migrat… id     INTE… TRUE     NA       0001_initi… manif… TRUE     INTEGER  
+#>  2 _migrat… name   TEXT  TRUE     NA       0001_initi… manif… TRUE     TEXT     
+#>  3 _migrat… appli… INTE… TRUE     datetim… 0001_initi… manif… TRUE     INTEGER  
+#>  4 annotat… id     TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#>  5 annotat… asset… TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#>  6 annotat… page   INTE… TRUE     int      0007_annot… manif… TRUE     INTEGER  
+#>  7 annotat… kind   TEXT  TRUE     enum     0007_annot… manif… TRUE     TEXT     
+#>  8 annotat… color  TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT     
+#>  9 annotat… x      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL     
+#> 10 annotat… y      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL     
 #> # ℹ 180 more rows
 entropia_disconnect(con)
 ```

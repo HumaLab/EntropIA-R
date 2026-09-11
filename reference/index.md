@@ -107,6 +107,16 @@ helpers.
 - [`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
   : Item metadata (parsed)
 
+## Shared EDA
+
+SQL-aggregated corpus overview over an explicit selection and local
+grouped profiling of collected tibbles.
+
+- [`entropia_overview()`](https://humalab.github.io/EntropIA-R/reference/entropia_overview.md)
+  : Overview of a selected study universe
+- [`entropia_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_profile.md)
+  : Profile collected observations
+
 ## Corpus quality & diagnostics
 
 Coverage reports, orphaned-reference detection, connection validation
@@ -164,14 +174,36 @@ with provenance.
 
 ## Visualization
 
-ggplot2 helpers on analysis summaries (Suggests).
+ggplot2 helpers on analysis summaries and EDA tables (Suggests).
 
 - [`entropia_plot_temporal()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_temporal.md)
   : Plot a temporal profile
 - [`entropia_plot_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_entities.md)
   : Plot entity frequencies
+- [`entropia_plot_topics()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_topics.md)
+  : Plot topic frequencies
 - [`entropia_plot_coverage()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_coverage.md)
   : Plot corpus coverage
+- [`entropia_plot_missing()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_missing.md)
+  : Plot missing-value proportions
+- [`entropia_plot_collections()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_collections.md)
+  : Plot collection counts
+- [`entropia_plot_distribution()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_distribution.md)
+  : Plot a numeric distribution
+- [`entropia_plot_scatter()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_scatter.md)
+  : Plot two numeric measurements
+- [`entropia_plot_correlation()`](https://humalab.github.io/EntropIA-R/reference/entropia_plot_correlation.md)
+  : Plot correlations of selected numeric measurements
+
+## Dashboard & reports
+
+Optional local Shiny exploration and frozen Quarto dashboards over the
+same overview tables.
+
+- [`entropia_dashboard()`](https://humalab.github.io/EntropIA-R/reference/entropia_dashboard.md)
+  : Explore an EntropIA snapshot in a local dashboard
+- [`entropia_report()`](https://humalab.github.io/EntropIA-R/reference/entropia_report.md)
+  : Render a frozen, shareable EDA dashboard with Quarto
 
 ## Export & provenance
 

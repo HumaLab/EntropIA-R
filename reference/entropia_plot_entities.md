@@ -3,13 +3,24 @@
 Plots the output of
 [`entropia_entity_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_entity_frequency.md)
 as a horizontal bar chart of the top entity values, filled by a column
-of `x` (by default `entity_type`). `value` is reordered by count so the
-most frequent entity sits at the top of the chart (via `coord_flip()`).
+of `x` (by default `entity_type`). Each source row has its own bar
+position, so repeated labels or distinct IDs are never stacked or
+silently merged. Highest values appear at the top. Global ranking
+selects rows, not aggregated labels; group ranking selects up to `top`
+rows per group/facet combination. Ties use input order.
 
 ## Usage
 
 ``` r
-entropia_plot_entities(x, top = 10, fill = "entity_type")
+entropia_plot_entities(
+  x,
+  top = 10,
+  fill = "entity_type",
+  group = NULL,
+  facet = NULL,
+  top_by = "global",
+  value = "n"
+)
 ```
 
 ## Arguments
@@ -29,6 +40,23 @@ entropia_plot_entities(x, top = 10, fill = "entity_type")
   Column of `x` to colour the bars by, selected by name or bare. Default
   `"entity_type"`.
 
+- group:
+
+  Optional grouping column, bare or named. Automatic grouping errors if
+  remaining dimensions are ambiguous; IDs take precedence.
+
+- facet:
+
+  Optional faceting column, bare or named.
+
+- top_by:
+
+  Either `global` (default) or `group`.
+
+- value:
+
+  Numeric measure column, bare or named; defaults to `n`.
+
 ## Value
 
 A `ggplot` object.
@@ -41,8 +69,8 @@ freq <- data.frame(
   value = c("Juan Pérez", "CGT", "Mar del Plata"),
   n = c(4L, 3L, 2L)
 )
-p <- entropia_plot_entities(freq)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
-  p + ggplot2::labs(title = "Custom title")
+  p <- entropia_plot_entities(freq)
+  p + ggplot2::labs(title = "Entidades destacadas")
 }
 ```

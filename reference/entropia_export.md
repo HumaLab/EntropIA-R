@@ -18,7 +18,8 @@ entropia_export(
   x,
   path,
   format = c("csv", "tsv", "json", "rds", "parquet", "arrow"),
-  chunk_size = 1000L
+  chunk_size = 1000L,
+  order_by = NULL
 )
 ```
 
@@ -45,20 +46,25 @@ entropia_export(
   Rows fetched per chunk when streaming a lazy input to a delimited
   format. Default `1000L`.
 
+- order_by:
+
+  Optional character vector of primary ordering columns. All comparable
+  output columns are appended as tie-breakers.
+
 ## Value
 
 The normalized `path`, invisibly.
 
 ## Details
 
-Lazy queries are exported in a deterministic row order: when the
-rendered SQL carries no `ORDER BY`, the export arranges by the first
-column before streaming. Queries with an explicit ordering (e.g.
-[`entropia_search()`](https://humalab.github.io/EntropIA-R/reference/entropia_search.md)'s
-rank order, or
-[`dplyr::arrange()`](https://dplyr.tidyverse.org/reference/arrange.html)
-applied first) are exported in that order. Materialised data is written
-in the order it was given.
+Lazy queries retain ordering recorded in dbplyr's `lazy_query$order_by`,
+with all projected columns appended as tie-breakers. SQLite compares
+BLOBs bytewise. Ordering hidden inside opaque SQL or unknown query
+objects cannot be recovered: supply `order_by` explicitly in that case.
+Identical projected rows are interchangeable. Materialised data retains
+its input order unless `order_by` is supplied; list columns cannot be
+explicit in-memory sort keys. CSV and TSV use one UTF-8 file connection
+for the entire export.
 
 The column contract is NOT applied by the export: a lazy query exports
 the raw values SQLite stores (epoch timestamps as integers, JSON-in-TEXT

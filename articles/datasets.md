@@ -23,27 +23,33 @@ it, and stamps provenance:
 ``` r
 
 ds <- entropia_analysis_dataset(con, name = "pdf_documents", asset_type == "pdf")
+#> Warning: Missing values are always removed in SQL aggregation functions.
+#> Use `na.rm = TRUE` to silence this warning
+#> This warning is displayed once every 8 hours.
 ds
 #> entropia_dataset: pdf_documents
-#>   schema: 0029_rag_chunks  content: 09d4c603b66d
+#>   schema: 0029_rag_chunks  hash: 09d4c603b66d
 #>   filters: asset_type == "pdf"
 #> # A tibble: 3 × 19
-#>   item_id      item_title collection_id metadata item_created_at item_updated_at
-#>   <chr>        <chr>      <chr>         <chr>            <int64>         <int64>
-#> 1 22222222-22… Manifiest… 11111111-111… "{\"__e…   1768478460000   1768478520000
-#> 2 22222222-22… Manifiest… 11111111-111… "{\"__e…   1768478460000   1768478520000
-#> 3 22222222-22… Manifiest… 11111111-111… "{\"__e…   1768478460000   1768478520000
-#> # ℹ 13 more variables: collection_name <chr>, collection_description <chr>,
-#> #   collection_created_at <int64>, collection_updated_at <int64>,
-#> #   asset_id <chr>, asset_path <chr>, asset_type <chr>, asset_size <int>,
-#> #   asset_created_at <int64>, asset_sort_index <int>, parent_asset_id <chr>,
-#> #   page_number <int>, text <chr>
+#>   item_id              item_title collection_id metadata     item_created_at    
+#>   <chr>                <chr>      <chr>         <list>       <dttm>             
+#> 1 22222222-2222-4222-… Manifiest… 11111111-111… <named list> 2026-01-15 12:01:00
+#> 2 22222222-2222-4222-… Manifiest… 11111111-111… <named list> 2026-01-15 12:01:00
+#> 3 22222222-2222-4222-… Manifiest… 11111111-111… <named list> 2026-01-15 12:01:00
+#> # ℹ 14 more variables: item_updated_at <dttm>, collection_name <chr>,
+#> #   collection_description <chr>, collection_created_at <dttm>,
+#> #   collection_updated_at <dttm>, asset_id <chr>, asset_path <chr>,
+#> #   asset_type <chr>, asset_size <int>, asset_created_at <dttm>,
+#> #   asset_sort_index <int>, parent_asset_id <chr>, page_number <int>,
+#> #   text <chr>
 ```
 
 The result is a tibble with class `entropia_dataset`, plus an
-`entropia_prov` attribute recording the schema version, the content hash
-of the source schema, the source path, the filter expressions, the
-package version, a build timestamp, and the R version.
+`entropia_prov` attribute (version 2 sidecar) recording the schema
+version, the schema hash, the source-file snapshot digest, a canonical
+digest of the collected rows, the resolved SQL, the selection recipe,
+the source path, the filter labels, the package version, a build
+timestamp, and the R version.
 
 ``` r
 
@@ -51,43 +57,57 @@ entropia_provenance(ds)
 #> entropiaR dataset provenance
 #>   name:           pdf_documents
 #>   schema version: 0029_rag_chunks
-#>   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
+#>   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
+#>   dataset hash:   1994ab82411fd92a1e09cf8caf392cb8720691b8d07903bad7d4bac1faa22ecf
+#>   scope:          origin
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-24T01:10:41.621Z
+#>   built at:       2026-09-11T17:36:12.490Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
-Multiple filters compose, and they push down to SQL before the collect:
+Multiple filters compose, and they push down to SQL before the collect.
+`unit = "item"` collapses to one row per document; `text = FALSE` skips
+OCR:
 
 ``` r
 
 entropia_analysis_dataset(con, name = "audio_items", asset_type == "audio") |>
   nrow()
 #> [1] 1
+entropia_analysis_dataset(con, unit = "item", text = FALSE, name = "items_only") |>
+  ncol()
+#> [1] 9
 ```
 
 ## Determinism
 
-Identical inputs produce identical datasets. The corpus is always
-arranged on `asset_id` before collecting, so row order never depends on
+Identical inputs produce identical datasets. Rows are arranged on a
+stable item/asset key before collecting, so row order never depends on
 the physical layout of the database:
 
 ``` r
 
 a <- entropia_analysis_dataset(con, asset_type == "image")
 b <- entropia_analysis_dataset(con, asset_type == "image")
-identical(a, b) # data bytes identical
+identical(as.data.frame(a), as.data.frame(b)) # data bytes identical
 #> [1] FALSE
 identical(
-  entropia_provenance(a)[["content_hash"]],
-  entropia_provenance(b)[["content_hash"]]
+  entropia_provenance(a)[["dataset_sha256"]],
+  entropia_provenance(b)[["dataset_sha256"]]
 )
 #> [1] TRUE
 ```
 
-Only `built_at` differs between builds.
+Only `built_at` differs between builds. Structural identity
+(`schema_hash`) and data identity (`dataset_sha256`) are separate
+claims: an UPDATE that changes rows leaves `schema_hash` intact but
+changes the data digest, and reading
+[`entropia_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_provenance.md)
+on a *derived* object re-computes the current digest, marks
+`scope = "derived"`, and keeps the origin digest and SQL under `origin`
+instead of claiming the original query reproduces transformed rows.
 
 ## Provenance sidecars
 
@@ -100,16 +120,17 @@ people’s machines:
 
 prov_path <- tempfile(fileext = "-prov.json")
 entropia_write_provenance(ds, prov_path)
+entropia_write_provenance(ds, tempfile(fileext = "-redacted.json"), redact = TRUE)
 readLines(prov_path)[1:9]
-#> [1] "{"                                                                                                
-#> [2] "  \"name\": \"pdf_documents\","                                                                   
-#> [3] "  \"schema_version\": \"0029_rag_chunks\","                                                       
-#> [4] "  \"content_hash\": \"09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732\","        
-#> [5] "  \"source_path\": \"/home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite\","
-#> [6] "  \"filters\": \"asset_type == \\\"pdf\\\"\","                                                    
-#> [7] "  \"package_version\": \"0.0.0.9000\","                                                           
-#> [8] "  \"built_at\": \"2026-08-24T01:10:41.621Z\","                                                    
-#> [9] "  \"r_version\": \"R version 4.6.1 (2026-06-24)\""
+#> [1] "{"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+#> [2] "  \"sidecar_version\": 2,"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+#> [3] "  \"name\": \"pdf_documents\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+#> [4] "  \"scope\": \"origin\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+#> [5] "  \"schema_version\": \"0029_rag_chunks\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+#> [6] "  \"schema_hash\": \"09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+#> [7] "  \"snapshot_sha256\": \"4cb964df442cd35fe1cb6b56b7dadf63a02de92014b4a9334cdfe2de9615a34c\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+#> [8] "  \"dataset_sha256\": \"1994ab82411fd92a1e09cf8caf392cb8720691b8d07903bad7d4bac1faa22ecf\","                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+#> [9] "  \"query\": \"SELECT\\n  `item_id`,\\n  `item_title`,\\n  `collection_id`,\\n  `metadata`,\\n  `item_created_at`,\\n  `item_updated_at`,\\n  `collection_name`,\\n  `collection_description`,\\n  `collection_created_at`,\\n  `collection_updated_at`,\\n  `asset_id`,\\n  `asset_path`,\\n  `asset_type`,\\n  `asset_size`,\\n  `asset_created_at`,\\n  `asset_sort_index`,\\n  `parent_asset_id`,\\n  `page_number`,\\n  COALESCE(`text_ext`, `text_trx`) AS `text`\\nFROM (\\n  SELECT\\n    `items`.`id` AS `item_id`,\\n    `title` AS `item_title`,\\n    `collection_id`,\\n    `metadata`,\\n    `items`.`created_at` AS `item_created_at`,\\n    `items`.`updated_at` AS `item_updated_at`,\\n    `name` AS `collection_name`,\\n    `description` AS `collection_description`,\\n    `collections`.`created_at` AS `collection_created_at`,\\n    `collections`.`updated_at` AS `collection_updated_at`,\\n    `assets`.`id` AS `asset_id`,\\n    `path` AS `asset_path`,\\n    `type` AS `asset_type`,\\n    `size` AS `asset_size`,\\n    `assets`.`created_at` AS `asset_created_at`,\\n    `sort_index` AS `asset_sort_index`,\\n    `parent_asset_id`,\\n    `page_number`,\\n    `extractions`.`text_content` AS `text_ext`,\\n    `transcriptions`.`text_content` AS `text_trx`\\n  FROM `items`\\n  LEFT JOIN `collections`\\n    ON (`items`.`collection_id` = `collections`.`id`)\\n  LEFT JOIN `assets`\\n    ON (`items`.`id` = `assets`.`item_id`)\\n  LEFT JOIN `extractions`\\n    ON (`assets`.`id` = `extractions`.`asset_id`)\\n  LEFT JOIN `transcriptions`\\n    ON (`assets`.`id` = `transcriptions`.`asset_id`)\\n) AS `q01`\\nWHERE (`asset_type` = 'pdf')\\nORDER BY `item_id`, `asset_id`\","
 ```
 
 ## Exporting

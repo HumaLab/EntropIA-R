@@ -20,7 +20,8 @@ entropia_schema_compat(con)
 
 A list of class `entropia_schema_compat` with elements `status`,
 `version`, `manifest_head`, `gaps` (the full expected-but-absent column
-table), `required_missing`, `optional_missing` and `compatible`.
+table for existing tables), `required_missing`, `optional_missing`,
+`required_tables_missing` and `compatible`.
 
 ## Details
 
@@ -38,7 +39,10 @@ table), `required_missing`, `optional_missing` and `compatible`.
 The required-column check uses the manifest contract: columns tagged
 `required = TRUE` whose `min_version` is already reached by the database
 version must exist in the live schema. Missing ones are listed in
-`required_missing` and make the database incompatible.
+`required_missing` and make the database incompatible. Unknown versions
+conservatively require manifest-required columns on existing tables. The
+core tables `collections`, `items` and `assets` must always exist;
+missing non-core tables are permitted for minimal databases.
 
 ## Examples
 
@@ -70,6 +74,9 @@ entropia_schema_compat(con)
 #> # A tibble: 0 × 7
 #> # ℹ 7 variables: table <chr>, column <chr>, type <chr>, required <lgl>,
 #> #   min_version <chr>, current_version <chr>, expected <lgl>
+#> 
+#> $required_tables_missing
+#> character(0)
 #> 
 #> $compatible
 #> [1] TRUE

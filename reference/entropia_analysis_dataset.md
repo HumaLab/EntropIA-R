@@ -5,7 +5,19 @@
 ## Usage
 
 ``` r
-entropia_analysis_dataset(con, ..., name = NULL)
+entropia_analysis_dataset(
+  con,
+  ...,
+  name = NULL,
+  unit = "asset",
+  columns = NULL,
+  text = "auto",
+  page_assets = TRUE,
+  collection_ids = NULL,
+  asset_types = NULL,
+  date_var = "item_created_at",
+  date_range = NULL
+)
 ```
 
 ## Arguments
@@ -27,28 +39,70 @@ entropia_analysis_dataset(con, ..., name = NULL)
 
   Optional human-readable label stored in the provenance.
 
+- unit:
+
+  Observation unit, `"asset"` or `"item"`. Asset observations retain
+  corpus rows for items without assets. Item observations use the same
+  selected universe, with one row per item and no asset columns.
+
+- columns:
+
+  Optional character vector of output columns, in output order.
+
+- text:
+
+  Text source accepted by the corpus, or `FALSE` to omit text. Item text
+  combines nonmissing asset texts in asset-ID order, separated by two
+  newlines; no text yields `NA_character_`.
+
+- page_assets:
+
+  Include page assets.
+
+- collection_ids:
+
+  Collection IDs; `NULL` selects all, empty selects none.
+
+- asset_types:
+
+  Optional asset types.
+
+- date_var:
+
+  Corpus timestamp used for date filtering.
+
+- date_range:
+
+  Inclusive two-element Date or POSIXct range, or `NULL`.
+
 ## Value
 
-A
-[`tibble::tibble()`](https://tibble.tidyverse.org/reference/tibble.html)
-of class `entropia_dataset`, one row per asset, with the `entropia_prov`
-attribute.
+A plain tibble with the `entropia_prov` attribute. Provenance includes
+selected row/item/asset counts and exclusions due to item reduction.
+Strict reproducibility requires an explicit
+[`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md)
+snapshot: hashing a live source file does not make it immutable.
 
 ## Details
 
 The dataset boundary of the package: assembles the lazy corpus
 ([`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)),
 applies any filter expressions passed in `...`, and materialises the
-result with a deterministic row order (arranged by `asset_id`). The
-returned tibble carries class `entropia_dataset` and an `entropia_prov`
-attribute recording everything needed to reconstruct the dataset:
+result in `item_id`, `asset_id` order. The returned plain tibble carries
+an `entropia_prov` attribute recording the build recipe:
 
 - `name`: the human label passed to `name` (`NULL` for unnamed);
 
 - `schema_version`: the database schema head (e.g. `"0029_rag_chunks"`);
 
-- `content_hash`: the connection's schema content hash (see
-  [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md));
+- `schema_hash`: the connection's schema hash;
+
+- `snapshot_sha256`: source-file hash, unavailable with a nonempty WAL;
+
+- `dataset_sha256`: canonical values, column classes and row order;
+
+- `query`: resolved SQL, with `selection` recording subsequent item
+  reduction;
 
 - `source_path`: the database file the dataset was built from;
 
@@ -74,15 +128,20 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
   package = "entropiaR"
 ))
 ds <- entropia_analysis_dataset(con, asset_type == "pdf", name = "PDF corpus")
+#> Warning: Missing values are always removed in SQL aggregation functions.
+#> Use `na.rm = TRUE` to silence this warning
+#> This warning is displayed once every 8 hours.
 entropia_provenance(ds)
 #> entropiaR dataset provenance
 #>   name:           PDF corpus
 #>   schema version: 0029_rag_chunks
-#>   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
+#>   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
+#>   dataset hash:   1994ab82411fd92a1e09cf8caf392cb8720691b8d07903bad7d4bac1faa22ecf
+#>   scope:          origin
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-08-24T01:10:02.465Z
+#>   built at:       2026-09-11T17:35:26.227Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 entropia_disconnect(con)
 ```

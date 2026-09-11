@@ -3,9 +3,10 @@
 Joins `llm_results` rows back to the row they analysed. The target table
 is named per row by `target_type` (`asset`, `item` or `collection`;
 `unknown` and missing targets have no resolvable row), so this cannot be
-one SQL join: each row's target is looked up in the table its type names
-and returned as a `target` list-column (a one-row tibble, or `NULL` when
-unresolvable). The `result` JSON is parsed into a list-column and
+one SQL join: unique target IDs are looked up in batches by type and
+returned as a `target` list-column (a one-row tibble, or `NULL` when
+unresolvable). Targets describe the current database, not historical
+analysed inputs. The `result` JSON is parsed into a list-column and
 timestamps become `POSIXct`.
 
 ## Usage

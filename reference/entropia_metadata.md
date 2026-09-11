@@ -42,7 +42,12 @@ with one row per item.
 
 Unlike the lazy accessors this function materialises: parsing JSON to
 list-columns is an R-side step. `parse = FALSE` returns the raw
-`metadata` text alongside `item_id` instead.
+`metadata` text alongside `item_id` instead. Parsed output also retains
+`raw_metadata` and an `extra_metadata` list-column containing top-level
+keys that collide with output column names. Non-scalar file fields
+become typed missing values. The `diagnostics` attribute is a tibble
+with `item_id`, `field`, and `problem`, including malformed JSON and
+invalid dates.
 
 ## Examples
 
@@ -51,12 +56,13 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
   package = "entropiaR"
 ))
 entropia_metadata(con)
-#> # A tibble: 3 × 5
-#>   item_id             original_name original_path imported_at         page_count
-#>   <chr>               <chr>         <chr>         <dttm>              <list>    
-#> 1 22222222-2222-4222… manifiesto.p… /docs/manifi… 2026-01-15 12:05:00 <int [1]> 
-#> 2 22222222-2222-4222… carta.mp3     /docs/carta.… 2026-01-15 12:06:00 <NULL>    
-#> 3 22222222-2222-4222… NA            NA            NA                  <NULL>    
+#> # A tibble: 3 × 7
+#>   item_id           original_name original_path imported_at         raw_metadata
+#>   <chr>             <chr>         <chr>         <dttm>              <chr>       
+#> 1 22222222-2222-42… manifiesto.p… /docs/manifi… 2026-01-15 12:05:00 "{\"__entro…
+#> 2 22222222-2222-42… carta.mp3     /docs/carta.… 2026-01-15 12:06:00 "{\"__entro…
+#> 3 22222222-2222-42… NA            NA            NA                   NA         
+#> # ℹ 2 more variables: extra_metadata <list>, page_count <list>
 entropia_metadata(con, parse = FALSE) # raw metadata text
 #> # A tibble: 3 × 2
 #>   item_id                              metadata                                 

@@ -32,7 +32,8 @@ entropia_temporal_profile(x, date_var, unit = "month", by = NULL)
 ## Value
 
 A tibble with the bucket column, the `by` columns (when given), and a
-count column `n`.
+count column `n`. Attribute `excluded` counts missing or non-finite
+dates.
 
 ## Details
 

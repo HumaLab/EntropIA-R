@@ -74,7 +74,9 @@ database reaches that version.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>table</code>, <code>column</code>, <code>type</code>, <code>required</code>,
-<code>contract</code>, <code>min_version</code> and <code>source</code>.</p>
+<code>contract</code>, <code>min_version</code>, <code>source</code>, <code>presence</code> (logical) and <code>live_type</code>.
+Absent manifest tables and columns have <code>presence = FALSE</code> and missing
+<code>live_type</code>; <code>type</code> retains the manifest declaration where available.</p>
     </div>
 
     <div class="section level2">
@@ -83,19 +85,19 @@ database reaches that version.</p>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"entropiaR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">entropia_schema_info</span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 190 × 7</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    table       column     type    required contract   min_version      source  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> _migrations id         INTEGER TRUE     <span style="color: #BB0000;">NA</span>         0001_initial     manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> _migrations name       TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0001_initial     manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> _migrations applied_at INTEGER TRUE     datetime_s 0001_initial     manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> annotations id         TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0007_annotations manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> annotations asset_id   TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0007_annotations manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> annotations page       INTEGER TRUE     int        0007_annotations manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> annotations kind       TEXT    TRUE     enum       0007_annotations manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> annotations color      TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0007_annotations manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> annotations x          REAL    TRUE     dbl        0007_annotations manifest</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> annotations y          REAL    TRUE     dbl        0007_annotations manifest</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 190 × 9</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    table    column type  required contract min_version source presence live_type</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> _migrat… id     INTE… TRUE     <span style="color: #BB0000;">NA</span>       0001_initi… manif… TRUE     INTEGER  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> _migrat… name   TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0001_initi… manif… TRUE     TEXT     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> _migrat… appli… INTE… TRUE     datetim… 0001_initi… manif… TRUE     INTEGER  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> annotat… id     TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> annotat… asset… TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> annotat… page   INTE… TRUE     int      0007_annot… manif… TRUE     INTEGER  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> annotat… kind   TEXT  TRUE     enum     0007_annot… manif… TRUE     TEXT     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> annotat… color  TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> annotat… x      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> annotat… y      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 180 more rows</span></span>
 <span class="r-in"><span><span class="fu"><a href="entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
 </code></pre></div>

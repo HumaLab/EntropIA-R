@@ -96,8 +96,8 @@ without your own data. Connect to it with
 <p>The result is an <code>entropia_conn</code>, a specialized DBI
 connection. It <em>is</em> a real <code>SQLiteConnection</code>, so
 every DBI function keeps working, and it carries a few extra attributes
-— the file path, the open mode, the schema version, and a content hash
-of the schema:</p>
+— the file path, the open mode, the schema version, and a
+<strong>schema</strong> hash (DDL + migrations, not row contents):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "entropia_conn"</span></span>
@@ -108,7 +108,7 @@ of the schema:</p>
 <span><span class="co">#&gt;   path:           /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite</span></span>
 <span><span class="co">#&gt;   mode:           read-only</span></span>
 <span><span class="co">#&gt;   schema version: 0029_rag_chunks</span></span>
-<span><span class="co">#&gt;   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732</span></span>
+<span><span class="co">#&gt;   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732</span></span>
 <span><span class="co">#&gt;   valid:          TRUE</span></span>
 <span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbIsValid.html" class="external-link">dbIsValid</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
@@ -128,7 +128,7 @@ non-SQLite files raise typed, actionable errors:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="st">"not a database"</span>, <span class="va">notsqlite</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="va">notsqlite</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `entropia_connect()`:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> <span style="color: #0000BB;">/tmp/RtmpYgeESj/file1f15b3c9b22.txt</span> is not a SQLite database.</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> <span style="color: #0000BB;">/tmp/Rtmpdir4vY/file20c12d8c8e59.txt</span> is not a SQLite database.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> entropiaR reads EntropIA SQLite databases. The file does not begin with the</span></span>
 <span><span class="co">#&gt;   SQLite header.</span></span></code></pre></div>
 </div>
@@ -156,19 +156,19 @@ the columns and the type contract the package will apply on collect:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">schema</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_schema_info.html">entropia_schema_info</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">schema</span>, <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 7</span></span></span>
-<span><span class="co">#&gt;    table       column     type    required contract   min_version      source  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> _migrations id         INTEGER TRUE     <span style="color: #BB0000;">NA</span>         0001_initial     manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> _migrations name       TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0001_initial     manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> _migrations applied_at INTEGER TRUE     datetime_s 0001_initial     manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> annotations id         TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0007_annotations manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> annotations asset_id   TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0007_annotations manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> annotations page       INTEGER TRUE     int        0007_annotations manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> annotations kind       TEXT    TRUE     enum       0007_annotations manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> annotations color      TEXT    TRUE     <span style="color: #BB0000;">NA</span>         0007_annotations manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> annotations x          REAL    TRUE     dbl        0007_annotations manifest</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> annotations y          REAL    TRUE     dbl        0007_annotations manifest</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 9</span></span></span>
+<span><span class="co">#&gt;    table    column type  required contract min_version source presence live_type</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> _migrat… id     INTE… TRUE     <span style="color: #BB0000;">NA</span>       0001_initi… manif… TRUE     INTEGER  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> _migrat… name   TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0001_initi… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> _migrat… appli… INTE… TRUE     datetim… 0001_initi… manif… TRUE     INTEGER  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> annotat… id     TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> annotat… asset… TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> annotat… page   INTE… TRUE     int      0007_annot… manif… TRUE     INTEGER  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> annotat… kind   TEXT  TRUE     enum     0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> annotat… color  TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> annotat… x      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> annotat… y      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="a-compact-status-report">A compact status report<a class="anchor" aria-label="anchor" href="#a-compact-status-report"></a>
@@ -196,19 +196,37 @@ open and behaves according to
 <code>options(entropiaR.schema_policy)</code>:</p>
 <ul>
 <li>
-<code>"warn"</code> (default) — warns and proceeds, tolerating
-unknown/newer/older schemas as long as the required columns exist;</li>
+<code>"warn"</code> (default) — warn and proceed for older/newer
+schemas <strong>when the core tables <code>collections</code>,
+<code>items</code> and <code>assets</code> exist</strong>;</li>
 <li>
-<code>"error"</code> — hard stop on an unknown (newer) schema;</li>
+<code>"error"</code> — hard stop on any incompatibility, including a
+missing core table;</li>
 <li>
-<code>"allow"</code> — silent, no warnings.</li>
+<code>"allow"</code> — open anyway so you can run
+<code><a href="../reference/entropia_validate.html">entropia_validate()</a></code>.</li>
 </ul>
-<p>The backward-compatible posture is the default: unknown columns are
-ignored, missing optional columns degrade gracefully, and only genuinely
-missing <em>required</em> columns raise
-<code>entropia_error_schema_incompatible</code>.</p>
+<p>A SQLite file that only has <code>_migrations</code> and no corpus
+tables is <strong>not</strong> compatible. That used to print
+<code>compatible = TRUE</code>; it no longer does.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>entropiaR.schema_policy <span class="op">=</span> <span class="st">"warn"</span><span class="op">)</span> <span class="co"># the default; scoped to this session</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>entropiaR.schema_policy <span class="op">=</span> <span class="st">"warn"</span><span class="op">)</span> <span class="co"># the default; scoped to this session</span></span>
+<span><span class="fu"><a href="../reference/entropia_schema_info.html">entropia_schema_info</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 8 × 9</span></span></span>
+<span><span class="co">#&gt;   table     column type  required contract min_version source presence live_type</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> _migrati… id     INTE… TRUE     <span style="color: #BB0000;">NA</span>       0001_initi… manif… TRUE     INTEGER  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> _migrati… name   TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0001_initi… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> _migrati… appli… INTE… TRUE     datetim… 0001_initi… manif… TRUE     INTEGER  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> annotati… id     TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> annotati… asset… TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> annotati… page   INTE… TRUE     int      0007_annot… manif… TRUE     INTEGER  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span> annotati… kind   TEXT  TRUE     enum     0007_annot… manif… TRUE     TEXT     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> annotati… color  TEXT  TRUE     <span style="color: #BB0000;">NA</span>       0007_annot… manif… TRUE     TEXT</span></span></code></pre></div>
+<p><code>schema_info</code> now distinguishes <code>presence</code>
+(column exists live) from the manifest <code>type</code> and the SQLite
+<code>live_type</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="validating-the-database">Validating the database<a class="anchor" aria-label="anchor" href="#validating-the-database"></a>

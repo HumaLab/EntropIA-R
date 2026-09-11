@@ -10,7 +10,13 @@ columns (e.g. grouping columns that are themselves dates).
 ## Usage
 
 ``` r
-entropia_plot_temporal(x, date_var = NULL)
+entropia_plot_temporal(
+  x,
+  date_var = NULL,
+  group = NULL,
+  facet = NULL,
+  value = "n"
+)
 ```
 
 ## Arguments
@@ -27,6 +33,18 @@ entropia_plot_temporal(x, date_var = NULL)
   (tidyselect). `NULL` (default) auto-detects the single date column of
   `x`.
 
+- group:
+
+  Optional grouping column, bare or named.
+
+- facet:
+
+  Optional faceting column, bare or named.
+
+- value:
+
+  Numeric measure column, bare or named; defaults to `n`.
+
 ## Value
 
 A `ggplot` object.
@@ -34,9 +52,11 @@ A `ggplot` object.
 ## Details
 
 The returned `ggplot` is deliberately bare: add labels, a title, a theme
-or facets with `+`. A profile built with a `by` grouping draws one line
-across all groups; add `aes(colour = <group>)` yourself to distinguish
-them.
+or facets with `+`. Grouped summaries draw separate lines, preferring
+IDs to display names. Automatic grouping requires a single unambiguous
+remaining dimension; otherwise select `group` explicitly. Duplicate
+dates within a series are rejected rather than joined or aggregated
+silently.
 
 ## Examples
 
@@ -45,8 +65,8 @@ prof <- data.frame(
   created_at = as.POSIXct(c("2026-01-01", "2026-02-01"), tz = "UTC"),
   n = c(3L, 5L)
 )
-p <- entropia_plot_temporal(prof)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
-  p + ggplot2::labs(title = "Items over time")
+  p <- entropia_plot_temporal(prof)
+  p + ggplot2::labs(title = "Elementos a lo largo del tiempo")
 }
 ```

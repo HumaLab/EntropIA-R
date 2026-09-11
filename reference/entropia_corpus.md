@@ -1,9 +1,12 @@
 # Corpus (lazy)
 
 The workhorse research query: a lazy join of `items`, `collections` and
-`assets`, one row per asset, with an optional per-asset `text` column.
-Nothing is fetched at access time; every join and filter is pushed down
-to SQLite, and the result stays composable with
+`assets`, one row per item-asset pair, plus one row with missing asset
+fields for each item without assets, with an optional per-asset `text`
+column. Asset-type filters remove missing-asset rows; excluding page
+assets filters existing rows and does not create replacement rows for
+page-only items. Nothing is fetched at access time; every join and
+filter is pushed down to SQLite, and the result stays composable with
 [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html),
 [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html)
 and friends.
@@ -17,7 +20,9 @@ entropia_corpus(
   asset_types = NULL,
   text = "auto",
   page_assets = TRUE,
-  include_deleted = FALSE
+  include_deleted = FALSE,
+  collection_ids = NULL,
+  item_ids = NULL
 )
 ```
 
@@ -58,11 +63,23 @@ entropia_corpus(
   [`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
   and for forward compatibility with schemas that introduce one.
 
+- collection_ids:
+
+  Optional character vector of collection IDs. Applied together with the
+  legacy collection-name filter (intersection).
+
+- item_ids:
+
+  Optional character vector of item IDs. For either ID filter, `NULL`
+  means unrestricted and
+  [`character()`](https://rdrr.io/r/base/character.html) selects zero
+  rows.
+
 ## Value
 
-A `tbl_sql` with one row per asset and prefixed, non-colliding columns
-from `items`, `collections` and `assets`, plus `text` unless
-`text = FALSE`.
+A plain `tbl_sql` at item-asset grain, retaining items without assets as
+missing-asset rows unless removed by filters, with prefixed columns from
+`items`, `collections` and `assets`, plus `text` unless `text = FALSE`.
 
 ## Details
 

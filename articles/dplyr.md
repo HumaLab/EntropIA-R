@@ -6,7 +6,8 @@ Every accessor returns a `tbl_sql` backed by SQLite. That means you can
 compose the whole `dplyr` grammar — `filter`, `select`, `mutate`,
 `arrange`, `group_by`, `summarise`, `left_join` — and the *entire query*
 is translated to SQL and executed by SQLite. Nothing is loaded into R
-until you `collect()`.
+until you
+[`collect()`](https://dplyr.tidyverse.org/reference/compute.html).
 
 ``` r
 
@@ -50,8 +51,10 @@ dbplyr::sql_render(q)
 #> WHERE (grepl('huelga', `title`, 1 AS `ignore.case`))
 ```
 
-tidyselect works natively too — the `select()` above could have been
-written with helpers like `starts_with()`:
+tidyselect works natively too — the
+[`select()`](https://dplyr.tidyverse.org/reference/select.html) above
+could have been written with helpers like
+[`starts_with()`](https://tidyselect.r-lib.org/reference/starts_with.html):
 
 ``` r
 
@@ -144,9 +147,10 @@ the query itself is never interpolated into SQL.
 ## Collecting applies the column contract
 
 [`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
-is `collect()` plus the package’s column contract: millisecond
-timestamps become `POSIXct`, JSON-in-TEXT columns become list-columns,
-and embedding BLOBs stay `raw` (and are not selected unless you opt in).
+is [`collect()`](https://dplyr.tidyverse.org/reference/compute.html)
+plus the package’s column contract: millisecond timestamps become
+`POSIXct`, JSON-in-TEXT columns become list-columns, and embedding BLOBs
+stay `raw` (and are not selected unless you opt in).
 
 ``` r
 
@@ -156,42 +160,20 @@ items$created_at
 #> [3] "2026-01-15 12:05:00 UTC"
 ```
 
+Rename keeps the type of the *source* column. A new expression that
+reuses a timestamp name does **not** get converted:
+
 ``` r
 
-metadata_col <- entropia_items(con) |> entropia_collect()
-metadata_col$metadata
-#> [[1]]
-#> [[1]]$`__entropia_file_metadata`
-#> [[1]]$`__entropia_file_metadata`$original_name
-#> [1] "manifiesto.pdf"
-#> 
-#> [[1]]$`__entropia_file_metadata`$original_path
-#> [1] "/docs/manifiesto.pdf"
-#> 
-#> [[1]]$`__entropia_file_metadata`$importedAt
-#> [1] "2026-01-15T12:05:00Z"
-#> 
-#> 
-#> [[1]]$page_count
-#> [1] 2
-#> 
-#> 
-#> [[2]]
-#> [[2]]$`__entropia_file_metadata`
-#> [[2]]$`__entropia_file_metadata`$original_name
-#> [1] "carta.mp3"
-#> 
-#> [[2]]$`__entropia_file_metadata`$original_path
-#> [1] "/docs/carta.mp3"
-#> 
-#> [[2]]$`__entropia_file_metadata`$importedAt
-#> [1] "2026-01-15T12:06:00Z"
-#> 
-#> 
-#> 
-#> [[3]]
-#> [1] NA
+class(entropia_collect(rename(entropia_items(con), imported = created_at))$imported)
+#> [1] "POSIXct" "POSIXt"
+class(entropia_collect(mutate(entropia_items(con), created_at = 1))$created_at)
+#> [1] "numeric"
 ```
+
+Joins have no automatic contract — pass `schema =` when you need typed
+columns on a joined query (see
+[`?entropia_collect`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)).
 
 The pure timestamp helpers back this:
 [`entropia_datetime()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime.md)
@@ -199,8 +181,7 @@ converts milliseconds,
 [`entropia_datetime_s()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime_s.md)
 seconds, and
 [`entropia_datetime_auto()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime_auto.md)
-uses a magnitude guard for columns whose units have drifted over time
-(used for `entities.created_at` and `triples.created_at`):
+uses a magnitude guard for columns whose units have drifted over time:
 
 ``` r
 
@@ -220,7 +201,7 @@ entropia_disconnect(con)
 ```
 
 Next:
+[`vignette("eda")`](https://humalab.github.io/EntropIA-R/articles/eda.md)
+for SQL-side inventory, or
 [`vignette("datasets")`](https://humalab.github.io/EntropIA-R/articles/datasets.md)
-for building reproducible analysis datasets, or
-[`vignette("analysis")`](https://humalab.github.io/EntropIA-R/articles/analysis.md)
-for a complete analysis workflow.
+for reproducible analysis datasets.

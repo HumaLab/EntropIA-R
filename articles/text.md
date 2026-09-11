@@ -46,8 +46,10 @@ available text per asset. `source` selects the layer:
 
 - `"extraction"` — the OCR/PDF extraction text only;
 - `"transcription"` — the audio transcription text only;
-- `"auto"` (default) — extraction when present, otherwise transcription
-  (this mirrors the rule EntropIA’s own full-text index uses).
+- `"auto"` (default) — extraction **when that layer exists**, even if
+  the extraction text is empty, otherwise transcription. This matches
+  the corpus `COALESCE` rule. Coverage metrics that mean “any layer
+  useful” are named separately in `entropia_overview()$quality`.
 
 ``` r
 
@@ -147,21 +149,25 @@ The same applies to `items.metadata`, `rag_messages.sources`, and
 
 [`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
 parses `items.metadata` into tidy rows (see
-[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md)):
+[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md)).
+Non-scalar file-metadata fields no longer abort the whole batch: the row
+is kept, the original JSON stays in `raw_metadata`, and
+`attr(..., "diagnostics")` lists `item_id`, field and problem.
 
 ``` r
 
 entropia_metadata(con)
-#> # A tibble: 3 × 5
-#>   item_id             original_name original_path imported_at         page_count
-#>   <chr>               <chr>         <chr>         <dttm>              <list>    
-#> 1 22222222-2222-4222… manifiesto.p… /docs/manifi… 2026-01-15 12:05:00 <int [1]> 
-#> 2 22222222-2222-4222… carta.mp3     /docs/carta.… 2026-01-15 12:06:00 <NULL>    
-#> 3 22222222-2222-4222… NA            NA            NA                  <NULL>
+#> # A tibble: 3 × 7
+#>   item_id           original_name original_path imported_at         raw_metadata
+#>   <chr>             <chr>         <chr>         <dttm>              <chr>       
+#> 1 22222222-2222-42… manifiesto.p… /docs/manifi… 2026-01-15 12:05:00 "{\"__entro…
+#> 2 22222222-2222-42… carta.mp3     /docs/carta.… 2026-01-15 12:06:00 "{\"__entro…
+#> 3 22222222-2222-42… NA            NA            NA                   NA         
+#> # ℹ 2 more variables: extra_metadata <list>, page_count <list>
 ```
 
-Malformed JSON never fails the collect — it warns and yields `NA`, and
-the raw value stays reachable via `parse = FALSE`.
+Malformed JSON never fails the collect — it warns (with row context) and
+yields `NA`. Use `parse = FALSE` for the raw text.
 
 ## Coverage at a glance
 
@@ -186,19 +192,19 @@ Or the combined quality report:
 ``` r
 
 entropia_corpus_quality(con)
-#> # A tibble: 10 × 5
-#>    metric                 group                 n total    pct
-#>    <chr>                  <chr>             <int> <int>  <dbl>
-#>  1 empty_text             audio                 0     1  0    
-#>  2 empty_text             image                 0     0 NA    
-#>  3 empty_text             pdf                   0     2  0    
-#>  4 metadata_coverage      Archivo de prueba     2     3  0.667
-#>  5 ocr_coverage           audio                 0     1  0    
-#>  6 ocr_coverage           image                 0     1  0    
-#>  7 ocr_coverage           pdf                   2     3  0.667
-#>  8 transcription_presence audio                 1     1  1    
-#>  9 transcription_presence image                 0     1  0    
-#> 10 transcription_presence pdf                   0     3  0
+#> # A tibble: 10 × 8
+#>    metric                 group_id         group unit      n total    pct status
+#>    <chr>                  <chr>            <chr> <chr> <int> <int>  <dbl> <chr> 
+#>  1 empty_text             audio            audio asset     0     1  0     ok    
+#>  2 empty_text             image            image asset     0     0 NA     no_da…
+#>  3 empty_text             pdf              pdf   asset     0     2  0     ok    
+#>  4 metadata_coverage      11111111-1111-4… Arch… item      2     3  0.667 ok    
+#>  5 ocr_coverage           audio            audio asset     0     1  0     ok    
+#>  6 ocr_coverage           image            image asset     0     1  0     ok    
+#>  7 ocr_coverage           pdf              pdf   asset     2     3  0.667 ok    
+#>  8 transcription_presence audio            audio asset     1     1  1     ok    
+#>  9 transcription_presence image            image asset     0     1  0     ok    
+#> 10 transcription_presence pdf              pdf   asset     0     3  0     ok
 ```
 
 ## Cleaning up

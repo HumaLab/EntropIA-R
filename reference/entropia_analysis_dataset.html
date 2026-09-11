@@ -39,7 +39,19 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">entropia_analysis_dataset</span><span class="op">(</span><span class="va">con</span>, <span class="va">...</span>, name <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">entropia_analysis_dataset</span><span class="op">(</span></span>
+<span>  <span class="va">con</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  unit <span class="op">=</span> <span class="st">"asset"</span>,</span>
+<span>  columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  text <span class="op">=</span> <span class="st">"auto"</span>,</span>
+<span>  page_assets <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  collection_ids <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  asset_types <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  date_var <span class="op">=</span> <span class="st">"item_created_at"</span>,</span>
+<span>  date_range <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,23 +71,61 @@
 <dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
 <dd><p>Optional human-readable label stored in the provenance.</p></dd>
 
+
+<dt id="arg-unit">unit<a class="anchor" aria-label="anchor" href="#arg-unit"></a></dt>
+<dd><p>Observation unit, <code>"asset"</code> or <code>"item"</code>. Asset observations
+retain corpus rows for items without assets. Item observations use the
+same selected universe, with one row per item and no asset columns.</p></dd>
+
+
+<dt id="arg-columns">columns<a class="anchor" aria-label="anchor" href="#arg-columns"></a></dt>
+<dd><p>Optional character vector of output columns, in output order.</p></dd>
+
+
+<dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
+<dd><p>Text source accepted by the corpus, or <code>FALSE</code> to omit text.
+Item text combines nonmissing asset texts in asset-ID order, separated
+by two newlines; no text yields <code>NA_character_</code>.</p></dd>
+
+
+<dt id="arg-page-assets">page_assets<a class="anchor" aria-label="anchor" href="#arg-page-assets"></a></dt>
+<dd><p>Include page assets.</p></dd>
+
+
+<dt id="arg-collection-ids">collection_ids<a class="anchor" aria-label="anchor" href="#arg-collection-ids"></a></dt>
+<dd><p>Collection IDs; <code>NULL</code> selects all, empty selects none.</p></dd>
+
+
+<dt id="arg-asset-types">asset_types<a class="anchor" aria-label="anchor" href="#arg-asset-types"></a></dt>
+<dd><p>Optional asset types.</p></dd>
+
+
+<dt id="arg-date-var">date_var<a class="anchor" aria-label="anchor" href="#arg-date-var"></a></dt>
+<dd><p>Corpus timestamp used for date filtering.</p></dd>
+
+
+<dt id="arg-date-range">date_range<a class="anchor" aria-label="anchor" href="#arg-date-range"></a></dt>
+<dd><p>Inclusive two-element Date or POSIXct range, or <code>NULL</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble::tibble()</a></code> of class <code>entropia_dataset</code>, one row per asset,
-with the <code>entropia_prov</code> attribute.</p>
+    <p>A plain tibble with the <code>entropia_prov</code> attribute. Provenance includes
+selected row/item/asset counts and exclusions due to item reduction.
+Strict reproducibility requires an explicit <code><a href="entropia_copy.html">entropia_copy()</a></code> snapshot:
+hashing a live source file does not make it immutable.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The dataset boundary of the package: assembles the lazy corpus
 (<code><a href="entropia_corpus.html">entropia_corpus()</a></code>), applies any filter expressions passed in <code>...</code>, and
-materialises the result with a deterministic row order (arranged by
-<code>asset_id</code>). The returned tibble carries class <code>entropia_dataset</code> and an
-<code>entropia_prov</code> attribute recording everything needed to reconstruct the
-dataset:</p><ul><li><p><code>name</code>: the human label passed to <code>name</code> (<code>NULL</code> for unnamed);</p></li>
+materialises the result in <code>item_id</code>, <code>asset_id</code> order. The returned plain
+tibble carries an <code>entropia_prov</code> attribute recording the build recipe:</p><ul><li><p><code>name</code>: the human label passed to <code>name</code> (<code>NULL</code> for unnamed);</p></li>
 <li><p><code>schema_version</code>: the database schema head (e.g. <code>"0029_rag_chunks"</code>);</p></li>
-<li><p><code>content_hash</code>: the connection's schema content hash (see
-<code><a href="entropia_connect.html">entropia_connect()</a></code>);</p></li>
+<li><p><code>schema_hash</code>: the connection's schema hash;</p></li>
+<li><p><code>snapshot_sha256</code>: source-file hash, unavailable with a nonempty WAL;</p></li>
+<li><p><code>dataset_sha256</code>: canonical values, column classes and row order;</p></li>
+<li><p><code>query</code>: resolved SQL, with <code>selection</code> recording subsequent item reduction;</p></li>
 <li><p><code>source_path</code>: the database file the dataset was built from;</p></li>
 <li><p><code>filters</code>: the deparsed filter expressions captured from <code>...</code>;</p></li>
 <li><p><code>package_version</code>: the entropiaR version used;</p></li>
@@ -93,15 +143,20 @@ as a JSON sidecar with <code><a href="entropia_write_provenance.html">entropia_w
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"entropiaR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">ds</span> <span class="op">&lt;-</span> <span class="fu">entropia_analysis_dataset</span><span class="op">(</span><span class="va">con</span>, <span class="va">asset_type</span> <span class="op">==</span> <span class="st">"pdf"</span>, name <span class="op">=</span> <span class="st">"PDF corpus"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Missing values are always removed in SQL aggregation functions.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use `na.rm = TRUE` to silence this warning</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span>
 <span class="r-in"><span><span class="fu"><a href="entropia_provenance.html">entropia_provenance</a></span><span class="op">(</span><span class="va">ds</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> entropiaR dataset provenance</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   name:           PDF corpus</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   schema version: 0029_rag_chunks</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   content hash:   09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dataset hash:   1994ab82411fd92a1e09cf8caf392cb8720691b8d07903bad7d4bac1faa22ecf</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   scope:          origin</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   filters:        asset_type == "pdf"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   package:        0.0.0.9000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   built at:       2026-08-24T01:10:02.465Z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   built at:       2026-09-11T17:35:26.227Z</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   R version:      R version 4.6.1 (2026-06-24)</span>
 <span class="r-in"><span><span class="fu"><a href="entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
 </code></pre></div>

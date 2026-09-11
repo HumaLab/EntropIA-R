@@ -3,7 +3,7 @@
 Opens `path` as a read-only DBI connection. The returned object is an
 `entropia_conn`: a typed subclass of
 [RSQLite::SQLiteConnection](https://rsqlite.r-dbi.org/reference/SQLiteConnection-class.html)
-carrying the `path`, `mode`, `schema_version` and `content_hash`
+carrying the `path`, `mode`, `schema_version` and `schema_hash`
 attributes. All DBI and dbplyr functions keep working on it.
 
 ## Usage

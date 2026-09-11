@@ -57,7 +57,8 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>entropia_schema_compat</code> with elements <code>status</code>,
 <code>version</code>, <code>manifest_head</code>, <code>gaps</code> (the full expected-but-absent column
-table), <code>required_missing</code>, <code>optional_missing</code> and <code>compatible</code>.</p>
+table for existing tables), <code>required_missing</code>, <code>optional_missing</code>,
+<code>required_tables_missing</code> and <code>compatible</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -70,7 +71,10 @@ head – a future EntropIA wrote it.</p></li>
 </ul><p>The required-column check uses the manifest contract: columns tagged
 <code>required = TRUE</code> whose <code>min_version</code> is already reached by the database
 version must exist in the live schema. Missing ones are listed in
-<code>required_missing</code> and make the database incompatible.</p>
+<code>required_missing</code> and make the database incompatible. Unknown versions
+conservatively require manifest-required columns on existing tables.
+The core tables <code>collections</code>, <code>items</code> and <code>assets</code> must always exist;
+missing non-core tables are permitted for minimal databases.</p>
     </div>
 
     <div class="section level2">
@@ -102,6 +106,9 @@ version must exist in the live schema. Missing ones are listed in
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 0 × 7</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 7 variables: table &lt;chr&gt;, column &lt;chr&gt;, type &lt;chr&gt;, required &lt;lgl&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   min_version &lt;chr&gt;, current_version &lt;chr&gt;, expected &lt;lgl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $required_tables_missing</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> character(0)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $compatible</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>

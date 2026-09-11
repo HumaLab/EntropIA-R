@@ -16,8 +16,9 @@ entropia_compare_collections(x, by = "collection_name")
 
 - by:
 
-  The collection column, selected by name or bare (tidyselect). Default
-  `"collection_name"`.
+  The collection column, selected by name or bare (tidyselect). Defaults
+  to `collection_id` when available, otherwise `collection_name`. The
+  default ID grouping retains `collection_name` as a display label.
 
 ## Value
 
@@ -33,8 +34,8 @@ by a different collection column (e.g. `collection_id`).
 
 Each row reports `n` (rows of `x` in that collection) plus `n_items` and
 `n_assets` (distinct `item_id` / `asset_id` values, `NA` excluded) when
-the input carries those columns. On the collected corpus `n` equals the
-number of assets in the collection. Rows are ordered by the collection
+the input carries those columns. Corpus rows without assets count
+towards `n` but not `n_assets`. Rows are ordered by the collection
 column (deterministic).
 
 ## Examples
@@ -45,9 +46,9 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 ))
 corpus <- entropia_collect(entropia_corpus(con))
 entropia_compare_collections(corpus)
-#> # A tibble: 1 × 4
-#>   collection_name   n_items n_assets     n
-#>   <chr>               <int>    <int> <int>
-#> 1 Archivo de prueba       3        5     5
+#> # A tibble: 1 × 5
+#>   collection_id                        collection_name   n_items n_assets     n
+#>   <chr>                                <chr>               <int>    <int> <int>
+#> 1 11111111-1111-4111-8111-111111111111 Archivo de prueba       3        5     5
 entropia_disconnect(con)
 ```
