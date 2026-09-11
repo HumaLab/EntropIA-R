@@ -62,8 +62,8 @@ entity statistics, not the item universe.
 
 ``` r
 if (interactive() && requireNamespace("shiny", quietly = TRUE) &&
-    requireNamespace("bslib", quietly = TRUE) &&
-    requireNamespace("ggplot2", quietly = TRUE)) {
+  requireNamespace("bslib", quietly = TRUE) &&
+  requireNamespace("ggplot2", quietly = TRUE)) {
   path <- system.file("extdata", "entropia-example.sqlite", package = "entropiaR")
   app <- entropia_dashboard(path)
   shiny::runApp(app)

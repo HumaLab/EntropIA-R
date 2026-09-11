@@ -40,8 +40,9 @@ Never returns: aborts with `entropia_error_write_disabled`.
 ## Details
 
 In v2, `entropia_upsert()` implements upserts as
-`INSERT ... ON CONFLICT(id) DO UPDATE` — never `INSERT OR REPLACE`,
-whose rowid reassignment would break the contentless FTS5 tables.
+`INSERT ... ON CONFLICT(id) DO UPDATE` \<U+2014\> never
+`INSERT OR REPLACE`, whose rowid reassignment would break the
+contentless FTS5 tables.
 
 ## Examples
 

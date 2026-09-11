@@ -68,7 +68,7 @@ entropia_overview(
 
 - min_confidence:
 
-  Optional entity confidence threshold in 0, 1.
+  Optional entity confidence threshold between 0 and 1.
 
 ## Value
 

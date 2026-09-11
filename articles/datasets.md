@@ -57,7 +57,7 @@ entropia_provenance(ds)
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-09-11T17:53:43.668Z
+#>   built at:       2026-09-11T18:08:00.908Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
