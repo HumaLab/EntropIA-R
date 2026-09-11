@@ -233,7 +233,7 @@ test_that("document lengths counts empty and whitespace-only text as zero", {
 })
 
 test_that("document lengths collapses runs of spaces and keeps punctuation attached", {
-  df <- tibble::tibble(text = c("dos   palabras", "Compañeros, a la huelga"))
+  df <- tibble::tibble(text = c("dos   palabras", "Compa<U+00F1>eros, a la huelga"))
   lens <- entropia_document_lengths(df)
   expect_identical(lens$n_words, c(2L, 4L))
 })
@@ -259,7 +259,7 @@ test_that("entity frequency counts the fixture entities by type", {
     expect_identical(names(freq), c("entity_type", "value", "n"))
     expect_equal(nrow(freq), 3L)
     expect_identical(freq$entity_type, c("organization", "person", "place"))
-    expect_identical(freq$value, c("Sindicato Ferroviario", "Juan Pérez", "Plaza de Mayo"))
+    expect_identical(freq$value, c("Sindicato Ferroviario", "Juan P<U+00E9>rez", "Plaza de Mayo"))
     expect_identical(freq$n, c(1L, 1L, 1L))
   })
 })
@@ -315,7 +315,7 @@ test_that("entity frequency counts soft-deleted rows when the input carries them
     freq <- entropia_entity_frequency(entities)
     expect_equal(nrow(freq), 4L)
     person_rows <- freq[freq$entity_type == "person", ]
-    expect_identical(person_rows$value, c("Juan Pérez", "Persona Borrada"))
+    expect_identical(person_rows$value, c("Juan P<U+00E9>rez", "Persona Borrada"))
   })
 })
 

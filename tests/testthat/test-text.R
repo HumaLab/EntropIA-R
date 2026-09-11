@@ -71,7 +71,7 @@ test_that("source = transcription returns transcription text and NA for the rest
     res <- dplyr::collect(entropia_text(con, source = "transcription", strip_markers = FALSE))
     expect_identical(
       res$text[match(TEXT_ALL_ASSETS, res$id)],
-      c(NA, NA, NA, NA, "Compañeros, a la huelga")
+      c(NA, NA, NA, NA, "Compa<U+00F1>eros, a la huelga")
     )
   })
 })
@@ -85,7 +85,7 @@ test_that("auto picks extraction when present, else transcription (both / one / 
         "![](page=1,bbox=[10,10,500,700]) La huelga general de 1920 movilizo a los obreros.",
         "Segunda pagina del manifiesto con demandas salariales.",
         NA, NA,
-        "Compañeros, a la huelga"
+        "Compa<U+00F1>eros, a la huelga"
       )
     )
   })
@@ -106,7 +106,7 @@ test_that("strip_markers = TRUE removes the marker, FALSE keeps it", {
     # non-marker text is untouched
     expect_identical(
       stripped$text[match(TEXT_ASSET_AUDIO, stripped$id)],
-      "Compañeros, a la huelga"
+      "Compa<U+00F1>eros, a la huelga"
     )
   })
 })
@@ -157,7 +157,7 @@ test_that("a lazy table of assets is used as the base", {
     audio <- dplyr::filter(entropia_assets(con), .data$type == "audio")
     res <- dplyr::collect(entropia_text(con, assets = audio))
     expect_identical(res$id, TEXT_ASSET_AUDIO)
-    expect_identical(res$text, "Compañeros, a la huelga")
+    expect_identical(res$text, "Compa<U+00F1>eros, a la huelga")
   })
 })
 

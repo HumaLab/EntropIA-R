@@ -7,7 +7,7 @@ ent_report_redact <- function(x) {
   x$selection$model_name <- NULL
   if (is.data.frame(x$collections) && nrow(x$collections)) {
     ids <- x$collections$collection_id
-    labels <- paste("Colección", seq_along(ids))
+    labels <- paste("Colecci\u00f3n", seq_along(ids))
     x$collections$collection_id <- paste0("collection-", seq_along(ids))
     x$collections$collection_name <- labels
     if (is.data.frame(x$quality) && "group_id" %in% names(x$quality)) {
@@ -58,7 +58,7 @@ ent_report_redact <- function(x) {
 entropia_report <- function(x, path, redact = TRUE) {
   required <- c("counts", "collections", "temporal", "quality", "entities", "topics")
   if (!is.list(x) || !all(required %in% names(x)) ||
-      !all(vapply(x[required], is.data.frame, logical(1)))) {
+    !all(vapply(x[required], is.data.frame, logical(1)))) {
     ent_abort("entropia_error_invalid_argument", "{.arg x} must be an entropia overview.")
   }
   if (!is.logical(redact) || length(redact) != 1L || is.na(redact)) {
@@ -93,7 +93,11 @@ entropia_report <- function(x, path, redact = TRUE) {
   }
   if (redact) x <- ent_report_redact(x)
   saveRDS(x, file.path(work, "overview.rds"))
-  result <- system2(quarto, c("render", shQuote(input), "--output", "overview.html"),
+  work <- normalizePath(work, winslash = "/", mustWork = TRUE)
+  input <- normalizePath(input, winslash = "/", mustWork = TRUE)
+  result <- system2(
+    quarto,
+    c("render", shQuote(input), "--output-dir", shQuote(work)),
     stdout = TRUE, stderr = TRUE
   )
   status <- attr(result, "status") %||% 0L

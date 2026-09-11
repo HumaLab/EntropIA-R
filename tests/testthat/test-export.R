@@ -85,7 +85,7 @@ test_that("lazy csv export is ordered deterministically and matches collect", {
     expected <- dplyr::arrange(dplyr::collect(entropia_items(con)), .data$id)
     expect_identical(out$id, expected$id)
     raw <- readBin(p, "raw", file.info(p)$size)
-    # UTF-8 í (U+00ED) in "Fotografía" — independent of native encoding.
+    # UTF-8 <U+00ED> (U+00ED) in "Fotograf<U+00ED>a" <U+2014> independent of native encoding.
     expect_true(any(raw[-length(raw)] == as.raw(0xc3) & raw[-1] == as.raw(0xad)))
   })
 })

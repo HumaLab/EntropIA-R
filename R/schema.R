@@ -217,8 +217,11 @@ entropia_schema_info <- function(con) {
   rows <- list()
   live_tables <- ent_tables(con)
   for (t in sort(union(live_tables, names(mf$tables)))) {
-    live <- if (t %in% live_tables) ent_columns(con, t) else
+    live <- if (t %in% live_tables) {
+      ent_columns(con, t)
+    } else {
       data.frame(name = character(), type = character())
+    }
     mentry <- mf$tables[[t]]
     manifest_cols <- if (is.null(mentry)) character() else names(mentry$columns)
     live_only <- setdiff(live$name, manifest_cols)
@@ -350,15 +353,21 @@ entropia_schema_compat <- function(con) {
 # call's named arguments, so the values must be in scope there.
 ent_abort_schema_incompatible <- function(compat) {
   if (nrow(compat$required_missing) == 0L &&
-      length(compat$required_tables_missing) > 0L) {
-    missing <- compat$required_tables_missing
+    length(compat$required_tables_missing) > 0L) {
     ent_abort(
       "entropia_error_schema_incompatible",
       c(
         "Database is missing required core table(s): {.val {missing}}.",
-        i = "The collections, items and assets tables are required at every schema version.",
-        i = "To proceed anyway, set {.code options(entropiaR.schema_policy = 'allow')}."
-      )
+        i = paste(
+          "The collections, items and assets tables are required at",
+          "every schema version."
+        ),
+        i = paste(
+          "To proceed anyway, set",
+          "{.code options(entropiaR.schema_policy = 'allow')}."
+        )
+      ),
+      .envir = rlang::env(missing = compat$required_tables_missing)
     )
   }
   if (nrow(compat$required_missing) > 0L) {

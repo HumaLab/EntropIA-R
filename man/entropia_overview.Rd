@@ -38,7 +38,7 @@ are excluded unless explicitly selected.}
 
 \item{model_name}{Optional entity model names.}
 
-\item{min_confidence}{Optional entity confidence threshold in \link{0, 1}.}
+\item{min_confidence}{Optional entity confidence threshold between 0 and 1.}
 }
 \value{
 An ordinary list with counts, collections, asset_types, temporal,

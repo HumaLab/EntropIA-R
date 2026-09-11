@@ -1,6 +1,6 @@
 # Tests for Task 16 (entropia_corpus + entropia_metadata).
 #
-# entropia_corpus() is the lazy workhorse: items ⋈ collections ⋈ assets, one
+# entropia_corpus() is the lazy workhorse: items <U+22C8> collections <U+22C8> assets, one
 # row per asset, with an optional per-asset text column assembled in SQL
 # (COALESCE for auto, the app's FTS rule). Filters push down to SQL and the
 # page_assets toggle excludes PDF page assets. entropia_metadata() parses
@@ -78,7 +78,7 @@ test_that("corpus text follows the auto rule (extraction else transcription)", {
       "![](page=1,bbox=[10,10,500,700]) La huelga general de 1920 movilizo a los obreros.",
       "Segunda pagina del manifiesto con demandas salariales.",
       NA_character_, NA_character_,
-      "Compañeros, a la huelga"
+      "Compa<U+00F1>eros, a la huelga"
     ))
   })
 })
@@ -101,7 +101,7 @@ test_that("text = FALSE omits the text column; explicit sources select one layer
     trx <- dplyr::collect(entropia_corpus(con, text = "transcription"))
     expect_identical(
       trx$text[match(c(CORPUS_ASSET_PDF, CORPUS_ASSET_AUDIO), trx$asset_id)],
-      c(NA_character_, "Compañeros, a la huelga")
+      c(NA_character_, "Compa<U+00F1>eros, a la huelga")
     )
   })
 })
@@ -332,15 +332,19 @@ test_that("study ID selection and inclusive date bounds preserve the universe", 
   with_corpus_con("full", function(con) {
     empty <- entropiaR:::ent_study_query(con, collection_ids = character())
     expect_equal(nrow(dplyr::collect(empty)), 0L)
-    selected <- entropia_corpus(con, text = FALSE, collection_ids = CORPUS_COLL_1,
-      item_ids = CORPUS_ITEM_2)
+    selected <- entropia_corpus(con,
+      text = FALSE, collection_ids = CORPUS_COLL_1,
+      item_ids = CORPUS_ITEM_2
+    )
     expect_true(all(dplyr::collect(selected)$item_id == CORPUS_ITEM_2))
     day <- entropiaR:::ent_study_query(con,
-      date_range = as.Date(c("2026-01-15", "2026-01-15")))
+      date_range = as.Date(c("2026-01-15", "2026-01-15"))
+    )
     typed <- entropia_collect(day, schema = entropiaR:::ent_corpus_contract())
     expect_equal(nrow(typed), 5L)
     expect_s3_class(typed$item_created_at, "POSIXct")
     expect_error(entropiaR:::ent_study_query(con, date_var = "metadata"),
-      class = "entropia_error_invalid_argument")
+      class = "entropia_error_invalid_argument"
+    )
   })
 })

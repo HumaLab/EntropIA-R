@@ -48,8 +48,10 @@ entropia_provenance <- function(x) {
   ent_require_tibble(x)
   current <- ent_dataset_hash(x)
   if (is.null(prov$origin)) {
-    prov$origin <- list(dataset_sha256 = prov$dataset_sha256,
-      query = prov$query, selection = prov$selection)
+    prov$origin <- list(
+      dataset_sha256 = prov$dataset_sha256,
+      query = prov$query, selection = prov$selection
+    )
   }
   prov$scope <- if (identical(current, prov$origin$dataset_sha256)) "origin" else "derived"
   prov$dataset_sha256 <- current
@@ -216,9 +218,11 @@ ent_export_ordered <- function(x, order_by = NULL) {
 
 ent_export_validate_order <- function(order_by, cols) {
   if (!is.null(order_by) && (!is.character(order_by) || anyNA(order_by) ||
-      !length(order_by) || anyDuplicated(order_by) || !all(order_by %in% cols))) {
-    ent_abort("entropia_error_invalid_argument",
-      "{.arg order_by} must be NULL or unique existing column names.")
+    !length(order_by) || anyDuplicated(order_by) || !all(order_by %in% cols))) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg order_by} must be NULL or unique existing column names."
+    )
   }
   invisible(order_by)
 }
@@ -241,7 +245,7 @@ ent_export_list_scalar <- function(z) {
 # columns (including integer64) untouched.
 #
 # Embedding BLOB columns (4096-byte f32 vectors) produce long strings per row
-# under the space-join representation — a thousand such rows produce ~10 MB of
+# under the space-join representation <U+2014> a thousand such rows produce ~10 MB of
 # serialised bytes, which is manageable for occasional exports but not for
 # streaming the full embedding table. Accessors exclude the `embedding` column
 # by default (select with `any_of("embedding")`), and direct collect+export
@@ -436,7 +440,10 @@ entropia_export <- function(x, path,
     if (!is.null(order_by)) {
       comparable <- names(x)[vapply(x, function(z) is.atomic(z) && is.null(dim(z)), logical(1))]
       if (!all(order_by %in% comparable)) {
-        ent_abort("entropia_error_invalid_argument", "In-memory ordering requires atomic vector columns.")
+        ent_abort(
+          "entropia_error_invalid_argument",
+          "In-memory ordering requires atomic vector columns."
+        )
       }
       x <- dplyr::arrange(x, !!!rlang::syms(unique(c(order_by, comparable))))
     }

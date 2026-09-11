@@ -73,10 +73,13 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
   }
   policy <- getOption("entropiaR.schema_policy", "warn")
   if (!is.character(policy) || length(policy) != 1L || is.na(policy) ||
-      !policy %in% c("warn", "error", "allow")) {
+    !policy %in% c("warn", "error", "allow")) {
     ent_abort(
       "entropia_error_invalid_argument",
-      "{.code options(entropiaR.schema_policy)} must be one of {.val warn}, {.val error} or {.val allow}."
+      paste(
+        "{.code options(entropiaR.schema_policy)} must be one of",
+        "{.val warn}, {.val error} or {.val allow}."
+      )
     )
   }
   if (isTRUE(write)) {
@@ -129,9 +132,12 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
   )
   opened <- con
   complete <- FALSE
-  on.exit({
-    if (!complete) try(entropia_disconnect(opened), silent = TRUE)
-  }, add = TRUE)
+  on.exit(
+    {
+      if (!complete) try(entropia_disconnect(opened), silent = TRUE)
+    },
+    add = TRUE
+  )
   DBI::dbExecute(con, "PRAGMA query_only = ON")
 
   if (validate) {

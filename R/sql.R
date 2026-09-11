@@ -38,7 +38,7 @@ ent_sql_fragments <- function() {
 # token in double-quotes (escaping any embedded double-quote by doubling it),
 # and join with spaces. This preserves the implicit-AND token semantics while
 # preventing FTS5 syntax errors from characters that the FTS5 query expression
-# parser cannot handle (notably apostrophes in "O'Brien", "l'assemblée").
+# parser cannot handle (notably apostrophes in "O'Brien", "l'assembl<U+00E9>e").
 ent_escape_fts5 <- function(query) {
   tokens <- strsplit(trimws(query), "\\s+")[[1L]]
   tokens <- tokens[nzchar(tokens)]

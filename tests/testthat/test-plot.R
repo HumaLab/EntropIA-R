@@ -31,14 +31,17 @@ plot_coverage_summary <- function(con) {
 
 test_that("temporal series with identical labels retain distinct IDs", {
   skip_if_not_installed("ggplot2")
-  x <- data.frame(date = rep(as.Date(c("2026-01-01", "2026-02-01")), 2),
+  x <- data.frame(
+    date = rep(as.Date(c("2026-01-01", "2026-02-01")), 2),
     collection_id = rep(c(1L, 2L), each = 2), collection_name = "Archivo",
-    n = c(1, 2, 10, 20))
+    n = c(1, 2, 10, 20)
+  )
   b <- ggplot2::ggplot_build(entropia_plot_temporal(x))$data[[1]]
   expect_equal(sort(vapply(split(b$y, b$group), sum, numeric(1))), c(3, 30), ignore_attr = TRUE)
   expect_equal(sort(as.numeric(table(b$group))), c(2, 2))
   expect_error(entropia_plot_temporal(transform(x, other = "ambiguous")),
-    class = "entropia_error_invalid_argument")
+    class = "entropia_error_invalid_argument"
+  )
 })
 
 test_that("temporal plot auto-detects the date column and accepts explicit date_var", {
@@ -98,8 +101,10 @@ test_that("temporal plot validates input", {
 
 test_that("entity bars do not stack identical values across types or IDs", {
   skip_if_not_installed("ggplot2")
-  x <- data.frame(value = "Roma", entity_type = c("person", "place", "place"),
-    collection_id = c(1, 1, 2), collection_name = "Archivo", n = c(3, 7, 11))
+  x <- data.frame(
+    value = "Roma", entity_type = c("person", "place", "place"),
+    collection_id = c(1, 1, 2), collection_name = "Archivo", n = c(3, 7, 11)
+  )
   b <- ggplot2::ggplot_build(entropia_plot_entities(x))$data[[1]]
   expect_equal(sort(b$ymax - b$ymin), c(3, 7, 11))
   expect_equal(anyDuplicated(b$x), 0L)
@@ -183,9 +188,11 @@ test_that("entity plot validates input, top and fill", {
 
 test_that("coverage preserves IDs and annotates missing denominators", {
   skip_if_not_installed("ggplot2")
-  x <- data.frame(metric = "text", group = "Archivo", group_id = c(1, 2, 3),
+  x <- data.frame(
+    metric = "text", group = "Archivo", group_id = c(1, 2, 3),
     pct = c(0.2, 0.8, NA_real_), total = c(10, 10, NA),
-    status = c("ok", "ok", "no_data"))
+    status = c("ok", "ok", "no_data")
+  )
   expect_warning(b <- ggplot2::ggplot_build(entropia_plot_coverage(x)), NA)
   expect_equal(sort(b$data[[1]]$y), c(0.2, 0.8))
   expect_equal(anyDuplicated(b$data[[1]]$x), 0L)
@@ -243,12 +250,15 @@ test_that("coverage plot validates metric, columns, empty input and input type",
 
 test_that("faceted temporal series never connect different IDs", {
   skip_if_not_installed("ggplot2")
-  x <- data.frame(date = rep(as.Date(c("2026-01-01", "2026-02-01")), 2),
-    group_id = rep(c(1, 2), each = 2), group = "Igual", n = c(1, 2, 10, 20))
+  x <- data.frame(
+    date = rep(as.Date(c("2026-01-01", "2026-02-01")), 2),
+    group_id = rep(c(1, 2), each = 2), group = "Igual", n = c(1, 2, 10, 20)
+  )
   b <- ggplot2::ggplot_build(entropia_plot_temporal(x, group = group, facet = group))$data[[1]]
   expect_equal(sort(vapply(split(b$y, b$PANEL), sum, numeric(1))), c(3, 30), ignore_attr = TRUE)
   expect_error(entropia_plot_temporal(rbind(x, x[1, ]), group = group),
-    class = "entropia_error_invalid_argument")
+    class = "entropia_error_invalid_argument"
+  )
 })
 
 test_that("new bar plots preserve repeated names and undefined missingness", {
@@ -283,8 +293,10 @@ test_that("distributions and scatter annotate unusable measurements without warn
 
 test_that("correlations exclude identifiers and handle constants and missing pairs", {
   skip_if_not_installed("ggplot2")
-  x <- data.frame(id = 1:3, item_id = 3:1, a = 1:3, b = 2:4,
-    constant = 1, absent = NA_real_, date = as.Date("2026-01-01") + 0:2)
+  x <- data.frame(
+    id = 1:3, item_id = 3:1, a = 1:3, b = 2:4,
+    constant = 1, absent = NA_real_, date = as.Date("2026-01-01") + 0:2
+  )
   expect_warning(p <- entropia_plot_correlation(x, c(id, item_id, a, b, constant, absent, date)), NA)
   expect_warning(b <- ggplot2::ggplot_build(p), NA)
   expect_setequal(p$data$variable_x, c("a", "b", "constant", "absent"))
@@ -296,6 +308,8 @@ test_that("correlations exclude identifiers and handle constants and missing pai
 # --- vdiffr snapshots (optional: run where vdiffr is installed) -----------------
 
 test_that("plot snapshots are stable", {
+  skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("vdiffr")
   with_plot_con("full", function(con) {

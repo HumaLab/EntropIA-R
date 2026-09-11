@@ -37,15 +37,19 @@ entropia_plot_collections(eda$collections)
 ### Selección del estudio
 
 ```{r}
-cat(jsonlite::toJSON(eda$selection, pretty = TRUE, auto_unbox = TRUE,
-                    null = "null", POSIXt = "ISO8601"))
+cat(jsonlite::toJSON(eda$selection,
+  pretty = TRUE, auto_unbox = TRUE,
+  null = "null", POSIXt = "ISO8601"
+))
 ```
 
 ### Procedencia
 
 ```{r}
-cat(jsonlite::toJSON(eda$provenance, pretty = TRUE, auto_unbox = TRUE,
-                    null = "null", POSIXt = "ISO8601"))
+cat(jsonlite::toJSON(eda$provenance,
+  pretty = TRUE, auto_unbox = TRUE,
+  null = "null", POSIXt = "ISO8601"
+))
 ```
 
 Este informe es una instantánea de resultados agregados. No consulta SQLite desde

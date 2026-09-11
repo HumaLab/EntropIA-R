@@ -46,6 +46,6 @@ jobs:
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git diff
-            echo "The package is not styled. Run `styler::style_pkg(strict = TRUE)` locally and commit the result."
+            echo "The package is not styled. Run styler::style_pkg(strict = TRUE) locally and commit the result."
             exit 1
           fi

@@ -455,20 +455,26 @@ ent_corpus_contract <- function() {
 ent_study_query <- function(con, collection_ids = NULL, asset_types = NULL,
                             page_assets = TRUE, date_var = "item_created_at",
                             date_range = NULL, text = FALSE) {
-  allowed <- c("item_created_at", "item_updated_at", "asset_created_at",
-    "collection_created_at", "collection_updated_at")
+  allowed <- c(
+    "item_created_at", "item_updated_at", "asset_created_at",
+    "collection_created_at", "collection_updated_at"
+  )
   if (!is.character(date_var) || length(date_var) != 1L ||
-      is.na(date_var) || !date_var %in% allowed) {
-    ent_abort("entropia_error_invalid_argument",
-      "{.arg date_var} must name a supported corpus timestamp column.")
+    is.na(date_var) || !date_var %in% allowed) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.arg date_var} must name a supported corpus timestamp column."
+    )
   }
   bounds <- NULL
   if (!is.null(date_range)) {
     if (!(inherits(date_range, "Date") || inherits(date_range, "POSIXct")) ||
-        length(date_range) != 2L || anyNA(date_range) ||
-        any(!is.finite(as.numeric(date_range))) || date_range[[1]] > date_range[[2]]) {
-      ent_abort("entropia_error_invalid_argument",
-        "{.arg date_range} must be two finite, ordered Date or POSIXct values.")
+      length(date_range) != 2L || anyNA(date_range) ||
+      any(!is.finite(as.numeric(date_range))) || date_range[[1]] > date_range[[2]]) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        "{.arg date_range} must be two finite, ordered Date or POSIXct values."
+      )
     }
     bounds <- as.numeric(date_range)
     if (inherits(date_range, "Date")) {
@@ -477,16 +483,22 @@ ent_study_query <- function(con, collection_ids = NULL, asset_types = NULL,
       bounds[[2]] <- bounds[[2]] + 86400 - 0.001
     }
     if (!identical(unname(ent_corpus_contract()[date_var]), "datetime_ms")) {
-      ent_abort("entropia_error_invalid_argument",
-        "The selected corpus timestamp must have a datetime_ms manifest contract.")
+      ent_abort(
+        "entropia_error_invalid_argument",
+        "The selected corpus timestamp must have a datetime_ms manifest contract."
+      )
     }
     bounds <- bounds * 1000
   }
-  out <- entropia_corpus(con, asset_types = asset_types, text = text,
-    page_assets = page_assets, collection_ids = collection_ids)
+  out <- entropia_corpus(con,
+    asset_types = asset_types, text = text,
+    page_assets = page_assets, collection_ids = collection_ids
+  )
   if (!is.null(bounds)) {
-    out <- dplyr::filter(out, .data[[date_var]] >= !!bounds[[1]],
-      .data[[date_var]] <= !!bounds[[2]])
+    out <- dplyr::filter(
+      out, .data[[date_var]] >= !!bounds[[1]],
+      .data[[date_var]] <= !!bounds[[2]]
+    )
   }
   out
 }
@@ -584,10 +596,15 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
     return(out)
   }
 
-  diagnostics <- tibble::tibble(item_id = rows$id[0], field = character(), problem = character())
+  box <- new.env(parent = emptyenv())
+  box$diagnostics <- tibble::tibble(
+    item_id = rows$id[0], field = character(), problem = character()
+  )
   diagnose <- function(i, field, problem) {
-    diagnostics <<- dplyr::bind_rows(diagnostics,
-      tibble::tibble(item_id = rows$id[i], field = field, problem = problem))
+    box$diagnostics <- dplyr::bind_rows(
+      box$diagnostics,
+      tibble::tibble(item_id = rows$id[i], field = field, problem = problem)
+    )
   }
   parsed <- lapply(seq_along(rows$metadata), function(i) {
     z <- rows$metadata[[i]]
@@ -598,7 +615,10 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
     if (inherits(p, "condition")) {
       diagnose(i, "metadata", "malformed_json")
       cli::cli_warn(
-        "Malformed JSON in items.metadata at row {i}, returning NA: {ent_sanitize_msg(conditionMessage(p))}",
+        paste(
+          "Malformed JSON in items.metadata at row {i}, returning NA:",
+          "{ent_sanitize_msg(conditionMessage(p))}"
+        ),
         class = "entropia_warn_malformed_json"
       )
       return(list())
@@ -618,13 +638,17 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   scalar_field <- function(field) {
     vapply(seq_along(fm), function(i) {
       x <- fm[[i]]
-      if (is.null(x)) return(NA_character_)
+      if (is.null(x)) {
+        return(NA_character_)
+      }
       if (!is.list(x) || (length(x) > 0L && is.null(names(x)))) {
         diagnose(i, field, "non_object_file_metadata")
         return(NA_character_)
       }
       value <- x[[field]]
-      if (is.null(value)) return(NA_character_)
+      if (is.null(value)) {
+        return(NA_character_)
+      }
       if (is.list(value) || length(value) != 1L) {
         diagnose(i, field, "non_scalar")
         return(NA_character_)
@@ -638,14 +662,17 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   # Parse each cell independently: an invalid date must not abort other rows.
   seconds <- vapply(seq_along(iso), function(i) {
     value <- tryCatch(suppressWarnings(as.numeric(ent_datetime_iso(iso[[i]]))),
-      error = function(e) NA_real_)
+      error = function(e) NA_real_
+    )
     if (!is.na(iso[[i]]) && is.na(value)) diagnose(i, "importedAt", "invalid_datetime")
     value
   }, numeric(1))
   out$imported_at <- as.POSIXct(seconds, origin = "1970-01-01", tz = "UTC")
 
-  reserved <- c("item_id", "original_name", "original_path", "imported_at",
-    "raw_metadata", "extra_metadata")
+  reserved <- c(
+    "item_id", "original_name", "original_path", "imported_at",
+    "raw_metadata", "extra_metadata"
+  )
   out$raw_metadata <- rows$metadata
   out$extra_metadata <- lapply(parsed, function(p) p[intersect(names(p), reserved)])
   keys <- setdiff(
@@ -658,6 +685,6 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
       if (is.null(p[[k]])) NULL else p[[k]]
     })
   }
-  attr(out, "diagnostics") <- diagnostics
+  attr(out, "diagnostics") <- box$diagnostics
   out
 }

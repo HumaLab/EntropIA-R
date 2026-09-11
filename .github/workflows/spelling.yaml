@@ -35,16 +35,14 @@ jobs:
           extra-packages: any::spelling
           needs: website
 
-      # Checks the English documentation only. spell_check_package() would also
-      # scan README.md (Spanish user-facing landing page) with the en-US
-      # dictionary and fail on legitimate Spanish words, so the file list is
-      # built explicitly instead: man/, vignettes/ and the English README.
+      # English documentation only. Spanish README.md / vignettes/*.Rmd are
+      # user-facing and would fail the en-US dictionary.
       - name: Spelling
         shell: Rscript {0}
         run: |
           files <- c(
             list.files("man", pattern = "\\.Rd$", ignore.case = TRUE, full.names = TRUE),
-            list.files("vignettes", pattern = "\\.(Rmd|qmd|Rnw)$", ignore.case = TRUE,
+            list.files("vignettes", pattern = "\\.en\\.(Rmd|qmd|Rnw)$", ignore.case = TRUE,
                        full.names = TRUE, recursive = TRUE),
             "README.en.md"
           )

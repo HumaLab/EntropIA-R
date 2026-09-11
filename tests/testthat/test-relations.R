@@ -46,7 +46,7 @@ test_that("entropia_conversation returns the conversation and its messages", {
     expect_identical(msgs$role, c("user", "assistant"))
     expect_identical(
       msgs$content,
-      c("¿Que paso en la huelga?", "Hubo una huelga general en 1920.")
+      c("<U+00BF>Que paso en la huelga?", "Hubo una huelga general en 1920.")
     )
     expect_s3_class(msgs$created_at, "POSIXct")
   })
@@ -142,7 +142,7 @@ test_that("entity relations resolves item and collection context on the fixture"
     out <- dplyr::collect(entropia_entity_relations(con))
     expect_equal(nrow(out), 1L)
     expect_identical(out$id, "88888888-8888-4888-8888-888888888881")
-    expect_identical(out$subject, "Juan Pérez")
+    expect_identical(out$subject, "Juan P<U+00E9>rez")
     expect_identical(out$predicate, "participo_en")
     expect_identical(out$object, "la huelga")
     expect_identical(out$item_id, REL_ITEM_1)

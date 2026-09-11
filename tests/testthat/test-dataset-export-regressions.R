@@ -2,7 +2,11 @@ test_that("temporal floors pre-epoch dates and handles every empty unit", {
   x <- tibble::tibble(t = as.POSIXct(c(-0.5, NA_real_), origin = "1970-01-01", tz = "UTC"))
   for (u in c("second", "minute", "hour")) {
     p <- entropia_temporal_profile(x, t, unit = u)
-    expected <- switch(u, second = -1, minute = -60, hour = -3600)
+    expected <- switch(u,
+      second = -1,
+      minute = -60,
+      hour = -3600
+    )
     expect_equal(as.numeric(p$t), expected)
     expect_equal(attr(p, "excluded"), 1)
   }
@@ -44,12 +48,15 @@ test_that("item projection rejects asset ambiguity and empty selection stays typ
   con <- ent_connect_fixture("full")
   on.exit(entropia_disconnect(con), add = TRUE)
   expect_error(entropia_analysis_dataset(con, unit = "item", columns = "asset_id"),
-    class = "entropia_error_invalid_argument")
+    class = "entropia_error_invalid_argument"
+  )
   x <- entropia_analysis_dataset(con, unit = "item", text = FALSE)
   expect_equal(nrow(x), length(unique(x$item_id)))
   expect_false("asset_id" %in% names(x))
-  z <- entropia_analysis_dataset(con, collection_ids = character(), text = FALSE,
-    columns = c("item_id", "item_created_at"))
+  z <- entropia_analysis_dataset(con,
+    collection_ids = character(), text = FALSE,
+    columns = c("item_id", "item_created_at")
+  )
   expect_equal(nrow(z), 0L)
   expect_s3_class(z$item_created_at, "POSIXct")
 })
@@ -57,13 +64,13 @@ test_that("item projection rejects asset ambiguity and empty selection stays typ
 test_that("lazy exports break third-column ties while retaining descending order", {
   con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
   on.exit(DBI::dbDisconnect(con), add = TRUE)
-  DBI::dbWriteTable(con, "ties", data.frame(a = c(1, 1, 2), b = 1, c = c("ñ", "á", "é")))
+  DBI::dbWriteTable(con, "ties", data.frame(a = c(1, 1, 2), b = 1, c = c("<U+00F1>", "<U+00E1>", "<U+00E9>")))
   q <- dplyr::arrange(dplyr::tbl(con, "ties"), dplyr::desc(.data$a))
   path <- tempfile()
   entropia_export(q, path, chunk_size = 1L)
   out <- utils::read.csv(path)
   expect_equal(out$a, c(2L, 1L, 1L))
   raw <- readBin(path, "raw", file.info(path)$size)
-  # UTF-8 é (U+00E9) written as bytes, not a <U+00E9> escape.
+  # UTF-8 <U+00E9> (U+00E9) written as bytes, not a <U+00E9> escape.
   expect_true(any(raw[-length(raw)] == as.raw(0xc3) & raw[-1] == as.raw(0xa9)))
 })

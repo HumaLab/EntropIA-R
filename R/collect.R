@@ -16,28 +16,36 @@
 # evidence of its type, even when it reuses a manifest column name.
 ent_infer_contract <- function(x) {
   walk <- function(q) {
-    if (!is.list(q)) return(character())
+    if (!is.list(q)) {
+      return(character())
+    }
     if (inherits(q, "lazy_base_query")) {
       # dbplyr >= 2.5 wraps table paths (dbplyr_table_path) and renders idents
       # with backticks; normalize to the bare table name for manifest lookup.
       src <- gsub("`", "", as.character(q$x), fixed = TRUE)
       if (length(src) != 1L || is.na(src) || !nzchar(src) ||
-          startsWith(src, "(")) {
+        startsWith(src, "(")) {
         return(character())
       }
       cols <- ent_manifest()$tables[[src]]$columns
-      if (is.null(cols) || !is.character(q$vars)) return(character())
+      if (is.null(cols) || !is.character(q$vars)) {
+        return(character())
+      }
       out <- vapply(cols, function(z) {
         if (is.null(z$contract)) "raw" else z$contract
       }, character(1))
       return(out[intersect(names(out), q$vars)])
     }
-    if (!inherits(q, "lazy_select_query")) return(character())
+    if (!inherits(q, "lazy_select_query")) {
+      return(character())
+    }
     input <- walk(q$x)
     sel <- q$select
     if (!is.list(sel) || !is.character(sel$name) ||
-        !is.list(sel$expr) || length(sel$name) != length(sel$expr) ||
-        anyNA(sel$name) || anyDuplicated(sel$name)) return(character())
+      !is.list(sel$expr) || length(sel$name) != length(sel$expr) ||
+      anyNA(sel$name) || anyDuplicated(sel$name)) {
+      return(character())
+    }
     out <- character()
     for (i in seq_along(sel$name)) {
       expr <- sel$expr[[i]]
@@ -59,14 +67,22 @@ ent_infer_contract <- function(x) {
 }
 
 ent_validate_collect_schema <- function(schema, vars) {
-  if (is.null(schema)) return(NULL)
+  if (is.null(schema)) {
+    return(NULL)
+  }
   if (!is.character(schema) || is.null(names(schema)) || anyNA(schema) ||
-      anyNA(names(schema)) || any(!nzchar(names(schema))) ||
-      anyDuplicated(names(schema)) ||
-      any(!schema %in% c("datetime_ms", "datetime_s", "datetime_auto", "json", "raw")) ||
-      any(!names(schema) %in% vars)) {
-    ent_abort("entropia_error_invalid_argument",
-      "{.arg schema} must be a uniquely named character vector mapping existing output columns to datetime_ms, datetime_s, datetime_auto, json, or raw.")
+    anyNA(names(schema)) || any(!nzchar(names(schema))) ||
+    anyDuplicated(names(schema)) ||
+    any(!schema %in% c("datetime_ms", "datetime_s", "datetime_auto", "json", "raw")) ||
+    any(!names(schema) %in% vars)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      paste(
+        "{.arg schema} must be a uniquely named character vector mapping",
+        "existing output columns to datetime_ms, datetime_s, datetime_auto,",
+        "json, or raw."
+      )
+    )
   }
   schema
 }

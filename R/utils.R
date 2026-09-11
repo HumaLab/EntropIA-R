@@ -123,25 +123,37 @@ ent_schema_hash <- function(con) {
 # concurrent changes; these checks cannot eliminate filesystem races.
 ent_snapshot_hash <- function(con) {
   ent_require_conn(con)
-  path <- tryCatch({
-    dbs <- DBI::dbGetQuery(con, "PRAGMA database_list")
-    dbs$file[match("main", dbs$name)]
-  }, error = function(e) NA_character_)
+  path <- tryCatch(
+    {
+      dbs <- DBI::dbGetQuery(con, "PRAGMA database_list")
+      dbs$file[match("main", dbs$name)]
+    },
+    error = function(e) NA_character_
+  )
   if (length(path) != 1L || is.na(path) || !nzchar(path) ||
-      identical(path, ":memory:") || !file.exists(path) || dir.exists(path)) {
+    identical(path, ":memory:") || !file.exists(path) || dir.exists(path)) {
     return(NA_character_)
   }
   self_contained <- function() {
     wal <- paste0(path, "-wal")
-    if (!file.exists(wal)) return(TRUE)
+    if (!file.exists(wal)) {
+      return(TRUE)
+    }
     isTRUE(file.info(wal)$size == 0)
   }
-  tryCatch({
-    if (!self_contained()) return(NA_character_)
-    before <- file.info(path)[, c("size", "mtime", "ctime"), drop = FALSE]
-    hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
-    after <- file.info(path)[, c("size", "mtime", "ctime"), drop = FALSE]
-    if (!self_contained() || !identical(before, after)) return(NA_character_)
-    hash
-  }, error = function(e) NA_character_)
+  tryCatch(
+    {
+      if (!self_contained()) {
+        return(NA_character_)
+      }
+      before <- file.info(path)[, c("size", "mtime", "ctime"), drop = FALSE]
+      hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
+      after <- file.info(path)[, c("size", "mtime", "ctime"), drop = FALSE]
+      if (!self_contained() || !identical(before, after)) {
+        return(NA_character_)
+      }
+      hash
+    },
+    error = function(e) NA_character_
+  )
 }

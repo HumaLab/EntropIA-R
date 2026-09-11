@@ -12,7 +12,7 @@ test_that("profile sampling is reproducible and preserves caller RNG", {
 
 test_that("profile empty and nonfinite numeric values do not yield infinite ranges", {
   p <- entropia_profile(tibble::tibble(value = numeric(), when = as.Date(character())))
-  expect_true(all(is.na(p$numeric$value[p$numeric$statistic %in% c("min", "max", "mean")])) )
+  expect_true(all(is.na(p$numeric$value[p$numeric$statistic %in% c("min", "max", "mean")])))
   expect_identical(p$missing$status, c("no_data", "no_data"))
   p <- entropia_profile(tibble::tibble(value = c(NA_real_, Inf, 2), when = as.Date(c(NA, "2020-01-01", "2020-02-01"))))
   expect_equal(p$numeric$value[p$numeric$statistic == "mean"], 2)
@@ -48,7 +48,8 @@ test_that("overview distinguishes malformed metadata from absent metadata", {
   DBI::dbExecute(wcon, "DROP INDEX IF EXISTS idx_items_search")
   DBI::dbExecute(wcon, "ALTER TABLE items DROP COLUMN search_text")
   DBI::dbExecute(wcon, "UPDATE items SET metadata = '{broken' WHERE id = ?",
-    params = list("22222222-2222-4222-8222-222222222221"))
+    params = list("22222222-2222-4222-8222-222222222221")
+  )
   DBI::dbDisconnect(wcon)
   con <- withr::with_options(
     list(entropiaR.schema_policy = "allow"),

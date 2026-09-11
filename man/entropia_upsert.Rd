@@ -28,7 +28,7 @@ guidance: v1 is read-only, and write support arrives in v2 via
 }
 \details{
 In v2, \code{entropia_upsert()} implements upserts as
-\verb{INSERT ... ON CONFLICT(id) DO UPDATE} — never \verb{INSERT OR REPLACE}, whose
+\verb{INSERT ... ON CONFLICT(id) DO UPDATE} <U+2014> never \verb{INSERT OR REPLACE}, whose
 rowid reassignment would break the contentless FTS5 tables.
 }
 \examples{

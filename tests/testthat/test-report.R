@@ -30,19 +30,14 @@ test_that("report redaction strips paths and identifying labels", {
 })
 
 test_that("report renders a frozen HTML dashboard with Quarto", {
+  skip_on_cran()
+  skip_on_ci()
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("knitr")
   skip_if_not_installed("rmarkdown")
   if (!nzchar(Sys.which("quarto"))) {
     skip("quarto executable not on PATH")
   }
-  # Quarto starts a clean R process that loads the installed package, not
-  # pkgload::load_all(), so this render is skipped in development tests.
-  skip_if(
-    requireNamespace("pkgload", quietly = TRUE) &&
-      isTRUE(pkgload::is_dev_package("entropiaR")),
-    "Quarto subprocess cannot see load_all() changes"
-  )
   con <- ent_connect_fixture("full")
   on.exit(entropia_disconnect(con), add = TRUE)
   eda <- entropia_overview(con)

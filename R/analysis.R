@@ -60,7 +60,9 @@ ent_select_cols <- function(x, quo, arg, exactly = NULL) {
 # base cut.POSIXt convention).
 ent_floor_date <- function(d, unit) {
   tz <- attr(d, "tzone") %||% "UTC"
-  if (!length(d)) return(as.POSIXct(numeric(), origin = "1970-01-01", tz = tz))
+  if (!length(d)) {
+    return(as.POSIXct(numeric(), origin = "1970-01-01", tz = tz))
+  }
   switch(unit,
     second = as.POSIXct(floor(as.numeric(d)), origin = "1970-01-01", tz = tz),
     minute = as.POSIXct(floor(as.numeric(d) / 60) * 60, origin = "1970-01-01", tz = tz),
@@ -168,7 +170,7 @@ entropia_temporal_profile <- function(x, date_var, unit = "month", by = NULL) {
 
 # Words in a character scalar: runs of non-whitespace tokens. Empty/whitespace
 # text is 0 words; NA is NA (the caller's NA policy). Punctuation stays
-# attached to its token, so "Compañeros," counts as one word.
+# attached to its token, so "Compa<U+00F1>eros," counts as one word.
 ent_n_words <- function(z) {
   if (is.na(z)) {
     return(NA_integer_)
@@ -402,7 +404,13 @@ entropia_topic_frequency <- function(x, by = NULL) {
 entropia_compare_collections <- function(x, by = "collection_name") {
   x <- ent_require_tibble(x)
   default_id <- missing(by) && "collection_id" %in% names(x)
-  by_col <- if (default_id) "collection_id" else ent_select_cols(x, rlang::enquo(by), "by", exactly = 1L)
+  by_col <- if (default_id) {
+    "collection_id"
+  } else {
+    ent_select_cols(x, rlang::enquo(by), "by",
+      exactly = 1L
+    )
+  }
   if (identical(by_col, "n")) {
     ent_abort(
       "entropia_error_invalid_argument",
@@ -441,7 +449,9 @@ entropia_compare_collections <- function(x, by = "collection_name") {
 
   sum_exprs <- list()
   if (default_id && "collection_name" %in% names(x)) {
-    sum_exprs[["collection_name"]] <- rlang::expr(sort(unique(.data$collection_name), na.last = TRUE)[1L])
+    sum_exprs[["collection_name"]] <- rlang::expr(sort(unique(.data$collection_name),
+      na.last = TRUE
+    )[1L])
   }
   if (has_item) {
     sum_exprs[["n_items"]] <- rlang::expr(dplyr::n_distinct(.data$item_id, na.rm = TRUE))
@@ -468,13 +478,17 @@ entropia_compare_collections <- function(x, by = "collection_name") {
 # arbitrary cached/volatile attributes are deliberately not hashed.
 ent_dataset_hash <- function(x) {
   if (!requireNamespace("digest", quietly = TRUE)) {
-    ent_abort("entropia_error_missing_dependency",
-      "Dataset provenance requires {.pkg digest}; install it with install.packages('digest').")
+    ent_abort(
+      "entropia_error_missing_dependency",
+      "Dataset provenance requires {.pkg digest}; install it with install.packages('digest')."
+    )
   }
   canonical <- function(z) {
     if (is.environment(z) || is.function(z) || typeof(z) == "externalptr") {
-      ent_abort("entropia_error_invalid_argument",
-        "Dataset hashing does not support environments, functions or external pointers.")
+      ent_abort(
+        "entropia_error_invalid_argument",
+        "Dataset hashing does not support environments, functions or external pointers."
+      )
     }
     a <- attributes(z)
     a <- a[intersect(c("class", "names", "levels", "tzone", "dim", "dimnames"), names(a))]
@@ -483,10 +497,13 @@ ent_dataset_hash <- function(x) {
     if (is.list(z)) z <- lapply(z, canonical)
     list(type = typeof(z), attributes = a, values = z)
   }
-  payload <- list(version = 1L, rows = nrow(x), columns = enc2utf8(names(x)),
-    data = lapply(seq_along(x), function(i) canonical(x[[i]])))
+  payload <- list(
+    version = 1L, rows = nrow(x), columns = enc2utf8(names(x)),
+    data = lapply(seq_along(x), function(i) canonical(x[[i]]))
+  )
   digest::digest(serialize(payload, NULL, ascii = FALSE, xdr = TRUE, version = 2L),
-    algo = "sha256", serialize = FALSE)
+    algo = "sha256", serialize = FALSE
+  )
 }
 
 ent_validate_dataset_name <- function(name) {
@@ -572,23 +589,32 @@ entropia_analysis_dataset <- function(con, ..., name = NULL, unit = "asset",
   }
 
   unit <- ent_validate_choice(unit, c("asset", "item"), "unit")
-  corpus <- ent_study_query(con, collection_ids = collection_ids,
+  corpus <- ent_study_query(con,
+    collection_ids = collection_ids,
     asset_types = asset_types, page_assets = page_assets, date_var = date_var,
-    date_range = date_range, text = text)
+    date_range = date_range, text = text
+  )
   if (length(filters)) corpus <- dplyr::filter(corpus, !!!filters)
   available <- colnames(corpus)
-  item_columns <- available[startsWith(available, "item_") | startsWith(available, "collection_") | available == "text"]
+  item_columns <- available[startsWith(available, "item_") | startsWith(available, "collection_") |
+    available == "text"]
   allowed <- if (unit == "item") item_columns else available
   if (is.null(columns)) columns <- allowed
   if (!is.character(columns) || anyNA(columns) || anyDuplicated(columns) ||
-      !length(columns) || !all(columns %in% allowed)) {
-    ent_abort("entropia_error_invalid_argument",
-      "{.arg columns} must be unique output column names; item datasets allow only item/collection columns and text.")
+    !length(columns) || !all(columns %in% allowed)) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      paste(
+        "{.arg columns} must be unique output column names; item datasets",
+        "allow only item/collection columns and text."
+      )
+    )
   }
   counts <- dplyr::collect(dplyr::summarise(corpus,
     rows = dplyr::n(), items = dplyr::n_distinct(.data$item_id),
     assets = dplyr::n_distinct(.data$asset_id, na.rm = TRUE),
-    rows_without_assets = sum(ifelse(is.na(.data$asset_id), 1L, 0L))))
+    rows_without_assets = sum(ifelse(is.na(.data$asset_id), 1L, 0L))
+  ))
   corpus <- dplyr::arrange(corpus, .data$item_id, .data$asset_id)
   projected <- if (unit == "item") unique(c("item_id", columns)) else columns
   corpus <- dplyr::select(corpus, dplyr::all_of(projected))
@@ -611,9 +637,11 @@ entropia_analysis_dataset <- function(con, ..., name = NULL, unit = "asset",
     }
     data <- data[, columns, drop = FALSE]
   }
-  selection <- list(unit = unit, columns = columns, text = text,
+  selection <- list(
+    unit = unit, columns = columns, text = text,
     page_assets = page_assets, collection_ids = collection_ids,
-    asset_types = asset_types, date_var = date_var, date_range = date_range)
+    asset_types = asset_types, date_var = date_var, date_range = date_range
+  )
   prov <- list(
     sidecar_version = 2L, name = name, scope = "origin",
     schema_version = ent_attr(con, "schema_version"),
@@ -629,8 +657,10 @@ entropia_analysis_dataset <- function(con, ..., name = NULL, unit = "asset",
     built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%OS3Z", tz = "UTC"),
     r_version = R.version.string
   )
-  prov$origin <- list(dataset_sha256 = prov$dataset_sha256, query = query,
-    selection = selection)
+  prov$origin <- list(
+    dataset_sha256 = prov$dataset_sha256, query = query,
+    selection = selection
+  )
   attr(data, "entropia_prov") <- prov
   class(data) <- c("entropia_dataset", class(data))
   data

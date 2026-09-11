@@ -66,8 +66,8 @@ ent_dashboard_choices <- function(x, label, key) {
 #' @export
 #' @examples
 #' if (interactive() && requireNamespace("shiny", quietly = TRUE) &&
-#'     requireNamespace("bslib", quietly = TRUE) &&
-#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   requireNamespace("bslib", quietly = TRUE) &&
+#'   requireNamespace("ggplot2", quietly = TRUE)) {
 #'   path <- system.file("extdata", "entropia-example.sqlite", package = "entropiaR")
 #'   app <- entropia_dashboard(path)
 #'   shiny::runApp(app)
@@ -77,7 +77,7 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
                                profile_limit = 1000L) {
   ent_require_dashboard()
   if (!is.character(path) || length(path) != 1L || is.na(path) ||
-      !ent_is_sqlite_header(path)) {
+    !ent_is_sqlite_header(path)) {
     ent_abort("entropia_error_not_sqlite", "{.arg path} must name a readable SQLite snapshot.")
   }
   if (!is.character(title) || length(title) != 1L || is.na(title)) {
@@ -102,40 +102,46 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
     title = title,
     sidebar = bslib::sidebar(
       title = "Universo del estudio", width = 300,
-      shiny::selectInput("collections", "Colecciones (sin selección: todas)",
+      shiny::selectInput("collections", "Colecciones (sin selecci\u00f3n: todas)",
         choices = character(), multiple = TRUE
       ),
-      shiny::selectInput("types", "Tipos de asset (sin selección: todos)",
+      shiny::selectInput("types", "Tipos de asset (sin selecci\u00f3n: todos)",
         choices = character(), multiple = TRUE
       ),
-      shiny::checkboxInput("pages", "Incluir páginas de PDF", TRUE),
+      shiny::checkboxInput("pages", "Incluir p\u00e1ginas de PDF", TRUE),
       shiny::selectInput("date_var", "Fecha del estudio", choices = c(
-        "Creación del item" = "item_created_at",
-        "Actualización del item" = "item_updated_at",
-        "Creación del asset" = "asset_created_at"
+        "Creaci\u00f3n del item" = "item_created_at",
+        "Actualizaci\u00f3n del item" = "item_updated_at",
+        "Creaci\u00f3n del asset" = "asset_created_at"
       )),
       shiny::checkboxInput("date_filter", "Limitar intervalo temporal", FALSE),
-      shiny::conditionalPanel("input.date_filter",
+      shiny::conditionalPanel(
+        "input.date_filter",
         shiny::dateRangeInput("dates", "Intervalo inclusivo",
           start = as.Date("1900-01-01"), end = Sys.Date()
         )
       ),
       shiny::selectInput("text_source", "Fuente de texto", choices = c(
-        "Automática: extracción, luego transcripción" = "auto",
-        "Extracción" = "extraction", "Transcripción" = "transcription"
+        "Autom\u00e1tica: extracci\u00f3n, luego transcripci\u00f3n" = "auto",
+        "Extracci\u00f3n" = "extraction", "Transcripci\u00f3n" = "transcription"
       )),
       shiny::selectInput("entity_source", "Fuente de entidades", choices = c("Todas" = "")),
       shiny::selectInput("model", "Modelo de entidades", choices = c("Todos" = "")),
       shiny::checkboxInput("use_confidence", "Filtrar confianza de entidades", FALSE),
-      shiny::conditionalPanel("input.use_confidence",
-        shiny::sliderInput("confidence", "Confianza mínima", min = 0, max = 1, value = 0.5)
+      shiny::conditionalPanel(
+        "input.use_confidence",
+        shiny::sliderInput("confidence", "Confianza m\u00ednima", min = 0, max = 1, value = 0.5)
       ),
       shiny::actionButton("apply", "Aplicar filtros", class = "btn-primary"),
-      shiny::tags$p("Las fechas de creación/importación no equivalen a la fecha del documento."),
-      shiny::tags$p("Las entidades extraídas por IA no son hechos verificados.")
+      shiny::tags$p(paste(
+        "Las fechas de creaci\u00f3n/importaci\u00f3n no equivalen a la",
+        "fecha del documento."
+      )),
+      shiny::tags$p("Las entidades extra\u00eddas por IA no son hechos verificados.")
     ),
     bslib::navset_card_tab(
-      bslib::nav_panel("Resumen",
+      bslib::nav_panel(
+        "Resumen",
         shiny::verbatimTextOutput("source_info"),
         shiny::tableOutput("counts"),
         shiny::plotOutput("collections_plot"),
@@ -143,12 +149,14 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
         shiny::tags$h3("Esquema: esperado y observado"),
         shiny::tableOutput("inventory")
       ),
-      bslib::nav_panel("Calidad",
+      bslib::nav_panel(
+        "Calidad",
         shiny::tags$p("Cada tasa conserva unidad, numerador, denominador y disponibilidad."),
         shiny::plotOutput("quality_plot", height = "500px"),
         shiny::tableOutput("quality_table")
       ),
-      bslib::nav_panel("Exploración",
+      bslib::nav_panel(
+        "Exploraci\u00f3n",
         shiny::plotOutput("temporal_plot"),
         shiny::plotOutput("entities_plot"),
         shiny::tableOutput("entities_table"),
@@ -159,17 +167,19 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
         shiny::plotOutput("length_plot"),
         shiny::tableOutput("length_summary")
       ),
-      bslib::nav_panel("Detalle",
+      bslib::nav_panel(
+        "Detalle",
         shiny::textOutput("page_notice"),
-        shiny::actionButton("previous", "Página anterior"),
-        shiny::actionButton("next_page", "Página siguiente"),
+        shiny::actionButton("previous", "P\u00e1gina anterior"),
+        shiny::actionButton("next_page", "P\u00e1gina siguiente"),
         shiny::tableOutput("detail"),
-        shiny::selectInput("document", "Asset de esta página", choices = character()),
+        shiny::selectInput("document", "Asset de esta p\u00e1gina", choices = character()),
         shiny::actionButton("show_text", "Mostrar texto seleccionado"),
         shiny::tags$p("El texto se muestra escapado, nunca como HTML ejecutable."),
         shiny::verbatimTextOutput("document_text")
       ),
-      bslib::nav_panel("Exportación",
+      bslib::nav_panel(
+        "Exportaci\u00f3n",
         shiny::verbatimTextOutput("selection_info"),
         shiny::textOutput("download_notice"),
         shiny::checkboxInput("download_text", "Incluir texto documental en la descarga", FALSE),
@@ -177,7 +187,10 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
         shiny::downloadButton("download_recipe", "Procedencia JSON"),
         shiny::downloadButton("download_eda", "Tablas EDA JSON"),
         shiny::downloadButton("download_plot", "Figura temporal PNG"),
-        shiny::tags$p("Las descargas omiten rutas y metadata. Revise nombres e IDs antes de compartir.")
+        shiny::tags$p(paste(
+          "Las descargas omiten rutas y metadata. Revise nombres e IDs",
+          "antes de compartir."
+        ))
       )
     )
   )
@@ -208,23 +221,26 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
         }
       }
     }
-    selected <- shiny::eventReactive(input$apply, {
-      dates <- NULL
-      if (isTRUE(input$date_filter)) {
-        shiny::req(length(input$dates) == 2L, !anyNA(input$dates))
-        dates <- as.POSIXct(input$dates, tz = "UTC")
-        dates[[2]] <- dates[[2]] + 86400 - 0.001
-      }
-      list(
-        collection_ids = if (length(input$collections)) input$collections else NULL,
-        asset_types = if (length(input$types)) input$types else NULL,
-        page_assets = isTRUE(input$pages), date_var = input$date_var,
-        date_range = dates, text_source = input$text_source,
-        entity_source = if (nzchar(input$entity_source %||% "")) input$entity_source else NULL,
-        model_name = if (nzchar(input$model %||% "")) input$model else NULL,
-        min_confidence = if (isTRUE(input$use_confidence)) input$confidence else NULL
-      )
-    }, ignoreNULL = FALSE)
+    selected <- shiny::eventReactive(input$apply,
+      {
+        dates <- NULL
+        if (isTRUE(input$date_filter)) {
+          shiny::req(length(input$dates) == 2L, !anyNA(input$dates))
+          dates <- as.POSIXct(input$dates, tz = "UTC")
+          dates[[2]] <- dates[[2]] + 86400 - 0.001
+        }
+        list(
+          collection_ids = if (length(input$collections)) input$collections else NULL,
+          asset_types = if (length(input$types)) input$types else NULL,
+          page_assets = isTRUE(input$pages), date_var = input$date_var,
+          date_range = dates, text_source = input$text_source,
+          entity_source = if (nzchar(input$entity_source %||% "")) input$entity_source else NULL,
+          model_name = if (nzchar(input$model %||% "")) input$model else NULL,
+          min_confidence = if (isTRUE(input$use_confidence)) input$confidence else NULL
+        )
+      },
+      ignoreNULL = FALSE
+    )
     overview <- shiny::reactive({
       do.call(entropia_overview, c(list(con = con), selected()))
     })
@@ -242,12 +258,14 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
       rows <- details()
       rows <- rows[!is.na(rows$asset_id), , drop = FALSE]
       shiny::updateSelectInput(session, "document",
-        choices = stats::setNames(rows$asset_id, paste(rows$item_title, rows$asset_id, sep = " — "))
+        choices = stats::setNames(rows$asset_id, paste(rows$item_title, rows$asset_id,
+          sep = " \u2014 "
+        ))
       )
     })
     output$source_info <- shiny::renderText(paste0(
       "Esquema: ", entropia_schema_version(con),
-      "\nModo: snapshot de solo lectura; conexión aislada por sesión.",
+      "\nModo: snapshot de solo lectura; conexi\u00f3n aislada por sesi\u00f3n.",
       "\nFecha operativa elegida: ", selected()$date_var
     ))
     output$counts <- shiny::renderTable(overview()$counts)
@@ -256,13 +274,15 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
     output$inventory <- shiny::renderTable(overview()$inventory)
     output$quality_table <- shiny::renderTable(overview()$quality)
     output$quality_plot <- shiny::renderPlot(entropia_plot_coverage(overview()$quality))
-    output$temporal_plot <- shiny::renderPlot(entropia_plot_temporal(overview()$temporal, date_var = "date"))
+    output$temporal_plot <- shiny::renderPlot(entropia_plot_temporal(overview()$temporal,
+      date_var = "date"
+    ))
     output$entities_plot <- shiny::renderPlot(entropia_plot_entities(overview()$entities))
     output$entities_table <- shiny::renderTable(overview()$entities)
     output$topics_plot <- shiny::renderPlot(entropia_plot_topics(overview()$topics))
     output$topics_table <- shiny::renderTable(overview()$topics)
     output$page_notice <- shiny::renderText(paste0(
-      "Página ", current_page(), " de ", max(1, ceiling(total_rows() / page_size)),
+      "P\u00e1gina ", current_page(), " de ", max(1, ceiling(total_rows() / page_size)),
       "; ", total_rows(), " filas del universo (no documentos independientes)."
     ))
     output$detail <- shiny::renderTable(details())
@@ -272,7 +292,7 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
       # Verify the selected asset still belongs to the applied universe.
       q <- ent_dashboard_query(con, selected(), text = selected()$text_source)
       q <- dplyr::filter(q, .data$asset_id == !!id)
-      rows <- dplyr::collect(head(dplyr::select(q, "text"), 1L))
+      rows <- dplyr::collect(utils::head(dplyr::select(q, "text"), 1L))
       if (!nrow(rows) || is.na(rows$text[[1]])) "Sin texto disponible." else rows$text[[1]]
     })
     output$document_text <- shiny::renderText({
@@ -282,10 +302,11 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
     })
     length_result <- shiny::eventReactive(input$lengths, {
       q <- ent_dashboard_query(con, selected(), text = selected()$text_source)
-      q <- dplyr::arrange(dplyr::select(q, "item_id", "asset_id", "asset_type", "text"),
+      q <- dplyr::arrange(
+        dplyr::select(q, "item_id", "asset_id", "asset_type", "text"),
         .data$item_id, .data$asset_id
       )
-      rows <- dplyr::collect(head(q, profile_limit))
+      rows <- dplyr::collect(utils::head(q, profile_limit))
       list(data = entropia_document_lengths(rows), selection = selected())
     })
     valid_lengths <- shiny::reactive({
@@ -302,19 +323,28 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
     ))
     output$length_plot <- shiny::renderPlot(entropia_plot_distribution(valid_lengths(), "n_words"))
     output$length_summary <- shiny::renderTable(entropia_profile(
-      valid_lengths(), columns = c("n_chars", "n_words")
+      valid_lengths(),
+      columns = c("n_chars", "n_words")
     )$numeric)
     output$selection_info <- shiny::renderText(jsonlite::toJSON(
-      selected(), pretty = TRUE, auto_unbox = TRUE, null = "null", POSIXt = "ISO8601"
+      selected(),
+      pretty = TRUE, auto_unbox = TRUE, null = "null", POSIXt = "ISO8601"
     ))
     output$download_notice <- shiny::renderText(paste0(
-      total_rows(), " filas seleccionadas; límite de descarga: ", download_limit,
+      total_rows(), " filas seleccionadas; l\u00edmite de descarga: ", download_limit,
       if (total_rows() > download_limit) ". Reduzca el universo antes de descargar." else "."
     ))
     download_dataset <- shiny::reactive({
-      shiny::validate(shiny::need(total_rows() <= download_limit, "Reduzca el universo de descarga."))
-      args <- selected()[c("collection_ids", "asset_types", "page_assets", "date_var", "date_range")]
-      cols <- c("item_id", "item_title", "collection_id", "collection_name", "asset_id",
+      shiny::validate(shiny::need(
+        total_rows() <= download_limit,
+        "Reduzca el universo de descarga."
+      ))
+      args <- selected()[c(
+        "collection_ids", "asset_types", "page_assets", "date_var",
+        "date_range"
+      )]
+      cols <- c(
+        "item_id", "item_title", "collection_id", "collection_name", "asset_id",
         "asset_type", "asset_size", "item_created_at", "asset_created_at"
       )
       if (isTRUE(input$download_text)) cols <- c(cols, "text")
@@ -336,17 +366,20 @@ entropia_dashboard <- function(path, title = "EntropIA: explorar el corpus",
       content = function(file) {
         result <- overview()
         result$provenance$source_path <- NULL
-        jsonlite::write_json(result, file, pretty = TRUE, auto_unbox = TRUE,
+        jsonlite::write_json(result, file,
+          pretty = TRUE, auto_unbox = TRUE,
           null = "null", na = "null", POSIXt = "ISO8601"
         )
       }
     )
     output$download_plot <- shiny::downloadHandler(
       filename = function() "entropia-temporal.png",
-      content = function(file) ggplot2::ggsave(
-        file, entropia_plot_temporal(overview()$temporal, date_var = "date"),
-        device = "png", width = 8, height = 5, dpi = 144
-      )
+      content = function(file) {
+        ggplot2::ggsave(
+          file, entropia_plot_temporal(overview()$temporal, date_var = "date"),
+          device = "png", width = 8, height = 5, dpi = 144
+        )
+      }
     )
   }
   shiny::shinyApp(ui, server)

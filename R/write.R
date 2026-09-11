@@ -102,7 +102,7 @@ entropia_update <- function(con, table, data, by, dry_run = TRUE) {
 #' `entropia_connect(path, write = TRUE)`.
 #'
 #' In v2, `entropia_upsert()` implements upserts as
-#' `INSERT ... ON CONFLICT(id) DO UPDATE` — never `INSERT OR REPLACE`, whose
+#' `INSERT ... ON CONFLICT(id) DO UPDATE` <U+2014> never `INSERT OR REPLACE`, whose
 #' rowid reassignment would break the contentless FTS5 tables.
 #'
 #' @param con An EntropIA connection.

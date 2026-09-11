@@ -72,7 +72,7 @@ test_that("entities excludes soft-deleted rows by default, include_deleted keeps
     expect_equal(nrow(inc), 4L)
     expect_false(any(def$value == "Persona Borrada"))
     expect_true("Persona Borrada" %in% inc$value)
-    expect_setequal(def$value, c("Juan Pérez", "Plaza de Mayo", "Sindicato Ferroviario"))
+    expect_setequal(def$value, c("Juan P<U+00E9>rez", "Plaza de Mayo", "Sindicato Ferroviario"))
   })
 })
 
@@ -93,7 +93,7 @@ test_that("entities min_confidence filters in SQL and composes with soft-delete"
     # 0.97 keeps only the 0.97 entity.
     out <- dplyr::collect(entropia_entities(con, min_confidence = 0.95))
     expect_equal(nrow(out), 1L)
-    expect_identical(out$value, "Juan Pérez")
+    expect_identical(out$value, "Juan P<U+00E9>rez")
 
     # 0.9 keeps the three live entities; the soft-deleted 0.5 row stays out.
     out2 <- dplyr::collect(entropia_entities(con, min_confidence = 0.9))
@@ -146,7 +146,7 @@ test_that("triples carry subject/predicate/object and a nullable asset_id", {
   with_research_con("full", function(con) {
     out <- dplyr::collect(entropia_triples(con))
     expect_equal(nrow(out), 1L)
-    expect_identical(out$subject, "Juan Pérez")
+    expect_identical(out$subject, "Juan P<U+00E9>rez")
     expect_identical(out$predicate, "participo_en")
     expect_identical(out$object, "la huelga")
     expect_true(is.na(out$asset_id)) # item-level triple
