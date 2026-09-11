@@ -84,7 +84,7 @@ notsqlite <- tempfile(fileext = ".txt")
 writeLines("not a database", notsqlite)
 entropia_connect(notsqlite)
 #> Error in `entropia_connect()`:
-#> ! /tmp/RtmpMAAJTk/file209f59b4d701.txt is not a SQLite database.
+#> ! /tmp/RtmpoZXHDd/file208c501ae593.txt is not a SQLite database.
 #> ℹ entropiaR reads EntropIA SQLite databases. The file does not begin with the
 #>   SQLite header.
 ```

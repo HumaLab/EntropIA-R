@@ -127,9 +127,7 @@ entropia_corpus(con, asset_types = "pdf") |>
   dplyr::collect() |>
   nrow()
 #> [1] 3
-ids <- entropia_collections(con) |>
-  dplyr::collect() |>
-  dplyr::pull(id)
+ids <- entropia_collections(con) |> dplyr::collect() |> dplyr::pull(id)
 entropia_corpus(con, collection_ids = ids[1]) |>
   dplyr::collect() |>
   nrow()

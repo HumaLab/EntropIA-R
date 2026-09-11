@@ -89,9 +89,9 @@ entropia_provenance(corpus)
 #>   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
 #>   dataset hash:   c7d9e919196ad9347a4ba5b7fdeff6a8bfe94e3703ee2f79d05624a7f93a40f0
 #>   scope:          origin
-#>   source path:    /tmp/RtmpK1xX6T/file1ff43d103063.sqlite
+#>   source path:    /tmp/RtmpIjDaG7/file1fe268428d73.sqlite
 #>   package:        0.0.0.9000
-#>   built at:       2026-09-11T18:07:21.168Z
+#>   built at:       2026-09-11T18:33:11.713Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 

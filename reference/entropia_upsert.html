@@ -82,7 +82,7 @@ guidance: v1 is read-only, and write support arrives in v2 via
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>In v2, <code>entropia_upsert()</code> implements upserts as
-<code>INSERT ... ON CONFLICT(id) DO UPDATE</code> &lt;U+2014&gt; never <code>INSERT OR REPLACE</code>, whose
+<code>INSERT ... ON CONFLICT(id) DO UPDATE</code> – never <code>INSERT OR REPLACE</code>, whose
 rowid reassignment would break the contentless FTS5 tables.</p>
     </div>
 
