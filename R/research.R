@@ -320,8 +320,9 @@ ent_resolve_llm_target <- function(con, type, id) {
 #' Joins `llm_results` rows back to the row they analysed. The target table is
 #' named per row by `target_type` (`asset`, `item` or `collection`; `unknown`
 #' and missing targets have no resolvable row), so this cannot be one SQL join:
-#' each row's target is looked up in the table its type names and returned as a
-#' `target` list-column (a one-row tibble, or `NULL` when unresolvable). The
+#' unique target IDs are looked up in batches by type and returned as a
+#' `target` list-column (a one-row tibble, or `NULL` when unresolvable).
+#' Targets describe the current database, not historical analysed inputs. The
 #' `result` JSON is parsed into a list-column and timestamps become `POSIXct`.
 #'
 #' Materialised (one row per `llm_results` row) and ordered deterministically
@@ -377,9 +378,23 @@ entropia_reconstruct_analysis <- function(con, target = NULL, job_type = NULL) {
   if (!"target_type" %in% names(rows)) {
     rows$target_type <- rep(NA_character_, nrow(rows))
   }
-  rows$target <- lapply(seq_len(nrow(rows)), function(i) {
-    ent_resolve_llm_target(con, rows$target_type[i], rows$target_id[i])
-  })
+  # Resolve each distinct target once, with one query per known target type.
+  # These are current target rows, not historical snapshots of analysed inputs.
+  rows$target <- vector("list", nrow(rows))
+  refs <- c(asset = "assets", item = "items", collection = "collections")
+  for (type in names(refs)) {
+    idx <- which(!is.na(rows$target_type) & rows$target_type == type &
+      !is.na(rows$target_id))
+    tab <- refs[[type]]
+    if (!length(idx) || !DBI::dbExistsTable(con, tab)) next
+    ids <- unique(rows$target_id[idx])
+    targets <- dplyr::collect(dplyr::filter(dplyr::tbl(con, tab), .data$id %in% !!ids))
+    targets <- ent_apply_contract(targets, ent_manifest()$tables[[tab]]$columns)
+    matched <- match(rows$target_id[idx], targets$id)
+    rows$target[idx] <- lapply(matched, function(j) {
+      if (is.na(j)) NULL else targets[j, , drop = FALSE]
+    })
+  }
   class(rows) <- c("entropia_reconstruction", class(rows))
   rows
 }

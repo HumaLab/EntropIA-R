@@ -38,28 +38,10 @@ scratch_db_missing_required <- function() {
 }
 
 scratch_db_missing_optional <- function() {
-  tmp <- tempfile(fileext = ".sqlite")
+  tmp <- ent_fixture("full")
   db <- DBI::dbConnect(RSQLite::SQLite(), tmp)
-  DBI::dbExecute(
-    db,
-    "CREATE TABLE _migrations (
-       id INTEGER PRIMARY KEY AUTOINCREMENT,
-       name TEXT NOT NULL UNIQUE,
-       applied_at INTEGER NOT NULL)"
-  )
-  DBI::dbExecute(
-    db,
-    "INSERT INTO _migrations (name, applied_at) VALUES ('0029_rag_chunks', 1768478400)"
-  )
-  DBI::dbExecute(
-    db,
-    "CREATE TABLE collections (
-       id         TEXT PRIMARY KEY,
-       name       TEXT NOT NULL,
-       created_at INTEGER NOT NULL,
-       updated_at INTEGER NOT NULL)"
-  )
-  DBI::dbDisconnect(db)
+  on.exit(DBI::dbDisconnect(db), add = TRUE)
+  DBI::dbExecute(db, "ALTER TABLE collections DROP COLUMN description")
   tmp
 }
 
@@ -81,12 +63,13 @@ test_that("entropia_schema_compat classifies every connectable fixture", {
 })
 
 test_that("entropia_schema_compat reports a database without migrations as unknown", {
-  con <- entropia_connect(":memory:")
+  con <- entropia_connect(":memory:", validate = FALSE)
   on.exit(entropia_disconnect(con), add = TRUE)
   c <- entropia_schema_compat(con)
   expect_identical(c$status, "unknown")
   expect_identical(c$version, NA_character_)
-  expect_true(c$compatible)
+  expect_false(c$compatible)
+  expect_setequal(c$required_tables_missing, c("collections", "items", "assets"))
 })
 
 test_that("entropia_schema_compat separates required from optional gaps", {
@@ -112,6 +95,21 @@ test_that("entropia_schema_compat separates required from optional gaps", {
     expect_true(c$compatible)
     expect_true("description" %in% c$optional_missing$column)
     expect_true(all(c$optional_missing$table == "collections"))
+  })
+})
+
+test_that("absent core tables fail even without migrations", {
+  for (policy in c("warn", "error")) {
+    withr::with_options(list(entropiaR.schema_policy = policy), {
+      expect_error(entropia_connect(":memory:", quiet = TRUE),
+        class = "entropia_error_schema_incompatible")
+    })
+  }
+  withr::with_options(list(entropiaR.schema_policy = "allow"), {
+    con <- NULL
+    expect_silent(con <- entropia_connect(":memory:"))
+    on.exit(entropia_disconnect(con), add = TRUE)
+    expect_false(entropia_schema_compat(con)$compatible)
   })
 })
 

@@ -35,38 +35,47 @@ ds
 ```
 
 The result is a tibble with class `entropia_dataset`, plus an `entropia_prov`
-attribute recording the schema version, the content hash of the source schema,
-the source path, the filter expressions, the package version, a build timestamp,
-and the R version.
+attribute (version 2 sidecar) recording the schema version, the schema hash,
+the source-file snapshot digest, a canonical digest of the collected rows,
+the resolved SQL, the selection recipe, the source path, the filter labels,
+the package version, a build timestamp, and the R version.
 
 ```{r}
 entropia_provenance(ds)
 ```
 
-Multiple filters compose, and they push down to SQL before the collect:
+Multiple filters compose, and they push down to SQL before the collect.
+`unit = "item"` collapses to one row per document; `text = FALSE` skips OCR:
 
 ```{r}
 entropia_analysis_dataset(con, name = "audio_items", asset_type == "audio") |>
   nrow()
+entropia_analysis_dataset(con, unit = "item", text = FALSE, name = "items_only") |>
+  ncol()
 ```
 
 # Determinism
 
-Identical inputs produce identical datasets. The corpus is always arranged on
-`asset_id` before collecting, so row order never depends on the physical layout
-of the database:
+Identical inputs produce identical datasets. Rows are arranged on a stable
+item/asset key before collecting, so row order never depends on the physical
+layout of the database:
 
 ```{r}
 a <- entropia_analysis_dataset(con, asset_type == "image")
 b <- entropia_analysis_dataset(con, asset_type == "image")
-identical(a, b) # data bytes identical
+identical(as.data.frame(a), as.data.frame(b)) # data bytes identical
 identical(
-  entropia_provenance(a)[["content_hash"]],
-  entropia_provenance(b)[["content_hash"]]
+  entropia_provenance(a)[["dataset_sha256"]],
+  entropia_provenance(b)[["dataset_sha256"]]
 )
 ```
 
-Only `built_at` differs between builds.
+Only `built_at` differs between builds. Structural identity (`schema_hash`)
+and data identity (`dataset_sha256`) are separate claims: an UPDATE that
+changes rows leaves `schema_hash` intact but changes the data digest, and
+reading `entropia_provenance()` on a *derived* object re-computes the current
+digest, marks `scope = "derived"`, and keeps the origin digest and SQL under
+`origin` instead of claiming the original query reproduces transformed rows.
 
 # Provenance sidecars
 
@@ -77,6 +86,7 @@ and other people's machines:
 ```{r}
 prov_path <- tempfile(fileext = "-prov.json")
 entropia_write_provenance(ds, prov_path)
+entropia_write_provenance(ds, tempfile(fileext = "-redacted.json"), redact = TRUE)
 readLines(prov_path)[1:9]
 ```
 

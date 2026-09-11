@@ -31,7 +31,7 @@ test_that("entropia_schema_version detects the head migration per fixture", {
 })
 
 test_that("entropia_schema_version is NA without _migrations", {
-  con <- entropia_connect(":memory:")
+  con <- entropia_connect(":memory:", validate = FALSE)
   expect_identical(entropia_schema_version(con), NA_character_)
   entropia_disconnect(con)
 })
@@ -91,6 +91,27 @@ test_that("ent_columns includes generated columns (search_text)", {
     expect_false(row$notnull)
     expect_true(row$hidden >= 3)
   })
+})
+
+test_that("VIRTUAL generated columns remain readable in introspection", {
+  db <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+  on.exit(DBI::dbDisconnect(db), add = TRUE)
+  DBI::dbExecute(db, paste0(
+    "CREATE TABLE generated (x INTEGER, ",
+    "v INTEGER GENERATED ALWAYS AS (x + 1) VIRTUAL, ",
+    "s INTEGER GENERATED ALWAYS AS (x + 2) STORED)"
+  ))
+  cols <- ent_columns(db, "generated")
+  expect_identical(cols$name, c("x", "v", "s"))
+  expect_identical(cols$hidden, c(0L, 2L, 3L))
+  info <- entropia_schema_info(db)
+  live <- info[info$table == "generated", ]
+  expect_true(all(live$presence))
+  expect_identical(live$live_type, rep("INTEGER", 3))
+  absent <- info[info$table == "collections", ]
+  expect_gt(nrow(absent), 0L)
+  expect_false(any(absent$presence))
+  expect_true(all(is.na(absent$live_type)))
 })
 
 test_that("ent_columns errors with a stable class for a missing table", {

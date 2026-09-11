@@ -76,9 +76,12 @@ opt-in (see `entropia_embeddings()` / `entropia_chunks()`).
 
 # The corpus view
 
-`entropia_corpus()` is the workhorse: it joins items, collections and assets in
-one lazy query, one row per asset, and appends the best available text per
-asset:
+`entropia_corpus()` is the workhorse: it joins items, collections and assets
+in one lazy query. Grain is **one row per linked asset, plus one row per item
+that has no asset** (`asset_id` is then `NA`). Orphan assets (no parent item)
+and empty collections do not appear. Prefixed timestamps stay integers until
+you pass an explicit contract into `entropia_collect()` — the join has no
+single-table contract.
 
 ```{r}
 corpus <- entropia_corpus(con)
@@ -87,23 +90,22 @@ corpus |> colnames()
 
 ```{r}
 corpus |>
-  select(item_title, asset_type, page_number, text) |>
-  collect()
+  dplyr::select(item_title, asset_type, page_number, text) |>
+  dplyr::collect()
 ```
-
-Assets with no text layer keep their row and get `NA` text — no rows are lost.
 
 ## Filtering
 
-`collections` and `asset_types` accept character vectors and push the filter
-down to SQL:
+`collections` matches `collections.name`. Prefer `collection_ids` when names
+can collide (the name is **not** unique in the schema):
 
 ```{r}
 entropia_corpus(con, asset_types = "pdf") |>
-  collect() |>
+  dplyr::collect() |>
   nrow()
-entropia_corpus(con, collections = "Archivo de prueba") |>
-  collect() |>
+ids <- entropia_collections(con) |> dplyr::collect() |> dplyr::pull(id)
+entropia_corpus(con, collection_ids = ids[1]) |>
+  dplyr::collect() |>
   nrow()
 ```
 

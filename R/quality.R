@@ -277,16 +277,18 @@ ent_text_layer_base <- function(con) {
 #'   per asset type.
 #' - `metadata_coverage`: `n` items with metadata, `total` items, per
 #'   collection.
-#' - `empty_text`: `n` assets whose best text layer is empty/whitespace-only,
-#'   `total` assets with at least one text layer, per asset type.
+#' - `empty_text`: `n` assets with a text layer but no useful text in any
+#'   layer, `total` assets with at least one text layer, per asset type.
+#'   This legacy metric is not selected-source emptiness; see
+#'   [entropia_overview()] for separate selected-source diagnostics.
 #'
-#' `pct` is `n / total`, `NA` when `total` is 0. The report is materialised (it
-#' is a small aggregate, like [entropia_validate()] findings) and carries the
-#' `entropia_corpus_quality` class.
+#' `pct` is `n / total`, `NA` when `total` is 0. Collection IDs are retained
+#' even when collection labels coincide. For a filtered study universe, use
+#' [entropia_overview()] and its `quality` element.
 #'
 #' @param con A connection returned by [entropia_connect()].
-#' @return A tibble of class `entropia_corpus_quality` with columns `metric`,
-#'   `group`, `n`, `total` and `pct`.
+#' @return A plain tibble with columns `metric`, `group_id`, `group`, `unit`,
+#'   `n`, `total`, `pct` and `status` (`ok` or `no_data`).
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 #'   package = "entropiaR"
@@ -327,24 +329,32 @@ entropia_corpus_quality <- function(con) {
   rows <- dplyr::bind_rows(
     tibble::tibble(
       metric = "ocr_coverage",
+      group_id = ocr$asset_type,
+      unit = "asset",
       group = ocr$asset_type,
       n = ocr$n_with_extraction - ocr$n_empty,
       total = ocr$n_assets
     ),
     tibble::tibble(
       metric = "transcription_presence",
+      group_id = trx$asset_type,
+      unit = "asset",
       group = trx$asset_type,
       n = trx$n,
       total = trx$total
     ),
     tibble::tibble(
       metric = "metadata_coverage",
+      group_id = as.character(meta$collection_id),
+      unit = "item",
       group = meta$collection_name,
       n = meta$n_with_metadata,
       total = meta$n_items
     ),
     tibble::tibble(
       metric = "empty_text",
+      group_id = empty$asset_type,
+      unit = "asset",
       group = empty$asset_type,
       n = empty$n,
       total = empty$total
@@ -354,9 +364,9 @@ entropia_corpus_quality <- function(con) {
     rows,
     pct = dplyr::if_else(.data$total == 0, NA_real_, .data$n / .data$total)
   )
-  rows <- dplyr::arrange(rows, .data$metric, .data$group)
-  class(rows) <- c("entropia_corpus_quality", class(rows))
-  rows
+  rows$status <- ifelse(rows$total == 0, "no_data", "ok")
+  rows <- dplyr::select(rows, "metric", "group_id", "group", "unit", "n", "total", "pct", "status")
+  dplyr::arrange(rows, .data$metric, .data$group, .data$group_id)
 }
 
 # --- Orphaned references ----------------------------------------------------

@@ -4,7 +4,7 @@
 \alias{entropia_collect}
 \title{Collect and apply the column contract}
 \usage{
-entropia_collect(x, n = Inf, ...)
+entropia_collect(x, n = Inf, ..., schema = NULL)
 }
 \arguments{
 \item{x}{A lazy table, e.g. from \code{\link[=entropia_items]{entropia_items()}}.}
@@ -12,6 +12,9 @@ entropia_collect(x, n = Inf, ...)
 \item{n}{Maximum number of rows to fetch, passed to \code{\link[dplyr:compute]{dplyr::collect()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[dplyr:compute]{dplyr::collect()}}.}
+
+\item{schema}{Optional named character vector mapping output columns to
+\code{datetime_ms}, \code{datetime_s}, \code{datetime_auto}, \code{json}, or \code{raw}.}
 }
 \value{
 A \code{\link[tibble:tibble]{tibble::tibble()}} with the column contract applied.
@@ -24,10 +27,10 @@ list-columns, and BLOB columns stay raw. Columns the manifest does not
 describe are returned unchanged.
 }
 \details{
-The contract is resolved from the table's base table. For a lazy query that
-is not a simple single-table read (joins, subqueries) the columns are
-returned as SQLite produced them -- keep filters/selects inside the lazy
-query for best results.
+Automatic contracts follow only proven untouched column references and
+rename aliases through supported dbplyr query nodes. Transformed expressions,
+joins, raw SQL and unknown query structures remain untyped. Explicit schema
+entries override inference for those columns; \code{"raw"} disables conversion.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",

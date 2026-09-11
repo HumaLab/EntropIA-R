@@ -1,7 +1,7 @@
 # Internal helpers for entropiaR (unexported; ent_* naming convention).
 #
 # Shared across modules: error construction, file sanity checks,
-# schema-version detection and the reproducibility content hash.
+# schema-version detection, schema hashing and explicit file snapshot hashing.
 
 # SQLite header magic: the 16-byte signature every SQLite 3 database file
 # begins with ("SQLite format 3" + NUL).
@@ -77,7 +77,7 @@ ent_attr <- function(x, name, default = NA_character_) {
 
 # Does `path` begin with the SQLite header magic?
 ent_is_sqlite_header <- function(path) {
-  if (is.na(path) || !nzchar(path) || dir.exists(path)) {
+  if (is.na(path) || !nzchar(path) || dir.exists(path) || !file.exists(path)) {
     return(FALSE)
   }
   f <- tryCatch(file(path, "rb"), error = function(e) NULL)
@@ -98,10 +98,8 @@ ent_current_version <- function(con) {
   if (is.null(v) || is.na(v)) NA_character_ else as.character(v)
 }
 
-# Reproducibility content hash: sha256 over the schema text (sqlite_master
-# SQL) plus the _migrations rows. Cheap and stable -- it distinguishes schema
-# state without hashing table data.
-ent_content_hash <- function(con) {
+# Schema hash: sha256 over schema text and migration rows, not table data.
+ent_schema_hash <- function(con) {
   schema <- DBI::dbGetQuery(
     con,
     "SELECT type, name, sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY type, name"
@@ -116,4 +114,34 @@ ent_content_hash <- function(con) {
     paste(mig$name, mig$applied_at, sep = "|", collapse = "\n")
   )
   digest::digest(canonical, algo = "sha256", serialize = FALSE)
+}
+
+# Explicit, best-effort SHA256 of an existing self-contained source file.
+# This does not make a live database immutable: strict reproducibility requires
+# entropia_copy() followed by hashing the resulting snapshot connection.
+# Check sidecars and file stats on both sides of the read to reject observable
+# concurrent changes; these checks cannot eliminate filesystem races.
+ent_snapshot_hash <- function(con) {
+  ent_require_conn(con)
+  path <- tryCatch({
+    dbs <- DBI::dbGetQuery(con, "PRAGMA database_list")
+    dbs$file[match("main", dbs$name)]
+  }, error = function(e) NA_character_)
+  if (length(path) != 1L || is.na(path) || !nzchar(path) ||
+      identical(path, ":memory:") || !file.exists(path) || dir.exists(path)) {
+    return(NA_character_)
+  }
+  self_contained <- function() {
+    wal <- paste0(path, "-wal")
+    if (!file.exists(wal)) return(TRUE)
+    isTRUE(file.info(wal)$size == 0)
+  }
+  tryCatch({
+    if (!self_contained()) return(NA_character_)
+    before <- file.info(path)[, c("size", "mtime", "ctime"), drop = FALSE]
+    hash <- digest::digest(file = path, algo = "sha256", serialize = FALSE)
+    after <- file.info(path)[, c("size", "mtime", "ctime"), drop = FALSE]
+    if (!self_contained() || !identical(before, after)) return(NA_character_)
+    hash
+  }, error = function(e) NA_character_)
 }

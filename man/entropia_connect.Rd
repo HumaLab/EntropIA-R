@@ -27,7 +27,7 @@ An \code{entropia_conn} object (S4, \code{SQLiteConnection} subclass).
 \description{
 Opens \code{path} as a read-only DBI connection. The returned object is an
 \code{entropia_conn}: a typed subclass of \link[RSQLite:SQLiteConnection-class]{RSQLite::SQLiteConnection}
-carrying the \code{path}, \code{mode}, \code{schema_version} and \code{content_hash}
+carrying the \code{path}, \code{mode}, \code{schema_version} and \code{schema_hash}
 attributes. All DBI and dbplyr functions keep working on it.
 }
 \examples{

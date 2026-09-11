@@ -5,14 +5,17 @@ template:
 
 articles:
 - title: Using entropiaR
-  desc: "End-to-end workflows: connect, explore, extract, query, and analyze."
+  desc: "End-to-end workflows: connect, explore, extract, query, analyze, and share."
   contents:
   - connect
   - corpus
   - text
   - dplyr
+  - eda
+  - visualize
   - datasets
   - analysis
+  - dashboard
   - administration
 
 reference:
@@ -78,6 +81,14 @@ reference:
   - entropia_text
   - entropia_metadata
 
+- title: Shared EDA
+  desc: >
+    SQL-aggregated corpus overview over an explicit selection and local
+    grouped profiling of collected tibbles.
+  contents:
+  - entropia_overview
+  - entropia_profile
+
 - title: Corpus quality & diagnostics
   desc: >
     Coverage reports, orphaned-reference detection, connection validation and
@@ -117,11 +128,25 @@ reference:
 
 - title: Visualization
   desc: >
-    ggplot2 helpers on analysis summaries (Suggests).
+    ggplot2 helpers on analysis summaries and EDA tables (Suggests).
   contents:
   - entropia_plot_temporal
   - entropia_plot_entities
+  - entropia_plot_topics
   - entropia_plot_coverage
+  - entropia_plot_missing
+  - entropia_plot_collections
+  - entropia_plot_distribution
+  - entropia_plot_scatter
+  - entropia_plot_correlation
+
+- title: Dashboard & reports
+  desc: >
+    Optional local Shiny exploration and frozen Quarto dashboards over the
+    same overview tables.
+  contents:
+  - entropia_dashboard
+  - entropia_report
 
 - title: Export & provenance
   desc: >

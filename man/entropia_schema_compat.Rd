@@ -12,7 +12,8 @@ entropia_schema_compat(con)
 \value{
 A list of class \code{entropia_schema_compat} with elements \code{status},
 \code{version}, \code{manifest_head}, \code{gaps} (the full expected-but-absent column
-table), \code{required_missing}, \code{optional_missing} and \code{compatible}.
+table for existing tables), \code{required_missing}, \code{optional_missing},
+\code{required_tables_missing} and \code{compatible}.
 }
 \description{
 Classifies a database against the shipped column contract
@@ -30,7 +31,10 @@ head -- a future EntropIA wrote it.
 The required-column check uses the manifest contract: columns tagged
 \code{required = TRUE} whose \code{min_version} is already reached by the database
 version must exist in the live schema. Missing ones are listed in
-\code{required_missing} and make the database incompatible.
+\code{required_missing} and make the database incompatible. Unknown versions
+conservatively require manifest-required columns on existing tables.
+The core tables \code{collections}, \code{items} and \code{assets} must always exist;
+missing non-core tables are permitted for minimal databases.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",

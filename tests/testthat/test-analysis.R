@@ -402,7 +402,7 @@ test_that("compare collections summarises the collected corpus", {
     cor <- dplyr::collect(entropia_corpus(con))
     cmp <- entropia_compare_collections(cor)
     expect_s3_class(cmp, "tbl_df")
-    expect_identical(names(cmp), c("collection_name", "n_items", "n_assets", "n"))
+    expect_identical(names(cmp), c("collection_id", "collection_name", "n_items", "n_assets", "n"))
     expect_equal(nrow(cmp), 1L)
     expect_identical(cmp$collection_name, "Archivo de prueba")
     expect_identical(cmp$n_items, 3L)

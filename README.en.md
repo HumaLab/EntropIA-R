@@ -25,7 +25,16 @@ opened **read-only**, never modified.
   and connection validation.
 - **Ready-made analysis**: temporal profiles, document lengths, entity and
   topic frequencies, collection comparison, and reproducible datasets with
-  provenance.
+  v2 provenance (schema, snapshot and data hashes).
+- **Shared EDA**: `entropia_overview()` SQL-aggregates the study universe
+  (counts, collections, temporality, eligibility-aware quality, entity and
+  topic occurrence plus per-item prevalence) and `entropia_profile()` profiles
+  collected tibbles locally (missingness, distributions, duplicates,
+  reproducible sampling).
+- **Local dashboard and frozen reports**: `entropia_dashboard()` builds an
+  optional Shiny app over a snapshot (isolated sessions, one selection across
+  panels, on-demand text, bounded downloads) and `entropia_report()` renders a
+  Quarto dashboard with optional redaction.
 - **Visualisation** with `ggplot2` (`entropia_plot_*`) and **reproducible
   export** to CSV, TSV, JSON, RDS, Parquet or Arrow, with provenance sidecars.
 

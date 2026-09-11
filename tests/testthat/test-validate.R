@@ -204,7 +204,10 @@ test_that("entropia_validate diagnoses a database with no tables", {
   DBI::dbExecute(db, "CREATE TABLE _scratch (a INTEGER)")
   DBI::dbExecute(db, "DROP TABLE _scratch")
   DBI::dbDisconnect(db)
-  con <- entropia_connect(tmp) # no _migrations -> compat policy is skipped
+  con <- withr::with_options(
+    list(entropiaR.schema_policy = "allow"),
+    entropia_connect(tmp)
+  )
   on.exit(entropia_disconnect(con), add = TRUE)
   v <- entropia_validate(con)
   expect_true(all(c("collections", "items", "assets") %in%
@@ -314,7 +317,10 @@ test_that("entropia_status detects WAL sidecars", {
   DBI::dbExecute(db, "CREATE TABLE t (x INTEGER)")
   DBI::dbExecute(db, "INSERT INTO t VALUES (1)")
   on.exit(try(DBI::dbDisconnect(db), silent = TRUE), add = TRUE)
-  con <- entropia_connect(p) # no _migrations -> compat policy is skipped
+  con <- withr::with_options(
+    list(entropiaR.schema_policy = "allow"),
+    entropia_connect(p)
+  )
   on.exit(entropia_disconnect(con), add = TRUE)
   st <- entropia_status(con)
   expect_identical(st$wal$journal_mode, "wal")

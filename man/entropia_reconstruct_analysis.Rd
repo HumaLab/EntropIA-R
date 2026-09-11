@@ -22,8 +22,9 @@ A tibble of class \code{entropia_reconstruction}.
 Joins \code{llm_results} rows back to the row they analysed. The target table is
 named per row by \code{target_type} (\code{asset}, \code{item} or \code{collection}; \code{unknown}
 and missing targets have no resolvable row), so this cannot be one SQL join:
-each row's target is looked up in the table its type names and returned as a
-\code{target} list-column (a one-row tibble, or \code{NULL} when unresolvable). The
+unique target IDs are looked up in batches by type and returned as a
+\code{target} list-column (a one-row tibble, or \code{NULL} when unresolvable).
+Targets describe the current database, not historical analysed inputs. The
 \code{result} JSON is parsed into a list-column and timestamps become \code{POSIXct}.
 }
 \details{

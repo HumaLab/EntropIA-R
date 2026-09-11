@@ -4,7 +4,7 @@
 # `entropia_prov` attribute onto every dataset it returns.
 # entropia_provenance() reads that stamp back; entropia_write_provenance()
 # persists it as a JSON sidecar next to the analysis. The JSON records the
-# schema version, source path + content hash, the captured filter expressions,
+# schema version, source path and schema hash, the captured filter expressions,
 # the package and R versions, and the build timestamp -- everything needed to
 # reconstruct the dataset from the database.
 
@@ -12,10 +12,13 @@
 #'
 #' Returns the `entropia_prov` attribute attached by
 #' [entropia_analysis_dataset()]: a list recording the dataset `name`, the
-#' database `schema_version`, the schema `content_hash`, the `source_path`, the
+#' database `schema_version`, the `schema_hash`, the `source_path`, the
 #' captured `filters`, the `package_version`, the `built_at` timestamp and the
 #' `r_version`. Aborts with `entropia_error_invalid_argument` when `x` carries
-#' no provenance stamp.
+#' no provenance stamp. The current data digest is recomputed. Changed values,
+#' classes, columns or row order yield `scope = "derived"` and `query = NULL`;
+#' `origin` retains the original digest, SQL and selection recipe. Origin SQL
+#' is not represented as a recipe for transformed rows.
 #'
 #' @param x An object carrying a provenance stamp, e.g. the output of
 #'   [entropia_analysis_dataset()].
@@ -42,6 +45,15 @@ entropia_provenance <- function(x) {
       )
     )
   }
+  ent_require_tibble(x)
+  current <- ent_dataset_hash(x)
+  if (is.null(prov$origin)) {
+    prov$origin <- list(dataset_sha256 = prov$dataset_sha256,
+      query = prov$query, selection = prov$selection)
+  }
+  prov$scope <- if (identical(current, prov$origin$dataset_sha256)) "origin" else "derived"
+  prov$dataset_sha256 <- current
+  if (prov$scope == "derived") prov$query <- NULL
   class(prov) <- c("entropia_provenance", "list")
   prov
 }
@@ -54,7 +66,9 @@ print.entropia_provenance <- function(x, ...) {
   ver <- x$schema_version
   if (length(ver) != 1L || is.na(ver)) ver <- "unknown"
   cat("  schema version: ", ver, "\n", sep = "")
-  cat("  content hash:   ", x$content_hash, "\n", sep = "")
+  cat("  schema hash:    ", x$schema_hash, "\n", sep = "")
+  cat("  dataset hash:   ", x$dataset_sha256, "\n", sep = "")
+  cat("  scope:          ", x$scope, "\n", sep = "")
   cat("  source path:    ", x$source_path, "\n", sep = "")
   if (length(x$filters) > 0L) {
     cat("  filters:        ", paste(x$filters, collapse = "; "), "\n", sep = "")
@@ -75,6 +89,8 @@ print.entropia_provenance <- function(x, ...) {
 #'
 #' @param x An object carrying a provenance stamp (see [entropia_provenance()]).
 #' @param path Destination file path. Must be a single path.
+#' @param redact Suppress source paths and free-form SQL/filter/name fields
+#'   which may contain paths, including the origin recipe.
 #' @return The normalized `path`, invisibly.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
@@ -86,11 +102,24 @@ print.entropia_provenance <- function(x, ...) {
 #' readLines(path)
 #' entropia_disconnect(con)
 #' @export
-entropia_write_provenance <- function(x, path) {
+entropia_write_provenance <- function(x, path, redact = FALSE) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)) {
     ent_abort("entropia_error_invalid_argument", "{.arg path} must be a single path.")
   }
+  if (!is.logical(redact) || length(redact) != 1L || is.na(redact)) {
+    ent_abort("entropia_error_invalid_argument", "{.arg redact} must be TRUE or FALSE.")
+  }
   prov <- entropia_provenance(x)
+  if (redact) {
+    prov$source_path <- NULL
+    prov$query <- NULL
+    prov$filters <- NULL
+    prov$name <- NULL
+    prov$origin$query <- NULL
+    prov$selection <- NULL
+    prov$origin$selection <- NULL
+    prov$redacted <- TRUE
+  }
   json <- jsonlite::toJSON(
     unclass(prov),
     auto_unbox = TRUE,
@@ -175,26 +204,23 @@ ent_validate_chunk_size <- function(x) {
   as.integer(x)
 }
 
-# Deterministic row order for lazy exports: when the rendered SQL carries no
-# ORDER BY, arrange by the first column. Queries with an explicit ordering
-# (including entropia_search()'s rank ordering) are left untouched. The check
-# is deliberately conservative -- any ORDER BY anywhere in the SQL (e.g. inside
-# a window function) skips the re-arrange rather than risk producing a double
-# ORDER BY.
-ent_export_ordered <- function(x) {
-  sql <- as.character(dbplyr::sql_render(x))
-  if (!grepl("(?i)ORDER[[:space:]]+BY", sql, perl = TRUE)) {
-    cols <- colnames(x)
-    if (length(cols) > 0L) {
-      # Single arrange() call with both columns so dbplyr emits one ORDER BY
-      # clause. When only one column exists, it is the sole sort key. Two
-      # columns produce a deterministic total order even when the first column
-      # has ties (e.g. corpus queries where item_id repeats across assets).
-      extra <- if (length(cols) > 1L) list(rlang::sym(cols[[2L]])) else list()
-      x <- dplyr::arrange(x, !!rlang::sym(cols[[1L]]), !!!extra)
-    }
+# Keep dbplyr's structural ordering, never infer it from rendered SQL.
+# SQLite orders all storage types, including BLOBs, lexicographically.
+ent_export_ordered <- function(x, order_by = NULL) {
+  cols <- colnames(x)
+  ent_export_validate_order(order_by, cols)
+  prior <- x$lazy_query$order_by %||% list()
+  if (!is.null(order_by)) prior <- rlang::syms(order_by)
+  dplyr::arrange(x, !!!prior, !!!rlang::syms(cols))
+}
+
+ent_export_validate_order <- function(order_by, cols) {
+  if (!is.null(order_by) && (!is.character(order_by) || anyNA(order_by) ||
+      !length(order_by) || anyDuplicated(order_by) || !all(order_by %in% cols))) {
+    ent_abort("entropia_error_invalid_argument",
+      "{.arg order_by} must be NULL or unique existing column names.")
   }
-  x
+  invisible(order_by)
 }
 
 # Serialise one list-column cell for delimited output: NULL/empty -> NA, raw
@@ -236,6 +262,43 @@ ent_prepare_delimited <- function(df) {
   df
 }
 
+# Quote every field (write.table quote=TRUE) with RFC-4180 doubling.
+# Convert to UTF-8 bytes before as.character can emit <U+XXXX> under LC_ALL=C.
+ent_quote_csv <- function(x) {
+  x <- if (is.character(x)) {
+    ifelse(is.na(x), "NA", x)
+  } else {
+    ifelse(is.na(x), "NA", as.character(x))
+  }
+  x <- enc2utf8(x)
+  paste0('"', gsub('"', '""', x, fixed = TRUE), '"')
+}
+
+ent_delimited_lines <- function(df, sep, header) {
+  rows <- character()
+  if (isTRUE(header)) {
+    rows <- paste(ent_quote_csv(names(df)), collapse = sep)
+  }
+  if (nrow(df) > 0L) {
+    cells <- lapply(df, function(col) {
+      if (inherits(col, "POSIXt")) col <- format(col, tz = "UTC")
+      ent_quote_csv(col)
+    })
+    rows <- c(rows, do.call(paste, c(cells, list(sep = sep))))
+  }
+  rows
+}
+
+ent_write_utf8_lines <- function(lines, con) {
+  if (!length(lines)) {
+    return(invisible(NULL))
+  }
+  nl <- as.raw(10L)
+  for (line in lines) {
+    writeBin(c(charToRaw(enc2utf8(line)), nl), con)
+  }
+}
+
 # Stream a lazy query to a delimited file in bounded chunks: dbSendQuery +
 # fetch(n), the header written once, rows appended chunk by chunk. Never
 # collects the whole result into memory. The query must already be
@@ -245,35 +308,27 @@ ent_export_delimited_lazy <- function(x, path, sep, chunk_size) {
   sql <- as.character(dbplyr::sql_render(x))
   res <- DBI::dbSendQuery(con, sql)
   on.exit(DBI::dbClearResult(res), add = TRUE)
+  output <- file(path, open = "wb")
+  on.exit(close(output), add = TRUE)
   chunk <- ent_prepare_delimited(DBI::dbFetch(res, n = chunk_size))
-  utils::write.table(chunk, path,
-    sep = sep, row.names = FALSE, quote = TRUE,
-    qmethod = "double"
-  )
+  ent_write_utf8_lines(ent_delimited_lines(chunk, sep, TRUE), output)
   while (nrow(chunk) > 0L) {
     chunk <- ent_prepare_delimited(DBI::dbFetch(res, n = chunk_size))
     if (nrow(chunk) > 0L) {
-      utils::write.table(
-        chunk, path,
-        sep = sep, row.names = FALSE, quote = TRUE,
-        col.names = FALSE, append = TRUE, qmethod = "double"
-      )
+      ent_write_utf8_lines(ent_delimited_lines(chunk, sep, FALSE), output)
     }
   }
   invisible(path)
 }
 
-# Write a materialised data.frame to a delimited file in one pass. qmethod =
-# "double" writes RFC-4180 quote escaping, so fields that contain both embedded
-# quotes and newlines (e.g. extraction text) round-trip through base read.csv
-# and every standards-compliant reader -- the default "escape" method mangles
-# them in R's own parser.
+# Write a materialised data.frame to a delimited file in one pass. Fields that
+# contain both embedded quotes and newlines (e.g. extraction text) round-trip
+# through base read.csv -- RFC-4180 doubling.
 ent_export_delimited_df <- function(x, path, sep) {
   df <- ent_prepare_delimited(tibble::as_tibble(x))
-  utils::write.table(df, path,
-    sep = sep, row.names = FALSE, quote = TRUE,
-    qmethod = "double"
-  )
+  output <- file(path, open = "wb")
+  on.exit(close(output), add = TRUE)
+  ent_write_utf8_lines(ent_delimited_lines(df, sep, TRUE), output)
   invisible(path)
 }
 
@@ -323,11 +378,13 @@ ent_export_arrow <- function(x, path, format) {
 #' `json`, `rds`, `parquet` and `arrow` are whole-file formats and collect the
 #' query first.
 #'
-#' Lazy queries are exported in a deterministic row order: when the rendered
-#' SQL carries no `ORDER BY`, the export arranges by the first column before
-#' streaming. Queries with an explicit ordering (e.g. [entropia_search()]'s
-#' rank order, or `dplyr::arrange()` applied first) are exported in that order.
-#' Materialised data is written in the order it was given.
+#' Lazy queries retain ordering recorded in dbplyr's `lazy_query$order_by`,
+#' with all projected columns appended as tie-breakers. SQLite compares BLOBs
+#' bytewise. Ordering hidden inside opaque SQL or unknown query objects cannot
+#' be recovered: supply `order_by` explicitly in that case. Identical projected
+#' rows are interchangeable. Materialised data retains its input order unless
+#' `order_by` is supplied; list columns cannot be explicit in-memory sort keys.
+#' CSV and TSV use one UTF-8 file connection for the entire export.
 #'
 #' The column contract is NOT applied by the export: a lazy query exports the
 #' raw values SQLite stores (epoch timestamps as integers, JSON-in-TEXT as
@@ -342,6 +399,8 @@ ent_export_arrow <- function(x, path, format) {
 #'   `"arrow"`.
 #' @param chunk_size Rows fetched per chunk when streaming a lazy input to a
 #'   delimited format. Default `1000L`.
+#' @param order_by Optional character vector of primary ordering columns.
+#'   All comparable output columns are appended as tie-breakers.
 #' @return The normalized `path`, invisibly.
 #' @export
 #' @examples
@@ -350,7 +409,7 @@ ent_export_arrow <- function(x, path, format) {
 #' read.csv(tmp)
 entropia_export <- function(x, path,
                             format = c("csv", "tsv", "json", "rds", "parquet", "arrow"),
-                            chunk_size = 1000L) {
+                            chunk_size = 1000L, order_by = NULL) {
   format <- ent_validate_export_format(format)
   path <- ent_validate_export_path(path)
   chunk_size <- ent_validate_chunk_size(chunk_size)
@@ -358,7 +417,7 @@ entropia_export <- function(x, path,
   lazy <- inherits(x, "tbl_sql")
   if (lazy) {
     ent_require_conn(dbplyr::remote_con(x))
-    x <- ent_export_ordered(x)
+    x <- ent_export_ordered(x, order_by)
   } else if (!inherits(x, "data.frame")) {
     ent_abort(
       "entropia_error_invalid_argument",
@@ -370,6 +429,20 @@ entropia_export <- function(x, path,
         )
       )
     )
+  }
+
+  if (!lazy) {
+    ent_export_validate_order(order_by, names(x))
+    if (!is.null(order_by)) {
+      comparable <- names(x)[vapply(x, function(z) is.atomic(z) && is.null(dim(z)), logical(1))]
+      if (!all(order_by %in% comparable)) {
+        ent_abort("entropia_error_invalid_argument", "In-memory ordering requires atomic vector columns.")
+      }
+      x <- dplyr::arrange(x, !!!rlang::syms(unique(c(order_by, comparable))))
+    }
+    if (!is.null(attr(x, "entropia_prov", exact = TRUE))) {
+      attr(x, "entropia_prov") <- unclass(entropia_provenance(x))
+    }
   }
 
   switch(format,

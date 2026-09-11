@@ -40,8 +40,10 @@ best available text per asset. `source` selects the layer:
 
 - `"extraction"` — the OCR/PDF extraction text only;
 - `"transcription"` — the audio transcription text only;
-- `"auto"` (default) — extraction when present, otherwise transcription (this
-  mirrors the rule EntropIA's own full-text index uses).
+- `"auto"` (default) — extraction **when that layer exists**, even if the
+  extraction text is empty, otherwise transcription. This matches the
+  corpus `COALESCE` rule. Coverage metrics that mean “any layer useful”
+  are named separately in `entropia_overview()$quality`.
 
 ```{r}
 entropia_text(con) |> entropia_collect()
@@ -105,14 +107,16 @@ The same applies to `items.metadata`, `rag_messages.sources`, and
 # Metadata
 
 `entropia_metadata()` parses `items.metadata` into tidy rows (see
-`vignette("corpus")`):
+`vignette("corpus")`). Non-scalar file-metadata fields no longer abort the
+whole batch: the row is kept, the original JSON stays in `raw_metadata`, and
+`attr(..., "diagnostics")` lists `item_id`, field and problem.
 
 ```{r}
 entropia_metadata(con)
 ```
 
-Malformed JSON never fails the collect — it warns and yields `NA`, and the raw
-value stays reachable via `parse = FALSE`.
+Malformed JSON never fails the collect — it warns (with row context) and
+yields `NA`. Use `parse = FALSE` for the raw text.
 
 # Coverage at a glance
 

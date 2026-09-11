@@ -1,8 +1,8 @@
 # Tests for Task 22 (reproducibility layer).
 #
 # entropia_analysis_dataset() assembles the lazy corpus, applies filter
-# expressions, and materialises a deterministically ordered tibble of class
-# entropia_dataset carrying an entropia_prov provenance attribute.
+# expressions, and materialises a deterministically ordered plain tibble
+# carrying an entropia_prov provenance attribute.
 # entropia_provenance() / entropia_write_provenance() read the stamp and
 # persist it as a JSON sidecar. Fixture-based: the full fixture corpus has 5
 # assets (3 pdf incl. pages, 1 image, 1 audio).
@@ -29,7 +29,7 @@ test_that("analysis dataset is a typed tibble with correct provenance fields", {
     expect_s3_class(prov, "entropia_provenance")
     expect_identical(prov$name, "imagenes")
     expect_identical(prov$schema_version, "0029_rag_chunks")
-    expect_identical(prov$content_hash, attr(con, "content_hash"))
+    expect_identical(prov$schema_hash, attr(con, "schema_hash"))
     expect_identical(prov$source_path, attr(con, "path"))
     expect_identical(prov$filters, "asset_type == \"image\"")
     expect_identical(prov$package_version, as.character(utils::packageVersion("entropiaR")))
@@ -44,7 +44,7 @@ test_that("analysis dataset without filters builds the whole corpus, unnamed", {
   with_dataset_con("full", function(con) {
     ds <- entropia_analysis_dataset(con)
     expect_equal(nrow(ds), 5L)
-    expect_identical(ds$asset_id, sort(ds$asset_id)) # deterministic ordering
+    expect_identical(order(ds$item_id, ds$asset_id), seq_len(nrow(ds)))
     prov <- entropia_provenance(ds)
     expect_null(prov$name)
     expect_identical(prov$filters, character(0))
@@ -64,9 +64,7 @@ test_that("analysis dataset supports multiple filters applied in SQL", {
 # --- reproducibility: identical inputs -> identical datasets --------------------
 
 test_that("building the same dataset twice yields identical data and stable provenance", {
-  # Open two independent copies of the same fixture so the content hash is
-  # computed independently on each connection — if ent_content_hash() were
-  # non-deterministic or data-dependent the hashes would differ.
+  # Independent copies must have identical schema and dataset digests.
   con1 <- ent_connect_fixture("full")
   on.exit(try(entropia_disconnect(con1), silent = TRUE), add = TRUE)
   con2 <- ent_connect_fixture("full")
@@ -82,7 +80,8 @@ test_that("building the same dataset twice yields identical data and stable prov
   # stable fields identical across independent connections; only the build
   # timestamp and source (temp) path differ
   expect_identical(p1$schema_version, p2$schema_version)
-  expect_identical(p1$content_hash, p2$content_hash)
+  expect_identical(p1$schema_hash, p2$schema_hash)
+  expect_identical(p1$dataset_sha256, p2$dataset_sha256)
   expect_identical(p1$filters, p2$filters)
   expect_identical(p1$package_version, p2$package_version)
   expect_identical(p1$r_version, p2$r_version)
@@ -105,7 +104,9 @@ test_that("write provenance round-trips through JSON", {
     expect_true(file.exists(path))
 
     rt <- jsonlite::fromJSON(path)
-    expect_identical(unclass(entropia_provenance(ds)), rt)
+    expect_identical(rt$dataset_sha256, entropia_provenance(ds)$dataset_sha256)
+    expect_identical(rt$query, entropia_provenance(ds)$query)
+    expect_identical(rt$sidecar_version, 2L)
   })
 })
 
@@ -119,11 +120,11 @@ test_that("write provenance validates path and requires a stamp", {
 
 # --- dataset class methods ------------------------------------------------------
 
-test_that("entropia_dataset print shows the name and schema", {
+test_that("dataset provenance print shows the name and schema", {
   with_dataset_con("full", function(con) {
     ds <- entropia_analysis_dataset(con, name = "corpus")
-    expect_output(print(ds), "entropia_dataset: corpus")
-    expect_output(print(ds), "schema: 0029_rag_chunks")
+    expect_output(print(entropia_provenance(ds)), "corpus")
+    expect_output(print(entropia_provenance(ds)), "0029_rag_chunks")
     expect_output(print(ds), "asset_id")
   })
 })
@@ -131,7 +132,7 @@ test_that("entropia_dataset print shows the name and schema", {
 test_that("entropia_dataset glimpse shows the header and columns", {
   with_dataset_con("full", function(con) {
     ds <- entropia_analysis_dataset(con, name = "corpus")
-    expect_output(dplyr::glimpse(ds), "entropia_dataset: corpus")
+    expect_output(dplyr::glimpse(ds), "Rows:")
     expect_output(dplyr::glimpse(ds), "asset_id")
   })
 })

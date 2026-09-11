@@ -123,8 +123,10 @@ test_that("assets accessor degrades gracefully on a pre-0024 schema", {
 })
 
 test_that("core accessors raise entropia_error_table_missing on absent tables", {
-  con <- entropia_connect(":memory:")
-  on.exit(entropia_disconnect(con), add = TRUE)
+  con <- withr::with_options(
+    list(entropiaR.schema_policy = "allow"),
+    entropia_connect(":memory:")
+  )
   expect_error(entropia_collections(con), class = "entropia_error_table_missing")
   expect_error(entropia_items(con), class = "entropia_error_table_missing")
   expect_error(entropia_assets(con), class = "entropia_error_table_missing")

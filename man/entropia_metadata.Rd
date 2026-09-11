@@ -30,7 +30,11 @@ remaining top-level metadata key. Items without metadata get one row with
 \details{
 Unlike the lazy accessors this function materialises: parsing JSON to
 list-columns is an R-side step. \code{parse = FALSE} returns the raw
-\code{metadata} text alongside \code{item_id} instead.
+\code{metadata} text alongside \code{item_id} instead. Parsed output also retains
+\code{raw_metadata} and an \code{extra_metadata} list-column containing top-level keys
+that collide with output column names. Non-scalar file fields become typed
+missing values. The \code{diagnostics} attribute is a tibble with \code{item_id},
+\code{field}, and \code{problem}, including malformed JSON and invalid dates.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",

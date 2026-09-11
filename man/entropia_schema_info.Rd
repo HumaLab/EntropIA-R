@@ -11,7 +11,9 @@ entropia_schema_info(con)
 }
 \value{
 A tibble with columns \code{table}, \code{column}, \code{type}, \code{required},
-\code{contract}, \code{min_version} and \code{source}.
+\code{contract}, \code{min_version}, \code{source}, \code{presence} (logical) and \code{live_type}.
+Absent manifest tables and columns have \code{presence = FALSE} and missing
+\code{live_type}; \code{type} retains the manifest declaration where available.
 }
 \description{
 Merges the live schema (from \verb{PRAGMA table_xinfo}) with the shipped column
