@@ -10,7 +10,8 @@ entropia_compare_collections(x, by = "collection_name")
 \item{x}{A data frame or tibble with a collection column.}
 
 \item{by}{The collection column, selected by name or bare (tidyselect).
-Default \code{"collection_name"}.}
+Defaults to \code{collection_id} when available, otherwise \code{collection_name}.
+The default ID grouping retains \code{collection_name} as a display label.}
 }
 \value{
 A tibble with the \code{by} column, \code{n_items}/\code{n_assets} (when \code{x} carries
@@ -27,8 +28,8 @@ different collection column (e.g. \code{collection_id}).
 
 Each row reports \code{n} (rows of \code{x} in that collection) plus \code{n_items} and
 \code{n_assets} (distinct \code{item_id} / \code{asset_id} values, \code{NA} excluded) when the
-input carries those columns. On the collected corpus \code{n} equals the number
-of assets in the collection. Rows are ordered by the collection column
+input carries those columns. Corpus rows without assets count towards \code{n}
+but not \code{n_assets}. Rows are ordered by the collection column
 (deterministic).
 }
 \examples{

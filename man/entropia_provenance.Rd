@@ -16,10 +16,13 @@ A list of class \code{entropia_provenance}.
 \description{
 Returns the \code{entropia_prov} attribute attached by
 \code{\link[=entropia_analysis_dataset]{entropia_analysis_dataset()}}: a list recording the dataset \code{name}, the
-database \code{schema_version}, the schema \code{content_hash}, the \code{source_path}, the
+database \code{schema_version}, the \code{schema_hash}, the \code{source_path}, the
 captured \code{filters}, the \code{package_version}, the \code{built_at} timestamp and the
 \code{r_version}. Aborts with \code{entropia_error_invalid_argument} when \code{x} carries
-no provenance stamp.
+no provenance stamp. The current data digest is recomputed. Changed values,
+classes, columns or row order yield \code{scope = "derived"} and \code{query = NULL};
+\code{origin} retains the original digest, SQL and selection recipe. Origin SQL
+is not represented as a recipe for transformed rows.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",

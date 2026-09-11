@@ -42,7 +42,7 @@ con
 The result is an `entropia_conn`, a specialized DBI connection. It *is* a real
 `SQLiteConnection`, so every DBI function keeps working, and it carries a few
 extra attributes — the file path, the open mode, the schema version, and a
-content hash of the schema:
+**schema** hash (DDL + migrations, not row contents):
 
 ```{r}
 class(con)
@@ -111,18 +111,24 @@ entropia_status(con)
 Because EntropIA evolves, `entropiaR` checks the schema on open and behaves
 according to `options(entropiaR.schema_policy)`:
 
-- `"warn"` (default) — warns and proceeds, tolerating unknown/newer/older
-  schemas as long as the required columns exist;
-- `"error"` — hard stop on an unknown (newer) schema;
-- `"allow"` — silent, no warnings.
+- `"warn"` (default) — warn and proceed for older/newer schemas **when the
+  core tables `collections`, `items` and `assets` exist**;
+- `"error"` — hard stop on any incompatibility, including a missing core table;
+- `"allow"` — open anyway so you can run `entropia_validate()`.
 
-The backward-compatible posture is the default: unknown columns are ignored,
-missing optional columns degrade gracefully, and only genuinely missing
-*required* columns raise `entropia_error_schema_incompatible`.
+A SQLite file that only has `_migrations` and no corpus tables is **not**
+compatible. That used to print `compatible = TRUE`; it no longer does.
 
 ```{r}
 options(entropiaR.schema_policy = "warn") # the default; scoped to this session
+entropia_schema_info(con) |>
+  utils::head(8)
 ```
+
+`schema_info` now distinguishes `presence` (column exists live) from the
+manifest `type` and the SQLite `live_type`.
+
+
 
 # Validating the database
 

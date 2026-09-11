@@ -26,7 +26,7 @@ ent_tables <- function(con) {
 }
 
 # Columns of a table via PRAGMA table_xinfo: regular columns (hidden == 0)
-# plus generated columns (hidden >= 3). Errors with
+# plus VIRTUAL and STORED generated columns (hidden != 1). Errors with
 # entropia_error_table_missing when the table does not exist.
 ent_columns <- function(con, table) {
   available <- ent_tables(con)
@@ -42,7 +42,7 @@ ent_columns <- function(con, table) {
   }
   q <- DBI::dbQuoteIdentifier(con, table)
   info <- DBI::dbGetQuery(con, paste0("PRAGMA table_xinfo(", q, ")"))
-  info <- info[info$hidden == 0 | info$hidden >= 3, , drop = FALSE]
+  info <- info[info$hidden != 1L, , drop = FALSE]
   data.frame(
     name = info$name,
     type = info$type,
@@ -99,6 +99,8 @@ ent_manifest_path <- function() {
 
 # Load the column contract. Returns a nested list (fromJSON with
 # simplifyVector = FALSE so names and order are preserved exactly).
+# Deliberately uncached: alternate manifests (including mocked paths) must
+# reflect file replacement even when filesystem timestamps have coarse precision.
 ent_manifest <- function() {
   p <- ent_manifest_path()
   if (!nzchar(p)) {
@@ -143,14 +145,15 @@ ent_schema_gaps <- function(con) {
     for (c in names(mentry$columns)) {
       if (c %in% live_cols) next
       mc <- mentry$columns[[c]]
+      mv <- mc$min_version %||% mentry$min_version %||% NULL
       out[[length(out) + 1]] <- data.frame(
         table = t,
         column = c,
         type = mc$type %||% NA_character_,
         required = isTRUE(mc$required),
-        min_version = mc$min_version %||% NA_character_,
+        min_version = mv %||% NA_character_,
         current_version = ver %||% NA_character_,
-        expected = ent_min_version_applies(mc$min_version %||% NULL, ver),
+        expected = ent_min_version_applies(mv, ver),
         stringsAsFactors = FALSE
       )
     }
@@ -198,7 +201,9 @@ entropia_schema_version <- function(con) {
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A tibble with columns `table`, `column`, `type`, `required`,
-#'   `contract`, `min_version` and `source`.
+#'   `contract`, `min_version`, `source`, `presence` (logical) and `live_type`.
+#'   Absent manifest tables and columns have `presence = FALSE` and missing
+#'   `live_type`; `type` retains the manifest declaration where available.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 #'   package = "entropiaR"
@@ -210,8 +215,10 @@ entropia_schema_info <- function(con) {
   ent_require_conn(con)
   mf <- ent_manifest()
   rows <- list()
-  for (t in ent_tables(con)) {
-    live <- ent_columns(con, t)
+  live_tables <- ent_tables(con)
+  for (t in sort(union(live_tables, names(mf$tables)))) {
+    live <- if (t %in% live_tables) ent_columns(con, t) else
+      data.frame(name = character(), type = character())
     mentry <- mf$tables[[t]]
     manifest_cols <- if (is.null(mentry)) character() else names(mentry$columns)
     live_only <- setdiff(live$name, manifest_cols)
@@ -221,6 +228,7 @@ entropia_schema_info <- function(con) {
         table = t, column = c, type = live$type[i],
         required = FALSE, contract = NA_character_,
         min_version = NA_character_, source = "schema",
+        presence = TRUE, live_type = live$type[i],
         stringsAsFactors = FALSE
       )
     }
@@ -234,6 +242,8 @@ entropia_schema_info <- function(con) {
           required = isTRUE(mc$required),
           contract = mc$contract %||% NA_character_,
           min_version = mv, source = "manifest",
+          presence = c %in% live$name,
+          live_type = live$type[match(c, live$name)],
           stringsAsFactors = FALSE
         )
       }
@@ -246,6 +256,7 @@ entropia_schema_info <- function(con) {
       table = character(), column = character(), type = character(),
       required = logical(), contract = character(),
       min_version = character(), source = character(),
+      presence = logical(), live_type = character(),
       stringsAsFactors = FALSE
     )
   }
@@ -288,12 +299,16 @@ ent_compat_status <- function(ver, head) {
 #' The required-column check uses the manifest contract: columns tagged
 #' `required = TRUE` whose `min_version` is already reached by the database
 #' version must exist in the live schema. Missing ones are listed in
-#' `required_missing` and make the database incompatible.
+#' `required_missing` and make the database incompatible. Unknown versions
+#' conservatively require manifest-required columns on existing tables.
+#' The core tables `collections`, `items` and `assets` must always exist;
+#' missing non-core tables are permitted for minimal databases.
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @return A list of class `entropia_schema_compat` with elements `status`,
 #'   `version`, `manifest_head`, `gaps` (the full expected-but-absent column
-#'   table), `required_missing`, `optional_missing` and `compatible`.
+#'   table for existing tables), `required_missing`, `optional_missing`,
+#'   `required_tables_missing` and `compatible`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 #'   package = "entropiaR"
@@ -309,7 +324,8 @@ entropia_schema_compat <- function(con) {
 
   status <- ent_compat_status(ver, head)
   gaps <- ent_schema_gaps(con)
-  expected <- gaps[!is.na(gaps$expected) & gaps$expected, , drop = FALSE]
+  expected <- gaps[is.na(gaps$expected) | gaps$expected, , drop = FALSE]
+  required_tables_missing <- setdiff(ent_core_tables, ent_tables(con))
   required_missing <- expected[expected$required, , drop = FALSE]
   optional_missing <- expected[!expected$required, , drop = FALSE]
 
@@ -320,7 +336,8 @@ entropia_schema_compat <- function(con) {
     gaps = gaps,
     required_missing = required_missing,
     optional_missing = optional_missing,
-    compatible = nrow(required_missing) == 0L
+    required_tables_missing = required_tables_missing,
+    compatible = nrow(required_missing) == 0L && length(required_tables_missing) == 0L
   )
   class(out) <- "entropia_schema_compat"
   out
@@ -332,6 +349,18 @@ entropia_schema_compat <- function(con) {
 # message environment: cli evaluates `{}` expressions against .envir, not the
 # call's named arguments, so the values must be in scope there.
 ent_abort_schema_incompatible <- function(compat) {
+  if (nrow(compat$required_missing) == 0L &&
+      length(compat$required_tables_missing) > 0L) {
+    missing <- compat$required_tables_missing
+    ent_abort(
+      "entropia_error_schema_incompatible",
+      c(
+        "Database is missing required core table(s): {.val {missing}}.",
+        i = "The collections, items and assets tables are required at every schema version.",
+        i = "To proceed anyway, set {.code options(entropiaR.schema_policy = 'allow')}."
+      )
+    )
+  }
   if (nrow(compat$required_missing) > 0L) {
     msg_env <- rlang::env(
       version = compat$version,
@@ -423,15 +452,10 @@ ent_warn_schema_compat <- function(compat) {
   cli::cli_warn(bullets, class = "entropia_warn_schema", .envir = msg_env)
 }
 
-# Apply the schema policy to a freshly opened connection. Databases without a
-# _migrations table are not EntropIA databases (or are empty); they are left
-# alone -- the version contract only exists once migrations do. `allow` is
-# fully silent; missing required columns abort unless `allow`; the `error`
-# policy hard-stops on any deviation; the default `warn` reports tolerably.
+# Apply policy even without migrations: core tables remain mandatory.
+# `allow` is silent; `warn` rejects structural failures but warns on tolerable
+# deviations; `error` rejects every deviation. quiet never suppresses errors.
 ent_compat_check <- function(con, policy, quiet = FALSE) {
-  if (!DBI::dbExistsTable(con, "_migrations")) {
-    return(invisible(NULL))
-  }
   compat <- entropia_schema_compat(con)
   if (identical(policy, "allow")) {
     return(invisible(compat))

@@ -20,7 +20,7 @@ test_that("entropia_connect returns a typed read-only connection", {
   expect_true(methods::is(con, "SQLiteConnection"))
   expect_identical(attr(con, "mode"), "read-only")
   expect_identical(attr(con, "schema_version"), "0001_initial")
-  expect_true(nzchar(attr(con, "content_hash")))
+  expect_true(nzchar(attr(con, "schema_hash")))
   expect_true(DBI::dbIsValid(con))
   entropia_disconnect(con)
 })
@@ -46,7 +46,7 @@ test_that("entropia_connect rejects write = TRUE in v1", {
 })
 
 test_that("entropia_connect supports :memory:", {
-  con <- entropia_connect(":memory:")
+  con <- connect_quiet(":memory:")
   expect_s4_class(con, "entropia_conn")
   expect_identical(attr(con, "path"), ":memory:")
   expect_true(DBI::dbIsValid(con))
@@ -108,10 +108,15 @@ test_that("entropia_copy is WAL-aware with live sidecars", {
   expect_true(file.exists(paste0(src, "-wal")))
   expect_true(file.exists(paste0(src, "-shm")))
 
-  con <- entropia_connect(src)
+  con <- connect_quiet(src)
+  expect_identical(ent_snapshot_hash(con), NA_character_)
   dest <- tempfile(fileext = ".sqlite")
   entropia_copy(con, dest)
-  con2 <- entropia_connect(dest)
+  con2 <- connect_quiet(dest)
+  expect_identical(
+    ent_snapshot_hash(con2),
+    digest::digest(file = dest, algo = "sha256", serialize = FALSE)
+  )
   expect_equal(DBI::dbGetQuery(con2, "SELECT count(*) AS n FROM t")$n, 2L)
   # The snapshot is self-contained: no sidecars follow the copy.
   expect_false(file.exists(paste0(dest, "-wal")))
@@ -126,6 +131,38 @@ test_that("entropia_copy refuses to overwrite an existing dest", {
   writeLines("x", dest)
   expect_error(entropia_copy(con, dest), class = "entropia_error_dest_exists")
   entropia_disconnect(con)
+})
+
+test_that("invalid flags and policies are rejected before file access", {
+  for (value in list(NA, 1, logical(), c(TRUE, FALSE))) {
+    for (arg in c("write", "validate", "quiet")) {
+      args <- list(path = tempfile())
+      args[[arg]] <- value
+      expect_error(do.call(entropia_connect, args),
+        class = "entropia_error_invalid_argument")
+    }
+  }
+  for (policy in list("w", NA_character_, c("warn", "allow"), 1)) {
+    withr::with_options(list(entropiaR.schema_policy = policy), {
+      expect_error(entropia_connect(tempfile(), validate = FALSE),
+        class = "entropia_error_invalid_argument")
+    })
+  }
+})
+
+test_that("post-open metadata failures disconnect the underlying connection", {
+  path <- tempfile(fileext = ".sqlite")
+  db <- DBI::dbConnect(RSQLite::SQLite(), path)
+  DBI::dbExecute(db, "CREATE TABLE _migrations (wrong_column TEXT)")
+  DBI::dbDisconnect(db)
+  captured <- NULL
+  original <- ent_current_version
+  testthat::local_mocked_bindings(ent_current_version = function(con) {
+    captured <<- con
+    original(con)
+  }, .package = "entropiaR")
+  expect_error(entropia_connect(path, validate = FALSE), "name")
+  expect_false(DBI::dbIsValid(captured))
 })
 
 test_that("entropia_connect errors on a missing file", {

@@ -312,7 +312,10 @@ ent_append_text_layer <- function(base, con, source) {
 #' Corpus (lazy)
 #'
 #' The workhorse research query: a lazy join of `items`, `collections` and
-#' `assets`, one row per asset, with an optional per-asset `text` column.
+#' `assets`, one row per item-asset pair, plus one row with missing asset
+#' fields for each item without assets, with an optional per-asset `text` column.
+#' Asset-type filters remove missing-asset rows; excluding page assets filters
+#' existing rows and does not create replacement rows for page-only items.
 #' Nothing is fetched at access time; every join and filter is pushed down to
 #' SQLite, and the result stays composable with [dplyr::filter()],
 #' [dplyr::select()] and friends.
@@ -346,9 +349,13 @@ ent_append_text_layer <- function(base, con, source) {
 #'   marker in the reference schema, so the flag currently has no effect; it is
 #'   validated and kept for API symmetry with [entropia_entities()] and for
 #'   forward compatibility with schemas that introduce one.
-#' @return A `tbl_sql` with one row per asset and prefixed, non-colliding
-#'   columns from `items`, `collections` and `assets`, plus `text` unless
-#'   `text = FALSE`.
+#' @param collection_ids Optional character vector of collection IDs. Applied
+#'   together with the legacy collection-name filter (intersection).
+#' @param item_ids Optional character vector of item IDs. For either ID filter,
+#'   `NULL` means unrestricted and `character()` selects zero rows.
+#' @return A plain `tbl_sql` at item-asset grain, retaining items without assets
+#'   as missing-asset rows unless removed by filters, with prefixed columns
+#'   from `items`, `collections` and `assets`, plus `text` unless `text = FALSE`.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 #'   package = "entropiaR"
@@ -358,10 +365,13 @@ ent_append_text_layer <- function(base, con, source) {
 #' entropia_disconnect(con)
 #' @export
 entropia_corpus <- function(con, collections = NULL, asset_types = NULL,
-                            text = "auto", page_assets = TRUE, include_deleted = FALSE) {
+                            text = "auto", page_assets = TRUE, include_deleted = FALSE,
+                            collection_ids = NULL, item_ids = NULL) {
   ent_require_conn(con)
   text <- ent_validate_text_arg(text)
   collections <- ent_validate_filter(collections, "collections")
+  collection_ids <- ent_validate_filter(collection_ids, "collection_ids")
+  item_ids <- ent_validate_filter(item_ids, "item_ids")
   asset_types <- ent_validate_filter(asset_types, "asset_types")
   page_assets <- ent_validate_text_flag(page_assets, "page_assets")
   include_deleted <- ent_validate_text_flag(include_deleted, "include_deleted")
@@ -406,12 +416,77 @@ entropia_corpus <- function(con, collections = NULL, asset_types = NULL,
   if (!is.null(collections)) {
     out <- dplyr::filter(out, .data$collection_name %in% !!collections)
   }
+  if (!is.null(collection_ids)) {
+    out <- dplyr::filter(out, .data$collection_id %in% !!collection_ids)
+  }
+  if (!is.null(item_ids)) {
+    out <- dplyr::filter(out, .data$item_id %in% !!item_ids)
+  }
   if (!is.null(asset_types)) {
     out <- dplyr::filter(out, .data$asset_type %in% !!asset_types)
   }
   if (!page_assets && ent_has_columns(con, "assets", "parent_asset_id")) {
     # PDF page assets are the rows with a non-NULL parent_asset_id.
     out <- dplyr::filter(out, is.na(.data$parent_asset_id))
+  }
+  out
+}
+
+# Manifest-backed typing for the known corpus projection. Pass explicitly to
+# entropia_collect(); attaching it to a tbl would become stale after mutate().
+ent_corpus_contract <- function() {
+  mapping <- list(
+    item_created_at = c("items", "created_at"),
+    item_updated_at = c("items", "updated_at"),
+    asset_created_at = c("assets", "created_at"),
+    collection_created_at = c("collections", "created_at"),
+    collection_updated_at = c("collections", "updated_at"),
+    metadata = c("items", "metadata")
+  )
+  tables <- ent_manifest()$tables
+  vapply(mapping, function(key) {
+    contract <- tables[[key[[1]]]]$columns[[key[[2]]]]$contract
+    if (is.null(contract)) "raw" else contract
+  }, character(1))
+}
+
+# Shared lazy study universe; timestamp filtering uses the corpus manifest
+# contract rather than a guessed SQL expression or collection label.
+ent_study_query <- function(con, collection_ids = NULL, asset_types = NULL,
+                            page_assets = TRUE, date_var = "item_created_at",
+                            date_range = NULL, text = FALSE) {
+  allowed <- c("item_created_at", "item_updated_at", "asset_created_at",
+    "collection_created_at", "collection_updated_at")
+  if (!is.character(date_var) || length(date_var) != 1L ||
+      is.na(date_var) || !date_var %in% allowed) {
+    ent_abort("entropia_error_invalid_argument",
+      "{.arg date_var} must name a supported corpus timestamp column.")
+  }
+  bounds <- NULL
+  if (!is.null(date_range)) {
+    if (!(inherits(date_range, "Date") || inherits(date_range, "POSIXct")) ||
+        length(date_range) != 2L || anyNA(date_range) ||
+        any(!is.finite(as.numeric(date_range))) || date_range[[1]] > date_range[[2]]) {
+      ent_abort("entropia_error_invalid_argument",
+        "{.arg date_range} must be two finite, ordered Date or POSIXct values.")
+    }
+    bounds <- as.numeric(date_range)
+    if (inherits(date_range, "Date")) {
+      # Inclusive calendar dates in UTC, at the database's millisecond precision.
+      bounds <- bounds * 86400
+      bounds[[2]] <- bounds[[2]] + 86400 - 0.001
+    }
+    if (!identical(unname(ent_corpus_contract()[date_var]), "datetime_ms")) {
+      ent_abort("entropia_error_invalid_argument",
+        "The selected corpus timestamp must have a datetime_ms manifest contract.")
+    }
+    bounds <- bounds * 1000
+  }
+  out <- entropia_corpus(con, asset_types = asset_types, text = text,
+    page_assets = page_assets, collection_ids = collection_ids)
+  if (!is.null(bounds)) {
+    out <- dplyr::filter(out, .data[[date_var]] >= !!bounds[[1]],
+      .data[[date_var]] <= !!bounds[[2]])
   }
   out
 }
@@ -472,7 +547,11 @@ ent_resolve_item_base <- function(con, items) {
 #'
 #' Unlike the lazy accessors this function materialises: parsing JSON to
 #' list-columns is an R-side step. `parse = FALSE` returns the raw
-#' `metadata` text alongside `item_id` instead.
+#' `metadata` text alongside `item_id` instead. Parsed output also retains
+#' `raw_metadata` and an `extra_metadata` list-column containing top-level keys
+#' that collide with output column names. Non-scalar file fields become typed
+#' missing values. The `diagnostics` attribute is a tibble with `item_id`,
+#' `field`, and `problem`, including malformed JSON and invalid dates.
 #'
 #' @param con A connection returned by [entropia_connect()].
 #' @param items `NULL` for all items, a character vector of item ids to keep,
@@ -505,21 +584,29 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
     return(out)
   }
 
-  parsed <- lapply(rows$metadata, function(z) {
+  diagnostics <- tibble::tibble(item_id = rows$id[0], field = character(), problem = character())
+  diagnose <- function(i, field, problem) {
+    diagnostics <<- dplyr::bind_rows(diagnostics,
+      tibble::tibble(item_id = rows$id[i], field = field, problem = problem))
+  }
+  parsed <- lapply(seq_along(rows$metadata), function(i) {
+    z <- rows$metadata[[i]]
     if (length(z) != 1L || is.na(z)) {
       return(list())
     }
-    p <- tryCatch(jsonlite::fromJSON(z, simplifyVector = TRUE), error = function(e) e)
+    p <- tryCatch(jsonlite::fromJSON(z, simplifyVector = FALSE), error = function(e) e)
     if (inherits(p, "condition")) {
+      diagnose(i, "metadata", "malformed_json")
       cli::cli_warn(
-        "Malformed JSON in items.metadata, returning NA: {ent_sanitize_msg(conditionMessage(p))}",
+        "Malformed JSON in items.metadata at row {i}, returning NA: {ent_sanitize_msg(conditionMessage(p))}",
         class = "entropia_warn_malformed_json"
       )
       return(list())
     }
-    if (!is.list(p)) {
+    if (!is.list(p) || (length(p) > 0L && is.null(names(p)))) {
+      diagnose(i, "metadata", "non_object")
       cli::cli_warn(
-        "Non-object JSON in items.metadata, returning NA",
+        "Non-object JSON in items.metadata at row {i}, returning NA",
         class = "entropia_warn_malformed_json"
       )
       return(list())
@@ -528,48 +615,39 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
   })
   fm <- lapply(parsed, function(p) p[["__entropia_file_metadata"]])
 
-  # Guard against a scalar __entropia_file_metadata value: $[[ on an atomic
-  # vector raises "subscript out of bounds". Tolerate it by treating the row
-  # as if file_metadata were absent, consistent with the non-object metadata
-  # posture above.
-  out$original_name <- vapply(
-    fm,
-    function(x) {
-      if (!is.list(x) || is.null(x[["original_name"]])) {
-        NA_character_
-      } else {
-        as.character(x[["original_name"]])
+  scalar_field <- function(field) {
+    vapply(seq_along(fm), function(i) {
+      x <- fm[[i]]
+      if (is.null(x)) return(NA_character_)
+      if (!is.list(x) || (length(x) > 0L && is.null(names(x)))) {
+        diagnose(i, field, "non_object_file_metadata")
+        return(NA_character_)
       }
-    },
-    character(1)
-  )
-  out$original_path <- vapply(
-    fm,
-    function(x) {
-      if (!is.list(x) || is.null(x[["original_path"]])) {
-        NA_character_
-      } else {
-        as.character(x[["original_path"]])
+      value <- x[[field]]
+      if (is.null(value)) return(NA_character_)
+      if (is.list(value) || length(value) != 1L) {
+        diagnose(i, field, "non_scalar")
+        return(NA_character_)
       }
-    },
-    character(1)
-  )
-  iso <- vapply(
-    fm,
-    function(x) {
-      if (!is.list(x) || is.null(x[["importedAt"]])) {
-        NA_character_
-      } else {
-        as.character(x[["importedAt"]])
-      }
-    },
-    character(1)
-  )
-  # suppressWarnings: a malformed importedAt is not a reason to fail the parse;
-  # it yields NA (the raw value remains reachable via parse = FALSE).
-  out$imported_at <- suppressWarnings(ent_datetime_iso(iso))
+      as.character(value)
+    }, character(1))
+  }
+  out$original_name <- scalar_field("original_name")
+  out$original_path <- scalar_field("original_path")
+  iso <- scalar_field("importedAt")
+  # Parse each cell independently: an invalid date must not abort other rows.
+  seconds <- vapply(seq_along(iso), function(i) {
+    value <- tryCatch(suppressWarnings(as.numeric(ent_datetime_iso(iso[[i]]))),
+      error = function(e) NA_real_)
+    if (!is.na(iso[[i]]) && is.na(value)) diagnose(i, "importedAt", "invalid_datetime")
+    value
+  }, numeric(1))
+  out$imported_at <- as.POSIXct(seconds, origin = "1970-01-01", tz = "UTC")
 
-  reserved <- c("item_id", "original_name", "original_path", "imported_at")
+  reserved <- c("item_id", "original_name", "original_path", "imported_at",
+    "raw_metadata", "extra_metadata")
+  out$raw_metadata <- rows$metadata
+  out$extra_metadata <- lapply(parsed, function(p) p[intersect(names(p), reserved)])
   keys <- setdiff(
     unique(unlist(lapply(parsed, function(p) setdiff(names(p), "__entropia_file_metadata")))),
     reserved
@@ -580,5 +658,6 @@ entropia_metadata <- function(con, items = NULL, parse = TRUE) {
       if (is.null(p[[k]])) NULL else p[[k]]
     })
   }
+  attr(out, "diagnostics") <- diagnostics
   out
 }

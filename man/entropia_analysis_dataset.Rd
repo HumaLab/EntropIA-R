@@ -4,7 +4,19 @@
 \alias{entropia_analysis_dataset}
 \title{Build a reproducible analysis dataset}
 \usage{
-entropia_analysis_dataset(con, ..., name = NULL)
+entropia_analysis_dataset(
+  con,
+  ...,
+  name = NULL,
+  unit = "asset",
+  columns = NULL,
+  text = "auto",
+  page_assets = TRUE,
+  collection_ids = NULL,
+  asset_types = NULL,
+  date_var = "item_created_at",
+  date_range = NULL
+)
 }
 \arguments{
 \item{con}{A connection returned by \code{\link[=entropia_connect]{entropia_connect()}}.}
@@ -14,10 +26,32 @@ entropia_analysis_dataset(con, ..., name = NULL)
 (see \code{\link[=entropia_corpus]{entropia_corpus()}} for the full column set). Must be unnamed.}
 
 \item{name}{Optional human-readable label stored in the provenance.}
+
+\item{unit}{Observation unit, \code{"asset"} or \code{"item"}. Asset observations
+retain corpus rows for items without assets. Item observations use the
+same selected universe, with one row per item and no asset columns.}
+
+\item{columns}{Optional character vector of output columns, in output order.}
+
+\item{text}{Text source accepted by the corpus, or \code{FALSE} to omit text.
+Item text combines nonmissing asset texts in asset-ID order, separated
+by two newlines; no text yields \code{NA_character_}.}
+
+\item{page_assets}{Include page assets.}
+
+\item{collection_ids}{Collection IDs; \code{NULL} selects all, empty selects none.}
+
+\item{asset_types}{Optional asset types.}
+
+\item{date_var}{Corpus timestamp used for date filtering.}
+
+\item{date_range}{Inclusive two-element Date or POSIXct range, or \code{NULL}.}
 }
 \value{
-A \code{\link[tibble:tibble]{tibble::tibble()}} of class \code{entropia_dataset}, one row per asset,
-with the \code{entropia_prov} attribute.
+A plain tibble with the \code{entropia_prov} attribute. Provenance includes
+selected row/item/asset counts and exclusions due to item reduction.
+Strict reproducibility requires an explicit \code{\link[=entropia_copy]{entropia_copy()}} snapshot:
+hashing a live source file does not make it immutable.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
@@ -25,15 +59,15 @@ with the \code{entropia_prov} attribute.
 \details{
 The dataset boundary of the package: assembles the lazy corpus
 (\code{\link[=entropia_corpus]{entropia_corpus()}}), applies any filter expressions passed in \code{...}, and
-materialises the result with a deterministic row order (arranged by
-\code{asset_id}). The returned tibble carries class \code{entropia_dataset} and an
-\code{entropia_prov} attribute recording everything needed to reconstruct the
-dataset:
+materialises the result in \code{item_id}, \code{asset_id} order. The returned plain
+tibble carries an \code{entropia_prov} attribute recording the build recipe:
 \itemize{
 \item \code{name}: the human label passed to \code{name} (\code{NULL} for unnamed);
 \item \code{schema_version}: the database schema head (e.g. \code{"0029_rag_chunks"});
-\item \code{content_hash}: the connection's schema content hash (see
-\code{\link[=entropia_connect]{entropia_connect()}});
+\item \code{schema_hash}: the connection's schema hash;
+\item \code{snapshot_sha256}: source-file hash, unavailable with a nonempty WAL;
+\item \code{dataset_sha256}: canonical values, column classes and row order;
+\item \code{query}: resolved SQL, with \code{selection} recording subsequent item reduction;
 \item \code{source_path}: the database file the dataset was built from;
 \item \code{filters}: the deparsed filter expressions captured from \code{...};
 \item \code{package_version}: the entropiaR version used;

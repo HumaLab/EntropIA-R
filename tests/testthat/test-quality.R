@@ -166,9 +166,8 @@ test_that("metadata coverage pushes the grouping down to SQL", {
 test_that("entropia_corpus_quality is a deterministic long-form report", {
   with_quality_con("full", function(con) {
     q <- entropia_corpus_quality(con)
-    expect_s3_class(q, "entropia_corpus_quality")
     expect_s3_class(q, "tbl_df")
-    expect_identical(names(q), c("metric", "group", "n", "total", "pct"))
+    expect_identical(names(q), c("metric", "group_id", "group", "unit", "n", "total", "pct", "status"))
     expect_equal(nrow(q), 10L)
 
     ocr <- q[q$metric == "ocr_coverage", ]

@@ -10,7 +10,7 @@
     Code
       conditionMessage(w2)
     Output
-      [1] "Malformed JSON in items.metadata, returning NA: parse error: premature EOF {\"bad\": (right here) ------^"
+      [1] "Malformed JSON in items.metadata at row 1, returning NA: parse error: premature EOF {\"bad\": (right here) ------^"
 
 ---
 

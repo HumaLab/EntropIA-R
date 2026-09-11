@@ -10,39 +10,65 @@
 # Conversions only apply to columns the manifest declares, so unknown or
 # future columns are never touched (forward compatibility).
 
-# Which table's contract does `x` read from? The raw-accessor case is resolved
-# by dbplyr::remote_name(); derived queries (filter/select) fall back to a
-# FROM-clause inference that only fires for single-table queries. A joined or
-# subquery tbl has no single reliable contract and is returned as collected.
-ent_infer_base_table <- function(x) {
-  tbl <- dbplyr::remote_name(x)
-  if (!is.null(tbl)) {
-    return(tbl)
-  }
-  sql <- as.character(dbplyr::sql_render(x))
-  if (grepl("(?i)JOIN", sql, perl = TRUE)) {
-    return(NULL)
-  }
-  # Two regexes search for a top-level FROM clause. The first matches quoted
-  # identifiers (dbplyr renders these as `"tablename"`). The second is a
-  # fallback for bare identifiers and deliberately rejects FROM followed by
-  # '(' (subquery) so a derived query's inner table name isn't misidentified
-  # as the contract source. Neither regex matches a FROM that appears inside
-  # a string literal (a rare corner case — the WHERE clause is after the FROM
-  # in RSQLite renders, so the first FROM the regexes see is the real one).
-  m <- regexpr("(?i)FROM\\s+[`\"]([^`\"]+)[`\"]", sql, perl = TRUE)
-  if (m == -1L) {
-    m <- regexpr("(?i)FROM\\s+([A-Za-z_][A-Za-z0-9_]*)(?!\\s*\\()", sql, perl = TRUE)
-    if (m == -1L) {
-      return(NULL)
+# Trace only proven column references through dbplyr's lazy query tree.
+# SQL sources, joins, and unknown node/selection shapes deliberately lose
+# automatic contracts. In particular, an expression's output name is not
+# evidence of its type, even when it reuses a manifest column name.
+ent_infer_contract <- function(x) {
+  walk <- function(q) {
+    if (!is.list(q)) return(character())
+    if (inherits(q, "lazy_base_query")) {
+      # dbplyr >= 2.5 wraps table paths (dbplyr_table_path) and renders idents
+      # with backticks; normalize to the bare table name for manifest lookup.
+      src <- gsub("`", "", as.character(q$x), fixed = TRUE)
+      if (length(src) != 1L || is.na(src) || !nzchar(src) ||
+          startsWith(src, "(")) {
+        return(character())
+      }
+      cols <- ent_manifest()$tables[[src]]$columns
+      if (is.null(cols) || !is.character(q$vars)) return(character())
+      out <- vapply(cols, function(z) {
+        if (is.null(z$contract)) "raw" else z$contract
+      }, character(1))
+      return(out[intersect(names(out), q$vars)])
     }
+    if (!inherits(q, "lazy_select_query")) return(character())
+    input <- walk(q$x)
+    sel <- q$select
+    if (!is.list(sel) || !is.character(sel$name) ||
+        !is.list(sel$expr) || length(sel$name) != length(sel$expr) ||
+        anyNA(sel$name) || anyDuplicated(sel$name)) return(character())
+    out <- character()
+    for (i in seq_along(sel$name)) {
+      expr <- sel$expr[[i]]
+      if (rlang::is_quosure(expr)) expr <- rlang::quo_get_expr(expr)
+      nm <- if (inherits(expr, "name")) {
+        as.character(expr)
+      } else if (rlang::is_symbol(expr)) {
+        rlang::as_string(expr)
+      } else if (is.character(expr) && length(expr) == 1L && !is.na(expr)) {
+        expr
+      } else {
+        NA_character_
+      }
+      if (!is.na(nm) && nm %in% names(input)) out[sel$name[[i]]] <- input[[nm]]
+    }
+    out
   }
-  cs <- attr(m, "capture.start")
-  cl <- attr(m, "capture.length")
-  if (cs[1] < 1) {
-    return(NULL)
+  walk(x$lazy_query)
+}
+
+ent_validate_collect_schema <- function(schema, vars) {
+  if (is.null(schema)) return(NULL)
+  if (!is.character(schema) || is.null(names(schema)) || anyNA(schema) ||
+      anyNA(names(schema)) || any(!nzchar(names(schema))) ||
+      anyDuplicated(names(schema)) ||
+      any(!schema %in% c("datetime_ms", "datetime_s", "datetime_auto", "json", "raw")) ||
+      any(!names(schema) %in% vars)) {
+    ent_abort("entropia_error_invalid_argument",
+      "{.arg schema} must be a uniquely named character vector mapping existing output columns to datetime_ms, datetime_s, datetime_auto, json, or raw.")
   }
-  substr(sql, cs[1], cs[1] + cl[1] - 1L)
+  schema
 }
 
 # Epoch milliseconds -> POSIXct (UTC). RSQLite returns large timestamps as
@@ -216,14 +242,16 @@ ent_apply_contract <- function(out, columns) {
 #' list-columns, and BLOB columns stay raw. Columns the manifest does not
 #' describe are returned unchanged.
 #'
-#' The contract is resolved from the table's base table. For a lazy query that
-#' is not a simple single-table read (joins, subqueries) the columns are
-#' returned as SQLite produced them -- keep filters/selects inside the lazy
-#' query for best results.
+#' Automatic contracts follow only proven untouched column references and
+#' rename aliases through supported dbplyr query nodes. Transformed expressions,
+#' joins, raw SQL and unknown query structures remain untyped. Explicit schema
+#' entries override inference for those columns; `"raw"` disables conversion.
 #'
 #' @param x A lazy table, e.g. from [entropia_items()].
 #' @param n Maximum number of rows to fetch, passed to [dplyr::collect()].
 #' @param ... Additional arguments passed to [dplyr::collect()].
+#' @param schema Optional named character vector mapping output columns to
+#'   `datetime_ms`, `datetime_s`, `datetime_auto`, `json`, or `raw`.
 #' @return A [tibble::tibble()] with the column contract applied.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
@@ -232,7 +260,7 @@ ent_apply_contract <- function(out, columns) {
 #' entropia_collect(entropia_items(con)) # created_at -> POSIXct, metadata -> list-column
 #' entropia_disconnect(con)
 #' @export
-entropia_collect <- function(x, n = Inf, ...) {
+entropia_collect <- function(x, n = Inf, ..., schema = NULL) {
   if (!inherits(x, "tbl_sql")) {
     ent_abort(
       "entropia_error_invalid_argument",
@@ -245,14 +273,9 @@ entropia_collect <- function(x, n = Inf, ...) {
       )
     )
   }
+  schema <- ent_validate_collect_schema(schema, dplyr::tbl_vars(x))
+  contract <- ent_infer_contract(x)
+  contract[names(schema)] <- schema
   out <- dplyr::collect(x, n = n, ...)
-  base <- ent_infer_base_table(x)
-  if (is.null(base)) {
-    return(out)
-  }
-  mentry <- ent_manifest()$tables[[base]]
-  if (is.null(mentry)) {
-    return(out)
-  }
-  ent_apply_contract(out, mentry$columns)
+  ent_apply_contract(out, lapply(contract, function(z) list(contract = z)))
 }

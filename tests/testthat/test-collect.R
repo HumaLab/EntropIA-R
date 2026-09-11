@@ -263,3 +263,36 @@ test_that("datetime_auto yields correct POSIXct dates on both fixtures", {
     expect_true(all(offsets %in% c(600, 610, 620)))
   })
 })
+
+test_that("typing follows aliases but not transformed timestamp expressions", {
+  with_collect_con("full", function(con) {
+    base <- entropia_items(con)
+    renamed <- base |>
+      dplyr::filter(.data$title != "FROM items JOIN entities") |>
+      dplyr::select(when = "created_at", payload = "metadata")
+    out <- entropia_collect(renamed)
+    expect_s3_class(out$when, "POSIXct")
+    expect_true(is.list(out$payload))
+    changed <- dplyr::mutate(base, created_at = .data$created_at / 1000)
+    raw <- entropia_collect(changed)
+    expect_false(inherits(raw$created_at, "POSIXct"))
+    explicit <- entropia_collect(changed, schema = c(created_at = "datetime_s"))
+    expect_equal(explicit$created_at, entropia_collect(base)$created_at)
+    disabled <- entropia_collect(base, schema = c(created_at = "raw"))
+    expect_false(inherits(disabled$created_at, "POSIXct"))
+    expect_error(entropia_collect(base, schema = c(no_such_column = "json")),
+      class = "entropia_error_invalid_argument")
+    expect_error(entropia_collect(base, schema = c("json")),
+      class = "entropia_error_invalid_argument")
+  })
+})
+
+test_that("raw SQL does not acquire a contract from output names or literals", {
+  with_collect_con("full", function(con) {
+    query <- dplyr::tbl(con, dbplyr::sql(
+      "SELECT 'FROM items' AS metadata, 12 AS created_at"))
+    out <- entropia_collect(query)
+    expect_identical(out$metadata, "FROM items")
+    expect_false(inherits(out$created_at, "POSIXct"))
+  })
+})

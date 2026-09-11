@@ -10,7 +10,9 @@ entropia_corpus(
   asset_types = NULL,
   text = "auto",
   page_assets = TRUE,
-  include_deleted = FALSE
+  include_deleted = FALSE,
+  collection_ids = NULL,
+  item_ids = NULL
 )
 }
 \arguments{
@@ -34,15 +36,24 @@ schemas without the page columns (migration 0024).}
 marker in the reference schema, so the flag currently has no effect; it is
 validated and kept for API symmetry with \code{\link[=entropia_entities]{entropia_entities()}} and for
 forward compatibility with schemas that introduce one.}
+
+\item{collection_ids}{Optional character vector of collection IDs. Applied
+together with the legacy collection-name filter (intersection).}
+
+\item{item_ids}{Optional character vector of item IDs. For either ID filter,
+\code{NULL} means unrestricted and \code{character()} selects zero rows.}
 }
 \value{
-A \code{tbl_sql} with one row per asset and prefixed, non-colliding
-columns from \code{items}, \code{collections} and \code{assets}, plus \code{text} unless
-\code{text = FALSE}.
+A plain \code{tbl_sql} at item-asset grain, retaining items without assets
+as missing-asset rows unless removed by filters, with prefixed columns
+from \code{items}, \code{collections} and \code{assets}, plus \code{text} unless \code{text = FALSE}.
 }
 \description{
 The workhorse research query: a lazy join of \code{items}, \code{collections} and
-\code{assets}, one row per asset, with an optional per-asset \code{text} column.
+\code{assets}, one row per item-asset pair, plus one row with missing asset
+fields for each item without assets, with an optional per-asset \code{text} column.
+Asset-type filters remove missing-asset rows; excluding page assets filters
+existing rows and does not create replacement rows for page-only items.
 Nothing is fetched at access time; every join and filter is pushed down to
 SQLite, and the result stays composable with \code{\link[dplyr:filter]{dplyr::filter()}},
 \code{\link[dplyr:select]{dplyr::select()}} and friends.

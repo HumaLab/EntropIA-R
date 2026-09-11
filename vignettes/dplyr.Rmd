@@ -115,15 +115,20 @@ items <- entropia_items(con) |> entropia_collect()
 items$created_at
 ```
 
+Rename keeps the type of the *source* column. A new expression that reuses a
+timestamp name does **not** get converted:
+
 ```{r}
-metadata_col <- entropia_items(con) |> entropia_collect()
-metadata_col$metadata
+class(entropia_collect(rename(entropia_items(con), imported = created_at))$imported)
+class(entropia_collect(mutate(entropia_items(con), created_at = 1))$created_at)
 ```
+
+Joins have no automatic contract — pass `schema =` when you need typed
+columns on a joined query (see `?entropia_collect`).
 
 The pure timestamp helpers back this: `entropia_datetime()` converts
 milliseconds, `entropia_datetime_s()` seconds, and `entropia_datetime_auto()`
-uses a magnitude guard for columns whose units have drifted over time (used for
-`entities.created_at` and `triples.created_at`):
+uses a magnitude guard for columns whose units have drifted over time:
 
 ```{r}
 entropia_datetime(1768478400000)
@@ -137,5 +142,5 @@ entropia_datetime_auto(c(1768478400000, 1768478400))
 entropia_disconnect(con)
 ```
 
-Next: `vignette("datasets")` for building reproducible analysis datasets, or
-`vignette("analysis")` for a complete analysis workflow.
+Next: `vignette("eda")` for SQL-side inventory, or `vignette("datasets")` for
+reproducible analysis datasets.

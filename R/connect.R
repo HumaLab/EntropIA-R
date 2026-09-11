@@ -5,7 +5,7 @@
 # SQLITE_RO and PRAGMA query_only = ON is re-asserted on top (belt and braces).
 # The returned object is an S4 subclass of SQLiteConnection, so every DBI and
 # dbplyr function keeps working while the object carries the entropiaR contract
-# (path, mode, schema_version, content_hash) as attributes.
+# (path, mode, schema_version, schema_hash) as attributes.
 
 # entropia_conn: S4 subclass of RSQLite's SQLiteConnection, defined at
 # namespace load. Prepending a plain S3 class would break S4 generic dispatch
@@ -19,7 +19,7 @@ if (!methods::isClass("entropia_conn")) {
 #'
 #' A typed, read-only DBI connection to an EntropIA SQLite database. Subclass
 #' of [RSQLite::SQLiteConnection-class]; carries `path`, `mode`,
-#' `schema_version` and `content_hash` attributes.
+#' `schema_version` and `schema_hash` attributes.
 #'
 #' @name entropia_conn-class
 #' @aliases entropia_conn
@@ -30,7 +30,7 @@ NULL
 #'
 #' Opens `path` as a read-only DBI connection. The returned object is an
 #' `entropia_conn`: a typed subclass of [RSQLite::SQLiteConnection-class]
-#' carrying the `path`, `mode`, `schema_version` and `content_hash`
+#' carrying the `path`, `mode`, `schema_version` and `schema_hash`
 #' attributes. All DBI and dbplyr functions keep working on it.
 #'
 #' @param path Path to the EntropIA SQLite database, or `":memory:"`.
@@ -60,6 +60,23 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
         "{.arg path} must be a single path to an EntropIA SQLite database.",
         i = "Got {.type {typeof(path)}}."
       )
+    )
+  }
+  for (arg in c("write", "validate", "quiet")) {
+    value <- get(arg)
+    if (!is.logical(value) || length(value) != 1L || is.na(value)) {
+      ent_abort(
+        "entropia_error_invalid_argument",
+        "{.arg {arg}} must be a single non-missing logical."
+      )
+    }
+  }
+  policy <- getOption("entropiaR.schema_policy", "warn")
+  if (!is.character(policy) || length(policy) != 1L || is.na(policy) ||
+      !policy %in% c("warn", "error", "allow")) {
+    ent_abort(
+      "entropia_error_invalid_argument",
+      "{.code options(entropiaR.schema_policy)} must be one of {.val warn}, {.val error} or {.val allow}."
     )
   }
   if (isTRUE(write)) {
@@ -110,6 +127,11 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
     flags = RSQLite::SQLITE_RO,
     synchronous = NULL
   )
+  opened <- con
+  complete <- FALSE
+  on.exit({
+    if (!complete) try(entropia_disconnect(opened), silent = TRUE)
+  }, add = TRUE)
   DBI::dbExecute(con, "PRAGMA query_only = ON")
 
   if (validate) {
@@ -121,7 +143,6 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
       error = function(e) conditionMessage(e)
     )
     if (!identical(err, "")) {
-      DBI::dbDisconnect(con)
       if (grepl("locked|busy", err)) {
         ent_abort(
           "entropia_error_locked",
@@ -152,42 +173,15 @@ entropia_connect <- function(path, write = FALSE, validate = TRUE, quiet = FALSE
   # open so callers learn about older/newer schemas immediately; aborts close
   # the connection so nothing leaks.
   if (validate) {
-    policy <- getOption("entropiaR.schema_policy", "warn")
-    policy <- tryCatch(
-      match.arg(policy, c("warn", "error", "allow")),
-      error = function(e) {
-        ent_abort(
-          "entropia_error_invalid_argument",
-          c(
-            "{.code options(entropiaR.schema_policy)} must be one of",
-            "{.val warn}, {.val error} or {.val allow}.",
-            i = "Received {.val {policy}}."
-          )
-        )
-      }
-    )
-    compat_err <- tryCatch(
-      {
-        ent_compat_check(con, policy, quiet = quiet)
-        NULL
-      },
-      error = function(e) e
-    )
-    if (!is.null(compat_err)) {
-      DBI::dbDisconnect(con)
-      rlang::abort(
-        "Schema compatibility check failed.",
-        parent = compat_err,
-        class = setdiff(class(compat_err), c("error", "condition", "rlang_error"))
-      )
-    }
+    ent_compat_check(con, policy, quiet = quiet)
   }
 
   con <- methods::as(con, "entropia_conn")
   attr(con, "path") <- if (is_memory) ":memory:" else db_path
   attr(con, "mode") <- "read-only"
   attr(con, "schema_version") <- ent_current_version(con)
-  attr(con, "content_hash") <- ent_content_hash(con)
+  attr(con, "schema_hash") <- ent_schema_hash(con)
+  complete <- TRUE
   con
 }
 
@@ -288,13 +282,13 @@ entropia_copy <- function(con, dest) {
 format.entropia_conn <- function(x, ...) {
   ver <- ent_attr(x, "schema_version")
   if (is.na(ver)) ver <- "unknown"
-  hash <- ent_attr(x, "content_hash")
+  hash <- ent_attr(x, "schema_hash")
   hash_short <- if (is.na(hash)) "n/a" else substr(hash, 1, 12)
   paste0(
     "<entropiaR connection> ", ent_attr(x, "mode"), "\n",
     "  path:    ", ent_attr(x, "path"), "\n",
     "  schema:  ", ver, "\n",
-    "  content: ", hash_short
+    "  schema hash: ", hash_short
   )
 }
 
@@ -310,7 +304,7 @@ summary.entropia_conn <- function(object, ...) {
     path = ent_attr(object, "path"),
     mode = ent_attr(object, "mode"),
     schema_version = ent_attr(object, "schema_version"),
-    content_hash = ent_attr(object, "content_hash"),
+    schema_hash = ent_attr(object, "schema_hash"),
     valid = DBI::dbIsValid(object)
   )
   class(out) <- c("summary.entropia_conn", "list")
@@ -325,7 +319,7 @@ print.summary.entropia_conn <- function(x, ...) {
   cat("  path:           ", x$path, "\n", sep = "")
   cat("  mode:           ", x$mode, "\n", sep = "")
   cat("  schema version: ", ver, "\n", sep = "")
-  cat("  content hash:   ", x$content_hash, "\n", sep = "")
+  cat("  schema hash:    ", x$schema_hash, "\n", sep = "")
   cat("  valid:          ", x$valid, "\n", sep = "")
   invisible(x)
 }

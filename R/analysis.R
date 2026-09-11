@@ -56,14 +56,15 @@ ent_select_cols <- function(x, quo, arg, exactly = NULL) {
 
 # Floor POSIXct timestamps to the start of their `unit` bucket. Day and longer
 # units are wall-clock in the vector's timezone (UTC for EntropIA data);
-# second/minute/hour are exact epoch truncations. Weeks start on Monday (the
+# second/minute/hour are exact epoch floors. Weeks start on Monday (the
 # base cut.POSIXt convention).
 ent_floor_date <- function(d, unit) {
   tz <- attr(d, "tzone") %||% "UTC"
+  if (!length(d)) return(as.POSIXct(numeric(), origin = "1970-01-01", tz = tz))
   switch(unit,
-    second = as.POSIXct(trunc(as.numeric(d)), origin = "1970-01-01", tz = tz),
-    minute = as.POSIXct(trunc(as.numeric(d) / 60) * 60, origin = "1970-01-01", tz = tz),
-    hour = as.POSIXct(trunc(as.numeric(d) / 3600) * 3600, origin = "1970-01-01", tz = tz),
+    second = as.POSIXct(floor(as.numeric(d)), origin = "1970-01-01", tz = tz),
+    minute = as.POSIXct(floor(as.numeric(d) / 60) * 60, origin = "1970-01-01", tz = tz),
+    hour = as.POSIXct(floor(as.numeric(d) / 3600) * 3600, origin = "1970-01-01", tz = tz),
     day = as.POSIXct(format(d, "%Y-%m-%d"), tz = tz),
     week = as.POSIXct(as.character(cut(d, "weeks")), tz = tz),
     month = as.POSIXct(format(d, "%Y-%m-01"), tz = tz),
@@ -100,7 +101,7 @@ ent_floor_date <- function(d, unit) {
 #' @param by Optional column(s) to break the counts by, selected by name or
 #'   bare (tidyselect). `NULL` (default) produces a single time series.
 #' @return A tibble with the bucket column, the `by` columns (when given), and
-#'   a count column `n`.
+#'   a count column `n`. Attribute `excluded` counts missing or non-finite dates.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 #'   package = "entropiaR"
@@ -144,7 +145,8 @@ entropia_temporal_profile <- function(x, date_var, unit = "month", by = NULL) {
   }
   if (inherits(d, "Date")) d <- as.POSIXct(d)
 
-  keep <- !is.na(d)
+  keep <- !is.na(d) & is.finite(as.numeric(d))
+  excluded <- sum(!keep)
   d <- d[keep]
   x <- x[keep, , drop = FALSE]
 
@@ -153,13 +155,15 @@ entropia_temporal_profile <- function(x, date_var, unit = "month", by = NULL) {
   if (length(by_cols) > 0L) {
     out <- dplyr::bind_cols(out, x[by_cols])
   }
-  out$n <- 1L
+  out$n <- rep.int(1L, nrow(out))
   out <- dplyr::summarise(
     dplyr::group_by(out, dplyr::across(dplyr::all_of(c(by_cols, date_col)))),
     n = dplyr::n(),
     .groups = "drop"
   )
-  dplyr::arrange(out, !!!rlang::syms(c(by_cols, date_col)))
+  out <- dplyr::arrange(out, !!!rlang::syms(c(by_cols, date_col)))
+  attr(out, "excluded") <- excluded
+  out
 }
 
 # Words in a character scalar: runs of non-whitespace tokens. Empty/whitespace
@@ -377,13 +381,14 @@ entropia_topic_frequency <- function(x, by = NULL) {
 #'
 #' Each row reports `n` (rows of `x` in that collection) plus `n_items` and
 #' `n_assets` (distinct `item_id` / `asset_id` values, `NA` excluded) when the
-#' input carries those columns. On the collected corpus `n` equals the number
-#' of assets in the collection. Rows are ordered by the collection column
+#' input carries those columns. Corpus rows without assets count towards `n`
+#' but not `n_assets`. Rows are ordered by the collection column
 #' (deterministic).
 #'
 #' @param x A data frame or tibble with a collection column.
 #' @param by The collection column, selected by name or bare (tidyselect).
-#'   Default `"collection_name"`.
+#'   Defaults to `collection_id` when available, otherwise `collection_name`.
+#'   The default ID grouping retains `collection_name` as a display label.
 #' @return A tibble with the `by` column, `n_items`/`n_assets` (when `x` carries
 #'   those id columns) and `n`, ordered by the collection column.
 #' @examples
@@ -396,7 +401,8 @@ entropia_topic_frequency <- function(x, by = NULL) {
 #' @export
 entropia_compare_collections <- function(x, by = "collection_name") {
   x <- ent_require_tibble(x)
-  by_col <- ent_select_cols(x, rlang::enquo(by), "by", exactly = 1L)
+  default_id <- missing(by) && "collection_id" %in% names(x)
+  by_col <- if (default_id) "collection_id" else ent_select_cols(x, rlang::enquo(by), "by", exactly = 1L)
   if (identical(by_col, "n")) {
     ent_abort(
       "entropia_error_invalid_argument",
@@ -434,6 +440,9 @@ entropia_compare_collections <- function(x, by = "collection_name") {
   }
 
   sum_exprs <- list()
+  if (default_id && "collection_name" %in% names(x)) {
+    sum_exprs[["collection_name"]] <- rlang::expr(sort(unique(.data$collection_name), na.last = TRUE)[1L])
+  }
   if (has_item) {
     sum_exprs[["n_items"]] <- rlang::expr(dplyr::n_distinct(.data$item_id, na.rm = TRUE))
   }
@@ -454,6 +463,32 @@ entropia_compare_collections <- function(x, by = "collection_name") {
 
 # Validate the `name` argument of entropia_analysis_dataset(): NULL (unnamed)
 # or a single non-NA character string.
+# Canonical payload excludes table attributes (provenance, grouping, row names).
+# Column semantics retain classes, names, levels, dimensions and time zones;
+# arbitrary cached/volatile attributes are deliberately not hashed.
+ent_dataset_hash <- function(x) {
+  if (!requireNamespace("digest", quietly = TRUE)) {
+    ent_abort("entropia_error_missing_dependency",
+      "Dataset provenance requires {.pkg digest}; install it with install.packages('digest').")
+  }
+  canonical <- function(z) {
+    if (is.environment(z) || is.function(z) || typeof(z) == "externalptr") {
+      ent_abort("entropia_error_invalid_argument",
+        "Dataset hashing does not support environments, functions or external pointers.")
+    }
+    a <- attributes(z)
+    a <- a[intersect(c("class", "names", "levels", "tzone", "dim", "dimnames"), names(a))]
+    attributes(z) <- NULL
+    if (is.character(z)) z <- enc2utf8(z)
+    if (is.list(z)) z <- lapply(z, canonical)
+    list(type = typeof(z), attributes = a, values = z)
+  }
+  payload <- list(version = 1L, rows = nrow(x), columns = enc2utf8(names(x)),
+    data = lapply(seq_along(x), function(i) canonical(x[[i]])))
+  digest::digest(serialize(payload, NULL, ascii = FALSE, xdr = TRUE, version = 2L),
+    algo = "sha256", serialize = FALSE)
+}
+
 ent_validate_dataset_name <- function(name) {
   if (is.null(name)) {
     return(name)
@@ -473,15 +508,15 @@ ent_validate_dataset_name <- function(name) {
 #'
 #' The dataset boundary of the package: assembles the lazy corpus
 #' ([entropia_corpus()]), applies any filter expressions passed in `...`, and
-#' materialises the result with a deterministic row order (arranged by
-#' `asset_id`). The returned tibble carries class `entropia_dataset` and an
-#' `entropia_prov` attribute recording everything needed to reconstruct the
-#' dataset:
+#' materialises the result in `item_id`, `asset_id` order. The returned plain
+#' tibble carries an `entropia_prov` attribute recording the build recipe:
 #'
 #' - `name`: the human label passed to `name` (`NULL` for unnamed);
 #' - `schema_version`: the database schema head (e.g. `"0029_rag_chunks"`);
-#' - `content_hash`: the connection's schema content hash (see
-#'   [entropia_connect()]);
+#' - `schema_hash`: the connection's schema hash;
+#' - `snapshot_sha256`: source-file hash, unavailable with a nonempty WAL;
+#' - `dataset_sha256`: canonical values, column classes and row order;
+#' - `query`: resolved SQL, with `selection` recording subsequent item reduction;
 #' - `source_path`: the database file the dataset was built from;
 #' - `filters`: the deparsed filter expressions captured from `...`;
 #' - `package_version`: the entropiaR version used;
@@ -498,8 +533,22 @@ ent_validate_dataset_name <- function(name) {
 #'   `asset_type == "image"`. Column names resolve against the lazy corpus
 #'   (see [entropia_corpus()] for the full column set). Must be unnamed.
 #' @param name Optional human-readable label stored in the provenance.
-#' @return A [tibble::tibble()] of class `entropia_dataset`, one row per asset,
-#'   with the `entropia_prov` attribute.
+#' @param unit Observation unit, `"asset"` or `"item"`. Asset observations
+#'   retain corpus rows for items without assets. Item observations use the
+#'   same selected universe, with one row per item and no asset columns.
+#' @param columns Optional character vector of output columns, in output order.
+#' @param text Text source accepted by the corpus, or `FALSE` to omit text.
+#'   Item text combines nonmissing asset texts in asset-ID order, separated
+#'   by two newlines; no text yields `NA_character_`.
+#' @param page_assets Include page assets.
+#' @param collection_ids Collection IDs; `NULL` selects all, empty selects none.
+#' @param asset_types Optional asset types.
+#' @param date_var Corpus timestamp used for date filtering.
+#' @param date_range Inclusive two-element Date or POSIXct range, or `NULL`.
+#' @return A plain tibble with the `entropia_prov` attribute. Provenance includes
+#'   selected row/item/asset counts and exclusions due to item reduction.
+#'   Strict reproducibility requires an explicit [entropia_copy()] snapshot:
+#'   hashing a live source file does not make it immutable.
 #' @examples
 #' con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
 #'   package = "entropiaR"
@@ -508,7 +557,10 @@ ent_validate_dataset_name <- function(name) {
 #' entropia_provenance(ds)
 #' entropia_disconnect(con)
 #' @export
-entropia_analysis_dataset <- function(con, ..., name = NULL) {
+entropia_analysis_dataset <- function(con, ..., name = NULL, unit = "asset",
+                                      columns = NULL, text = "auto", page_assets = TRUE,
+                                      collection_ids = NULL, asset_types = NULL,
+                                      date_var = "item_created_at", date_range = NULL) {
   ent_require_conn(con)
   name <- ent_validate_dataset_name(name)
   filters <- rlang::enquos(...)
@@ -519,26 +571,66 @@ entropia_analysis_dataset <- function(con, ..., name = NULL) {
     )
   }
 
-  corpus <- entropia_corpus(con)
-  if (length(filters) > 0L) {
-    corpus <- dplyr::filter(corpus, !!!filters)
+  unit <- ent_validate_choice(unit, c("asset", "item"), "unit")
+  corpus <- ent_study_query(con, collection_ids = collection_ids,
+    asset_types = asset_types, page_assets = page_assets, date_var = date_var,
+    date_range = date_range, text = text)
+  if (length(filters)) corpus <- dplyr::filter(corpus, !!!filters)
+  available <- colnames(corpus)
+  item_columns <- available[startsWith(available, "item_") | startsWith(available, "collection_") | available == "text"]
+  allowed <- if (unit == "item") item_columns else available
+  if (is.null(columns)) columns <- allowed
+  if (!is.character(columns) || anyNA(columns) || anyDuplicated(columns) ||
+      !length(columns) || !all(columns %in% allowed)) {
+    ent_abort("entropia_error_invalid_argument",
+      "{.arg columns} must be unique output column names; item datasets allow only item/collection columns and text.")
   }
-  # Deterministic row order: arrange on the corpus's always-present asset_id so
-  # identical inputs yield identical datasets regardless of the physical row
-  # order SQLite happens to return. No sampling, no dependence on row order.
-  corpus <- dplyr::arrange(corpus, .data$asset_id)
-  data <- entropia_collect(corpus)
-
+  counts <- dplyr::collect(dplyr::summarise(corpus,
+    rows = dplyr::n(), items = dplyr::n_distinct(.data$item_id),
+    assets = dplyr::n_distinct(.data$asset_id, na.rm = TRUE),
+    rows_without_assets = sum(ifelse(is.na(.data$asset_id), 1L, 0L))))
+  corpus <- dplyr::arrange(corpus, .data$item_id, .data$asset_id)
+  projected <- if (unit == "item") unique(c("item_id", columns)) else columns
+  corpus <- dplyr::select(corpus, dplyr::all_of(projected))
+  query <- as.character(dbplyr::sql_render(corpus))
+  contract <- ent_corpus_contract()
+  data <- entropia_collect(corpus, schema = contract[intersect(names(contract), projected)])
+  if (unit == "item") {
+    first <- !duplicated(data$item_id)
+    if ("text" %in% columns) {
+      ids <- match(data$item_id, unique(data$item_id))
+      combined <- vapply(seq_len(sum(first)), function(i) {
+        z <- data$text[ids == i]
+        z <- z[!is.na(z)]
+        if (!length(z)) NA_character_ else paste(z, collapse = "\n\n")
+      }, character(1))
+      data <- data[first, , drop = FALSE]
+      data$text <- combined
+    } else {
+      data <- data[first, , drop = FALSE]
+    }
+    data <- data[, columns, drop = FALSE]
+  }
+  selection <- list(unit = unit, columns = columns, text = text,
+    page_assets = page_assets, collection_ids = collection_ids,
+    asset_types = asset_types, date_var = date_var, date_range = date_range)
   prov <- list(
-    name = name,
+    sidecar_version = 2L, name = name, scope = "origin",
     schema_version = ent_attr(con, "schema_version"),
-    content_hash = ent_attr(con, "content_hash"),
+    schema_hash = ent_attr(con, "schema_hash"),
+    snapshot_sha256 = ent_snapshot_hash(con),
+    dataset_sha256 = ent_dataset_hash(data), query = query,
     source_path = ent_attr(con, "path"),
     filters = vapply(filters, rlang::as_label, character(1), USE.NAMES = FALSE),
+    selection = selection,
+    counts = as.list(counts[1L, ]),
+    excluded = list(item_reduction = counts$rows - nrow(data)),
     package_version = as.character(utils::packageVersion("entropiaR")),
     built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%OS3Z", tz = "UTC"),
     r_version = R.version.string
   )
+  prov$origin <- list(dataset_sha256 = prov$dataset_sha256, query = query,
+    selection = selection)
   attr(data, "entropia_prov") <- prov
   class(data) <- c("entropia_dataset", class(data))
   data
@@ -552,9 +644,9 @@ print.entropia_dataset <- function(x, ...) {
   if (!is.null(prov)) {
     ver <- prov$schema_version
     if (length(ver) != 1L || is.na(ver)) ver <- "unknown"
-    hash <- prov$content_hash
+    hash <- prov$schema_hash
     hash_short <- if (length(hash) != 1L || is.na(hash)) "n/a" else substr(hash, 1L, 12L)
-    cat(sprintf("  schema: %s  content: %s\n", ver, hash_short))
+    cat(sprintf("  schema: %s  hash: %s\n", ver, hash_short))
     if (length(prov$filters) > 0L) {
       cat("  filters: ", paste(prov$filters, collapse = "; "), "\n", sep = "")
     }

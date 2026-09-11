@@ -4,7 +4,15 @@
 \alias{entropia_plot_entities}
 \title{Plot entity frequencies}
 \usage{
-entropia_plot_entities(x, top = 10, fill = "entity_type")
+entropia_plot_entities(
+  x,
+  top = 10,
+  fill = "entity_type",
+  group = NULL,
+  facet = NULL,
+  top_by = "global",
+  value = "n"
+)
 }
 \arguments{
 \item{x}{A data frame or tibble with \code{value} and \code{n} columns (and typically
@@ -14,6 +22,15 @@ entropia_plot_entities(x, top = 10, fill = "entity_type")
 
 \item{fill}{Column of \code{x} to colour the bars by, selected by name or bare.
 Default \code{"entity_type"}.}
+
+\item{group}{Optional grouping column, bare or named. Automatic grouping
+errors if remaining dimensions are ambiguous; IDs take precedence.}
+
+\item{facet}{Optional faceting column, bare or named.}
+
+\item{top_by}{Either \code{global} (default) or \code{group}.}
+
+\item{value}{Numeric measure column, bare or named; defaults to \code{n}.}
 }
 \value{
 A \code{ggplot} object.
@@ -21,8 +38,10 @@ A \code{ggplot} object.
 \description{
 Plots the output of \code{\link[=entropia_entity_frequency]{entropia_entity_frequency()}} as a horizontal bar chart
 of the top entity values, filled by a column of \code{x} (by default
-\code{entity_type}). \code{value} is reordered by count so the most frequent entity
-sits at the top of the chart (via \code{coord_flip()}).
+\code{entity_type}). Each source row has its own bar position, so repeated labels
+or distinct IDs are never stacked or silently merged. Highest values appear
+at the top. Global ranking selects rows, not aggregated labels; group ranking
+selects up to \code{top} rows per group/facet combination. Ties use input order.
 }
 \examples{
 freq <- data.frame(
@@ -30,8 +49,8 @@ freq <- data.frame(
   value = c("Juan Pérez", "CGT", "Mar del Plata"),
   n = c(4L, 3L, 2L)
 )
-p <- entropia_plot_entities(freq)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
-  p + ggplot2::labs(title = "Custom title")
+  p <- entropia_plot_entities(freq)
+  p + ggplot2::labs(title = "Entidades destacadas")
 }
 }

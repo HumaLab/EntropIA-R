@@ -31,11 +31,22 @@ snap_con <- entropia_connect(snap)
 entropia_disconnect(con) # original connection no longer needed
 ```
 
-# 2. Build the analysis dataset
+# 2. Inventory the snapshot
+
+`entropia_overview()` is the cheap first pass: counts, quality and entity
+prevalence without collecting OCR text.
+
+```{r}
+eda <- entropia_overview(snap_con)
+eda$counts
+eda$collections
+```
+
+# 3. Build the analysis dataset
 
 `entropia_analysis_dataset()` applies filters to the corpus, collects it, and
-stamps provenance. This is the boundary: everything after it is ordinary
-tibble work, and everything before it is recorded.
+stamps provenance v2. This is the boundary: everything after it is ordinary
+tibble work.
 
 ```{r}
 corpus <- entropia_analysis_dataset(snap_con, name = "corpus_full")
@@ -46,7 +57,7 @@ corpus
 entropia_provenance(corpus)
 ```
 
-# 3. Temporal profile
+# 4. Temporal profile
 
 When were assets created? `entropia_temporal_profile()` buckets a date column.
 Collect the asset accessor directly — `entropia_collect()` types its
@@ -58,7 +69,7 @@ temporal <- entropia_temporal_profile(assets, created_at, unit = "second")
 temporal
 ```
 
-# 4. Document lengths
+# 5. Document lengths
 
 `entropia_document_lengths()` appends character and word counts per document to
 any tibble carrying a text column:
@@ -71,7 +82,7 @@ lengths |> select(id, n_chars, n_words)
 
 Empty text counts as 0; `NA` text stays `NA`.
 
-# 5. Entities
+# 6. Entities
 
 `entropia_entities()` excludes soft-deleted rows by default and surfaces
 provenance (source model) per entity. `entropia_entity_frequency()` tallies
@@ -82,7 +93,7 @@ entities <- entropia_entities(snap_con) |> entropia_collect()
 entropia_entity_frequency(entities)
 ```
 
-# 6. Topics
+# 7. Topics
 
 Topics are normalized UPPERCASE names. Join `item_topics` to `topics`, then
 tally:
@@ -93,15 +104,16 @@ topics <- entropia_topics(snap_con) |> entropia_collect()
 entropia_topic_frequency(left_join(item_topics, topics, by = c("topic_id" = "id")))
 ```
 
-# 7. Collections side by side
+# 8. Collections side by side
 
-`entropia_compare_collections()` summarizes the corpus per collection:
+`entropia_compare_collections()` groups by `collection_id` when that column
+exists, and keeps `collection_name` as a label:
 
 ```{r}
 entropia_compare_collections(corpus)
 ```
 
-# 8. Corpus quality
+# 9. Corpus quality
 
 `entropia_corpus_quality()` reports OCR coverage, transcription presence,
 and empty texts per asset type, plus metadata coverage per collection:
@@ -111,7 +123,7 @@ quality <- entropia_corpus_quality(snap_con)
 quality
 ```
 
-# 9. Visualize
+# 10. Visualize
 
 `entropia_plot_*` helpers wrap the analysis summaries in ggplot2 (Suggests) and
 return ordinary `ggplot` objects you can extend:
@@ -126,11 +138,12 @@ entropia_plot_entities(entropia_entity_frequency(entities))
 
 ```{r}
 entropia_plot_coverage(quality)
+entropia_plot_collections(eda$collections)
 ```
 
-# 10. Export with provenance
+# 11. Export with provenance
 
-The dataset exports as-is (RDS keeps its class and provenance; CSV is streamed
+The dataset exports as-is (RDS keeps class and provenance; CSV is streamed
 for lazy inputs). Always write the provenance sidecar alongside:
 
 ```{r}
@@ -156,6 +169,6 @@ entropia_provenance(back)[["name"]]
 entropia_disconnect(snap_con)
 ```
 
-That is the loop: snapshot → build a stamped dataset → analyze → export with a
-sidecar. Each step uses functions documented elsewhere in this site; the
-provenance records the whole chain.
+That is the loop: snapshot → overview → stamped dataset → analyze → export
+with a sidecar. See `vignette("eda")` and `vignette("dashboard")` for the
+shared tables and the local app.

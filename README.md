@@ -1,85 +1,159 @@
 # entropiaR
 
-Interfaz de **solo lectura** entre R y las bases de datos SQLite generadas por la
-aplicación de escritorio [EntropIA](https://github.com/HumaLab/EntropIA-Pro-Lite).
-Con estilo tidyverse: explorás tu corpus documental completo — ítems, transcripciones,
-entidades, análisis de LLM, búsquedas — sin escribir una sola línea de SQL.
+Interfaz de **solo lectura** entre R y las bases SQLite de
+[EntropIA](https://github.com/HumaLab/EntropIA-Pro-Lite).
+Estilo tidyverse: explorás el corpus — ítems, textos, entidades, temas,
+resultados de LLM — sin escribir SQL.
 
-Todo acceso es perezoso (`tbl_sql` vía `dbplyr`), tipado al materializar
-(timestamps a `POSIXct`, JSON a list-columns) y respaldado por chequeos de
-compatibilidad de esquema contra la base real. Y por diseño: la base se abre
-**en modo lectura**, nunca se modifica.
+La base se abre **siempre en lectura**. Nada de este paquete la modifica.
 
-## Características
-
-- **Acceso perezoso a 18 tablas**: `entropia_items()`, `entropia_entities()`,
-  `entropia_transcriptions()`, `entropia_llm_results()`, y más. Componé con los
-  verbos de `dplyr` y materializá con `entropia_collect()`.
-- **Materialización tipada**: columnas de timestamps a `POSIXct` (con manejo
-  automático de ms/segundos) y columnas JSON a list-columns.
-- **Búsqueda full-text** (FTS5) parametrizada y segura: `entropia_search()`.
-- **Capa de dominio**: corpus unificado con el mejor texto disponible,
-  metadatos parseados y helpers de extracción de texto.
-- **Diagnóstico del corpus**: cobertura OCR/metadatos, detección de referencias
-  huérfanas y validación de la conexión.
-- **Análisis listos para usar**: perfiles temporales, longitudes de documentos,
-  frecuencias de entidades y temas, comparación entre colecciones, y datasets
-  reproducibles con procedencia.
-- **Visualización** con `ggplot2` (`entropia_plot_*`) y **exportación
-  reproducible** a CSV, TSV, JSON, RDS, Parquet o Arrow, con sidecars de
-  procedencia.
-
-## Instalación
-
-```r
-remotes::install_github("HumaLab/EntropIA-R")
-```
-
-Requiere **R >= 4.1**.
-
-## Uso rápido
+## Camino rápido
 
 ```r
 library(entropiaR)
+library(dplyr)
 
-# El paquete incluye una base de ejemplo para probar sin instalar nada más.
-con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",
-                                    package = "entropiaR"))
+con <- entropia_connect(system.file(
+  "extdata", "entropia-example.sqlite",
+  package = "entropiaR"
+))
 
-entropia_items(con)                          # tbl_sql perezoso: nada cargado aún
-entropia_collect(entropia_items(con))        # tibble tipado: POSIXct + list-columns JSON
-entropia_search(con, "huelga")               # búsqueda full-text segura (FTS5)
-entropia_corpus(con) |> entropia_collect() |> entropia_document_lengths()
+# 1. ¿Qué hay? Agregados en SQLite, sin bajar el texto.
+eda <- entropia_overview(con)
+eda$counts
+eda$collections
+
+# 2. Un dataset reproducible (un universo, una receta).
+ds <- entropia_analysis_dataset(
+  con,
+  asset_type == "pdf",
+  name = "pdfs",
+  text = FALSE
+)
+entropia_provenance(ds)$dataset_sha256
+
+# 3. Gráficos sobre las mismas tablas.
+entropia_plot_collections(eda$collections)
+entropia_plot_entities(eda$entities)
+entropia_plot_coverage(eda$quality, metric = "ocr_coverage")
 
 entropia_disconnect(con)
 ```
 
-## Conectar tu propia base
+Esperado: `eda$counts` informa items/assets/colecciones; el dataset es un
+tibble con sello `entropia_prov`; los `entropia_plot_*` devuelven `ggplot`
+extensibles con `+`.
 
-Si usás la aplicación EntropIA, conectá la base que genera con la misma
-llamada:
+## Tu propia base
 
 ```r
-con <- entropia_connect("ruta/a/tu/entropia.sqlite")
+# Si EntropIA puede estar abierta, snapshot primero (VACUUM INTO, WAL-aware).
+live <- entropia_connect("ruta/a/entropia.sqlite")
+snap <- tempfile(fileext = ".sqlite")
+entropia_copy(live, snap)
+entropia_disconnect(live)
+
+con <- entropia_connect(snap)
 ```
 
-La conexión es de solo lectura y, al abrir, corre un chequeo de compatibilidad
-de esquema contra la base real (el comportamiento se controla con
-`options(entropiaR.schema_policy = "warn" | "error" | "allow")`).
+Compatibilidad al abrir (`warn` por defecto):
+
+```r
+options(entropiaR.schema_policy = "warn")  # o "error" | "allow"
+entropia_schema_compat(con)$compatible
+```
+
+Sin las tablas núcleo (`collections`, `items`, `assets`), `warn` y `error`
+rechazan la conexión. `allow` abre para diagnóstico.
+
+## EDA compartido
+
+`entropia_overview()` agrega **el universo elegido** en SQL. No materializa
+texto ni embeddings.
+
+```r
+eda <- entropia_overview(
+  con,
+  asset_types = c("pdf", "image"),
+  page_assets = FALSE
+)
+eda$quality     # n, total, pct, status, group_id
+eda$entities    # n = ocurrencias; pct = prevalencia por item
+eda$topics
+attr(eda$temporal, "exclusions")
+```
+
+`entropia_profile()` perfila un tibble ya recolectado:
+
+```r
+lengths <- entropia_text(con) |>
+  entropia_collect() |>
+  entropia_document_lengths()
+
+entropia_profile(lengths, columns = c("n_chars", "n_words"))
+```
+
+Caveats que el paquete no oculta:
+
+| Hecho | Consecuencia |
+|---|---|
+| Fechas de `created_at` | Son operativas (alta/importación), no necesariamente la fecha del documento |
+| `n` de entidades | Ocurrencias; `pct` es prevalencia sobre items del universo |
+| Colecciones homónimas | Se distinguen por `collection_id`, no por el nombre |
+| Páginas de PDF | Cada página es un asset; un item no es “un documento × N páginas” |
+| Entidades de IA | Extracciones, no hechos verificados |
+
+## Dashboard e informe
+
+```r
+# No abre el navegador: devuelve un shiny.appobj.
+app <- entropia_dashboard(snap)
+# shiny::runApp(app)
+
+# Informe HTML congelado (requiere Quarto en PATH).
+entropia_report(eda, "estudio.html")              # redacta rutas y etiquetas
+entropia_report(eda, "estudio-interno.html", redact = FALSE)
+```
+
+Shiny, bslib, ggplot2 y Quarto son **opcionales**. El núcleo (conexión,
+corpus, overview, export) funciona sin ellos.
+
+## Qué cubre el paquete
+
+| Capa | Entrada típica |
+|---|---|
+| Conexión / esquema | `entropia_connect()`, `entropia_copy()`, `entropia_schema_*()`, `entropia_validate()` |
+| Tablas perezosas | `entropia_items()`, `entropia_entities()`, … + dplyr |
+| Corpus y texto | `entropia_corpus()`, `entropia_text()`, `entropia_metadata()`, `entropia_search()` |
+| EDA | `entropia_overview()`, `entropia_profile()` |
+| Análisis | `entropia_temporal_profile()`, `entropia_*_frequency()`, `entropia_compare_collections()` |
+| Datasets | `entropia_analysis_dataset()`, `entropia_provenance()`, `entropia_export()` |
+| Gráficos | `entropia_plot_*()` (Suggests: ggplot2) |
+| Apps | `entropia_dashboard()`, `entropia_report()` |
 
 ## Documentación
 
-- [Sitio web del paquete](https://humalab.github.io/EntropIA-R/) con reference y
-  vignettes en español: conexión, corpus, texto, dplyr, datasets, análisis y
-  administración.
-- Ayuda en R: `?entropia_connect`, `?entropia_search`, etc.
+Artículos (vignettes), en orden de uso:
 
-## Estado del proyecto
+1. `vignette("connect")` — abrir, validar, snapshot
+2. `vignette("corpus")` — colecciones, ítems, assets
+3. `vignette("text")` — OCR, transcripciones, metadatos
+4. `vignette("dplyr")` — filtros perezosos y tipado
+5. `vignette("eda")` — overview y profile
+6. `vignette("visualize")` — gráficos individuales
+7. `vignette("datasets")` — procedencia v2 y exportación
+8. `vignette("analysis")` — un análisis completo
+9. `vignette("dashboard")` — Shiny y Quarto
+10. `vignette("administration")` — solo lectura, WAL, stubs de escritura
 
-Desarrollo temprano. La versión actual (v1) es **solo lectura**: abre la base
-para consultarla y nunca la escribe. La API de escritura ya está diseñada y
-disponible como stubs con errores claros; su implementación completa llega con
-la v2.
+Sitio: <https://humalab.github.io/EntropIA-R/>
+
+## Estado
+
+Desarrollo temprano, **v1 solo lectura**. Los stubs `entropia_insert/update/upsert/delete`
+fallan con `entropia_error_write_disabled`. Escritura real: v2.
+
+Requiere **R >= 4.1**.
 
 ## Licencia
 
@@ -87,4 +161,4 @@ MIT.
 
 ---
 
-[English version](https://github.com/HumaLab/EntropIA-R/blob/main/README.en.md)
+[English version](README.en.md)

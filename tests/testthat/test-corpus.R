@@ -181,7 +181,8 @@ test_that("entropia_metadata parses __entropia_file_metadata into tidy rows", {
     m <- entropia_metadata(con)
     expect_s3_class(m, "tbl_df")
     expect_identical(names(m), c(
-      "item_id", "original_name", "original_path", "imported_at", "page_count"
+      "item_id", "original_name", "original_path", "imported_at",
+      "raw_metadata", "extra_metadata", "page_count"
     ))
     expect_equal(nrow(m), 3L)
     expect_identical(
@@ -305,4 +306,41 @@ test_that("corpus and metadata reject a closed connection", {
   entropia_disconnect(con)
   expect_error(entropia_corpus(con), class = "entropia_error_invalid_connection")
   expect_error(entropia_metadata(con), class = "entropia_error_invalid_connection")
+})
+
+test_that("metadata non-scalars and key collisions do not destroy rows", {
+  with_corpus_con("full", function(con) {
+    payload <- '{"__entropia_file_metadata":{"original_name":["a","b"],"original_path":{"x":1},"importedAt":["bad"]},"item_id":"foreign","raw_metadata":"keep"}'
+    base <- dplyr::mutate(entropia_items(con), metadata = !!payload)
+    out <- entropia_metadata(con, items = base)
+    expect_equal(nrow(out), 3L)
+    expect_true(all(is.na(out$original_name)))
+    expect_true(all(is.na(out$original_path)))
+    expect_true(all(is.na(out$imported_at)))
+    expect_s3_class(out$imported_at, "POSIXct")
+    expect_true(all(out$raw_metadata == payload))
+    expect_identical(out$extra_metadata[[1]]$item_id, "foreign")
+    expect_identical(out$extra_metadata[[1]]$raw_metadata, "keep")
+    diagnostics <- attr(out, "diagnostics")
+    expect_equal(nrow(diagnostics), 9L)
+    expect_true(all(diagnostics$problem == "non_scalar"))
+    expect_setequal(diagnostics$item_id, out$item_id)
+  })
+})
+
+test_that("study ID selection and inclusive date bounds preserve the universe", {
+  with_corpus_con("full", function(con) {
+    empty <- entropiaR:::ent_study_query(con, collection_ids = character())
+    expect_equal(nrow(dplyr::collect(empty)), 0L)
+    selected <- entropia_corpus(con, text = FALSE, collection_ids = CORPUS_COLL_1,
+      item_ids = CORPUS_ITEM_2)
+    expect_true(all(dplyr::collect(selected)$item_id == CORPUS_ITEM_2))
+    day <- entropiaR:::ent_study_query(con,
+      date_range = as.Date(c("2026-01-15", "2026-01-15")))
+    typed <- entropia_collect(day, schema = entropiaR:::ent_corpus_contract())
+    expect_equal(nrow(typed), 5L)
+    expect_s3_class(typed$item_created_at, "POSIXct")
+    expect_error(entropiaR:::ent_study_query(con, date_var = "metadata"),
+      class = "entropia_error_invalid_argument")
+  })
 })

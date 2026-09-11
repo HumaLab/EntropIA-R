@@ -10,8 +10,8 @@ entropia_corpus_quality(con)
 \item{con}{A connection returned by \code{\link[=entropia_connect]{entropia_connect()}}.}
 }
 \value{
-A tibble of class \code{entropia_corpus_quality} with columns \code{metric},
-\code{group}, \code{n}, \code{total} and \code{pct}.
+A plain tibble with columns \code{metric}, \code{group_id}, \code{group}, \code{unit},
+\code{n}, \code{total}, \code{pct} and \code{status} (\code{ok} or \code{no_data}).
 }
 \description{
 A compact long-form report over the corpus, one row per \code{metric} x \code{group}
@@ -26,13 +26,15 @@ assets, per asset type.
 per asset type.
 \item \code{metadata_coverage}: \code{n} items with metadata, \code{total} items, per
 collection.
-\item \code{empty_text}: \code{n} assets whose best text layer is empty/whitespace-only,
-\code{total} assets with at least one text layer, per asset type.
+\item \code{empty_text}: \code{n} assets with a text layer but no useful text in any
+layer, \code{total} assets with at least one text layer, per asset type.
+This legacy metric is not selected-source emptiness; see
+\code{\link[=entropia_overview]{entropia_overview()}} for separate selected-source diagnostics.
 }
 
-\code{pct} is \code{n / total}, \code{NA} when \code{total} is 0. The report is materialised (it
-is a small aggregate, like \code{\link[=entropia_validate]{entropia_validate()}} findings) and carries the
-\code{entropia_corpus_quality} class.
+\code{pct} is \code{n / total}, \code{NA} when \code{total} is 0. Collection IDs are retained
+even when collection labels coincide. For a filtered study universe, use
+\code{\link[=entropia_overview]{entropia_overview()}} and its \code{quality} element.
 }
 \examples{
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite",

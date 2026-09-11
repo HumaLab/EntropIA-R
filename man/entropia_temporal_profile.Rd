@@ -21,7 +21,7 @@ bare (tidyselect). \code{NULL} (default) produces a single time series.}
 }
 \value{
 A tibble with the bucket column, the \code{by} columns (when given), and
-a count column \code{n}.
+a count column \code{n}. Attribute \code{excluded} counts missing or non-finite dates.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}

@@ -7,6 +7,6 @@
 \description{
 A typed, read-only DBI connection to an EntropIA SQLite database. Subclass
 of \link[RSQLite:SQLiteConnection-class]{RSQLite::SQLiteConnection}; carries \code{path}, \code{mode},
-\code{schema_version} and \code{content_hash} attributes.
+\code{schema_version} and \code{schema_hash} attributes.
 }
 \keyword{internal}

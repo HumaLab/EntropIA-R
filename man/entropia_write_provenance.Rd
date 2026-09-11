@@ -4,12 +4,15 @@
 \alias{entropia_write_provenance}
 \title{Write a provenance sidecar (JSON)}
 \usage{
-entropia_write_provenance(x, path)
+entropia_write_provenance(x, path, redact = FALSE)
 }
 \arguments{
 \item{x}{An object carrying a provenance stamp (see \code{\link[=entropia_provenance]{entropia_provenance()}}).}
 
 \item{path}{Destination file path. Must be a single path.}
+
+\item{redact}{Suppress source paths and free-form SQL/filter/name fields
+which may contain paths, including the origin recipe.}
 }
 \value{
 The normalized \code{path}, invisibly.

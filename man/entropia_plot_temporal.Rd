@@ -4,7 +4,13 @@
 \alias{entropia_plot_temporal}
 \title{Plot a temporal profile}
 \usage{
-entropia_plot_temporal(x, date_var = NULL)
+entropia_plot_temporal(
+  x,
+  date_var = NULL,
+  group = NULL,
+  facet = NULL,
+  value = "n"
+)
 }
 \arguments{
 \item{x}{A data frame or tibble with a \code{n} count column and a date column,
@@ -13,6 +19,12 @@ e.g. the output of \code{\link[=entropia_temporal_profile]{entropia_temporal_pro
 \item{date_var}{Optional date column to plot on the x axis, selected by name
 or bare (tidyselect). \code{NULL} (default) auto-detects the single date column
 of \code{x}.}
+
+\item{group}{Optional grouping column, bare or named.}
+
+\item{facet}{Optional faceting column, bare or named.}
+
+\item{value}{Numeric measure column, bare or named; defaults to \code{n}.}
 }
 \value{
 A \code{ggplot} object.
@@ -26,16 +38,18 @@ dates).
 }
 \details{
 The returned \code{ggplot} is deliberately bare: add labels, a title, a theme or
-facets with \code{+}. A profile built with a \code{by} grouping draws one line across
-all groups; add \verb{aes(colour = <group>)} yourself to distinguish them.
+facets with \code{+}. Grouped summaries draw separate lines, preferring IDs to
+display names. Automatic grouping requires a single unambiguous remaining
+dimension; otherwise select \code{group} explicitly. Duplicate dates within a
+series are rejected rather than joined or aggregated silently.
 }
 \examples{
 prof <- data.frame(
   created_at = as.POSIXct(c("2026-01-01", "2026-02-01"), tz = "UTC"),
   n = c(3L, 5L)
 )
-p <- entropia_plot_temporal(prof)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
-  p + ggplot2::labs(title = "Items over time")
+  p <- entropia_plot_temporal(prof)
+  p + ggplot2::labs(title = "Elementos a lo largo del tiempo")
 }
 }

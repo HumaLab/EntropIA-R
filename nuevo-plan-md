@@ -1,0 +1,565 @@
+# entropiaR: auditoría y plan para análisis de datos, EDA y dashboards
+
+**Fecha:** 2026-09-11. **Versión auditada:** `0.0.0.9000`.
+**Destinatarios:** analistas de datos, científicos de datos e investigadores que trabajan con corpus EntropIA.
+**Estado del documento:** propuesta basada en inspección y experimentos ejecutados; no implica que los cambios estén implementados o aprobados.
+
+## 1. Dictamen y decisión recomendada
+
+**entropiaR ya ofrece un núcleo útil de acceso a SQLite, pero todavía no constituye una experiencia analítica completa ni tiene dashboard propio.** Conviene evolucionarlo, no reescribirlo. La prioridad es asegurar tipos, identidad, granularidad y denominadores antes de añadir visualizaciones que puedan presentar resultados ambiguos como si fueran precisos.
+
+La arquitectura recomendada es:
+
+```text
+SQLite de EntropIA — solo lectura
+  → snapshot explícito para un estudio reproducible
+  → selección del universo de items/assets y consultas SQL perezosas
+  → agregados SQL + materialización tipada y acotada
+  → resultados EDA tabulares compartidos
+      ├─ scripts/notebooks y ciencia de datos
+      ├─ gráficos ggplot2 individuales
+      ├─ dashboard interactivo Shiny + bslib, opcional
+      └─ informe/dashboard HTML Quarto sobre resultados congelados
+```
+
+**Orden de trabajo:** corregir resultados y contratos → definir EDA reutilizable → completar gráficos → entregar dashboard e informe → medir escala y preparar publicación. Optimizar consultas innecesarias puede acompañar la capa EDA; no es necesario esperar al final para evitar transferir texto completo.
+
+No recomiendo añadir escritura en SQLite, AutoML, un ORM nuevo, un motor alternativo obligatorio ni generación remota de embeddings. No resuelven la necesidad principal del usuario y amplían los riesgos.
+
+### Estado por capacidad
+
+| Capacidad | Estado observado | Decisión |
+|---|---|---|
+| Conexión de solo lectura | `SQLITE_RO` y `query_only`; snapshot disponible | Conservar y cerrar rutas de error de conexión |
+| Compatibilidad SQLite | Introspección y manifiesto; la base de referencia es compatible | Corregir validación de tablas núcleo ausentes |
+| Acceso tidyverse | Accesores `tbl_sql`, filtros y joins en SQLite | Mantener objetos estándar, sin otra jerarquía de tablas |
+| Tipado | Bueno en accesores simples; frágil después de transformaciones | Hacer explícito y seguro el contrato de salida |
+| EDA | Temporalidad, longitudes, entidades, temas, comparación y calidad básica | Ampliar faltantes, distribuciones, denominadores y cohortes |
+| Reproducibilidad | Snapshot y sidecar; identidad de datos y receta incompletas | Separar identidad estructural, datos y transformaciones |
+| Visualización individual | Tres helpers: temporal, entidades y cobertura | Corregir agrupación y ampliar familias de gráficos |
+| Dashboard propio | No se encontró implementación ni interfaz exportada | Añadir módulo opcional que reutilice el mismo EDA |
+| Exportación | Seis formatos; CSV/TSV por chunks | Corregir UTF-8, orden y explicitar tipos/memoria |
+| Preparación científica | Tibbles y procedencia básica; faltan recorridos seguros de modelado | Facilitar interoperabilidad, no construir otro framework |
+
+Fuentes: [DESCRIPTION](DESCRIPTION), [NAMESPACE](NAMESPACE), [README](README.md), [R/analysis.R](R/analysis.R), [R/plot.R](R/plot.R), [R/export.R](R/export.R).
+
+## 2. Alcance, método y evidencia ejecutada
+
+Se revisaron conexión, esquema, accesores, corpus, recolección, análisis, calidad, investigación, gráficos, exportación, pruebas, viñetas y configuración CI. La revisión de contratos SQLite y la de EDA se realizaron en paralelo; los hallazgos de ejecución que siguen se verificaron en el proceso principal.
+
+### Entorno y límites
+
+- R `4.5.2`, RSQLite `3.53.3`, dbplyr `2.6.0`, dplyr `1.2.1`, ggplot2 `4.0.0`, Windows.
+- `devtools`, `testthat`, `arrow`, `shiny`, `bslib` y `rmarkdown` están instalados en este entorno. **Que Shiny esté instalado no significa que el paquete implemente un dashboard.**
+- La sesión inicial mostró advertencias por `C.UTF-8` no disponible. Las verificaciones controladas se ejecutaron con `LC_ALL=C`; el hallazgo de exportación se limita explícitamente a ese locale.
+- `data-test/entropia.sqlite` se consultó exclusivamente como referencia de esquema y recuentos, en solo lectura. No se utilizó como fixture ni se extrajeron textos, secretos o valores de documentos para el informe.
+- Las modificaciones necesarias para experimentar se hicieron en copias temporales de `full.sqlite` o bases sintéticas. Los scripts y PNG de auditoría se generaron fuera del repositorio.
+- No se ejecutó `devtools::check()`, lint, spelling, cobertura ni una matriz multiplataforma. No se afirma que el paquete esté listo para CRAN ni que la suite pase.
+- No se certificó compatibilidad con versiones de EntropIA posteriores a la base local; no se contrastaron migraciones nuevas del repositorio de la aplicación.
+- No hay benchmark de volumen/RAM ni prueba de dashboard existente: no hay dashboard del paquete que ejecutar.
+
+### Resultados observados
+
+| Verificación | Resultado real |
+|---|---|
+| Base de referencia | Migración `0029_rag_chunks`; `compatible=TRUE`; cero gaps requeridos y opcionales |
+| Protección de referencia | `PRAGMA query_only = 1` |
+| Recuentos de referencia | 2.393 items, 2.477 assets y 1.339 entidades |
+| Suite `devtools::test(reporter='summary')` | Reportó **1 fallo** en `test-export.R:86` y **1 warning** de gráfico en `test-plot.R:245`; no está verde |
+| Mensajes adicionales de suite | `geom_line()` con un punto por grupo y advertencia final de conexión sin desconectar; no se atribuye esta última a una ruta concreta sin más diagnóstico |
+| Fecha anterior a 1970 | `1969-12-31 23:59:30`, agregado por minuto, fue asignado a `1970-01-01 00:00:00` |
+| Temporal vacío | `unit='week'` falló con `'from' must be a finite number`; día y mes devolvieron cero filas |
+| Gráfico temporal agrupado | Dos series de entrada se dibujaron como **un solo grupo**; PNG inspeccionado |
+| Gráfico de entidades agrupadas | «Ana» con conteos 3 y 7 en dos colecciones terminó como una barra apilada de 10 sin distinguir colección; PNG inspeccionado |
+| Tipado después de dplyr | `created_at` directo/filtrado: `POSIXct`; renombrado a `date`: `integer64`; sustituido por el número 1 bajo el mismo nombre: convertido a `POSIXct` |
+| Corpus y RDS | `metadata` del corpus sigue como texto; RDS desde lazy conserva fecha `integer64`, desde tibble tipado conserva `POSIXct` |
+| Identidad de datos | Cambiar un título modificó las filas del dataset, pero dejó igual `content_hash` |
+| Parámetros de filtros | Cambiar `selected` de `image` a `pdf` produjo 1 y 3 filas; ambos sellos conservaron solamente `asset_type == selected` |
+| Dataset derivado | Filtrar un dataset de 5 a 1 fila conservó exactamente el atributo de procedencia original |
+| Granularidad | Añadir un item sin asset produjo 6 filas de corpus, 5 assets no nulos y 4 items distintos |
+| Colecciones homónimas | Dos IDs con nombre «Archivo»: comparación por defecto = 1 fila; por ID = 2 filas |
+| Metadata no escalar | `original_name: ["a", "b"]` abortó el lote por longitud incompatible con `vapply` |
+| Compatibilidad sin núcleo | Base sintética con migración actual pero sin items/assets/collections abrió bajo política `error` y declaró `compatible=TRUE`; `entropia_validate()` sí denunció las tres ausencias |
+| Exportación con empates | Mismas filas insertadas en orden contrario, empatadas en las primeras dos columnas: CSV distintos |
+| Unicode con locale C | El CSV escribió literalmente `<U+00ED>` en vez de `í`; leerlo como UTF-8 no recuperó el carácter original |
+
+El warning visual de la suite elimina una fila con valor ausente; no demuestra por sí solo un defecto. Sí muestra que los estados sin denominador necesitan representación explícita en la futura interfaz.
+
+## 3. Fortalezas que deben preservarse
+
+1. **Seguridad de la fuente.** La conexión usa `RSQLite::SQLITE_RO` además de `PRAGMA query_only`; `entropia_copy()` usa `VACUUM INTO` para una copia autocontenida. No sustituir esto por copiar solo el archivo principal mientras puede existir WAL. Fuentes: `R/connect.R:107–113,237–279`; pruebas de copia/WAL en `tests/testthat/test-connect.R`.
+2. **Trabajo perezoso.** Los accesores y el corpus permiten filtrar y proyectar antes de transferir datos. Las métricas de calidad ya muestran el patrón correcto: agregación SQL y recolección de resultados pequeños. Fuentes: `R/tables.R:44–47`; `R/quality.R:297–355`.
+3. **Integración idiomática.** S4 para conexión DBI, `tbl_sql` normales para consultas, tibbles y `ggplot` reutilizables. No hace falta envolver cada objeto en nuevas clases.
+4. **Conocimiento del dominio.** Fechas ms/segundos, JSON, FTS5, exclusión de entidades borradas y opt-in para BLOB de embeddings ya están contemplados. Conservar estos contratos al ampliar EDA.
+5. **Infraestructura existente.** Hay fixtures aislados, pruebas funcionales, viñetas y CI release/oldrel en tres sistemas; devel se ejecuta por calendario y manualmente. Esto es configuración observada, no evidencia de ejecuciones remotas exitosas. Fuentes: `.github/workflows/R-CMD-check.yaml` y `R-CMD-check-devel.yaml`.
+
+## 4. Hallazgos y arreglos priorizados
+
+**P1:** puede alterar o impedir resultados analíticos; resolver antes de presentar la biblioteca como fiable para estudios reproducibles. **P2:** capacidad, escalabilidad o contrato incompleto. **P3:** mejora secundaria. No se identificó un P0 reproducido de escritura destructiva sobre la fuente.
+
+### F01 · P1 · Intervalos temporales incorrectos y caso vacío semanal
+
+**Evidencia:** `R/analysis.R:61–75,147–162`; ambas manifestaciones reproducidas.
+
+`trunc()` redondea épocas negativas hacia cero, no hacia el inicio del intervalo. Además, la rama semanal llama a `cut()` sobre un vector vacío cuando no hay fechas utilizables.
+
+**Propuesta:** usar un cálculo de inicio de intervalo que respete `inicio <= fecha < siguiente_inicio`; construir la salida vacía tipada sin intentar obtener límites inexistentes. Mantener zona horaria y semanas desde lunes.
+
+**Aceptación:** épocas negativas y fracciones de segundo se asignan al intervalo correcto; cero filas y todas las fechas `NA` funcionan en todas las unidades; fechas positivas mantienen resultados; cubrir `Date`, `POSIXct` y límites de calendario. Exponer aparte el número de fechas excluidas.
+
+### F02 · P1 · Tipado dependiente del nombre de salida, no del significado
+
+**Evidencia:** `R/collect.R:17–46,195–209,235–257`; reproducción de `rename()` y `mutate()`.
+
+Una columna renombrada pierde el contrato; una expresión nueva que reutiliza `created_at` recibe conversión de fecha aunque sea un número analítico. La inferencia por regex SQL también es frágil ante subconsultas y literales.
+
+**Propuesta:** eliminar inferencias textuales inseguras. Conservar conversiones automáticas solo cuando el origen de la columna sea demostrable para las operaciones soportadas. Añadir un contrato explícito de salida para consultas ambiguas, con validación de nombres y tipos. No construir un parser SQL universal ni asumir que un atributo arbitrario sobrevivirá a todo dplyr.
+
+El corpus tiene columnas prefijadas conocidas: su dataset analítico debe aplicar un mapa derivado del manifiesto, no duplicar a mano unidades en cada consumidor. Los joins arbitrarios necesitan contrato explícito cuando no se pueda demostrar el origen.
+
+**Aceptación:** acceso directo, filtro, proyección y alias conservan tipos cuando hay origen inequívoco; `mutate`/`summarise` no convierten resultados numéricos por coincidencia de nombre. Cubrir colisiones, subconsultas y literales que contengan `JOIN`.
+
+**Distinción importante:** que el corpus unido devuelva fechas crudas y JSON texto está documentado en `R/corpus.R:320–326`. Es una limitación de experiencia analítica que se propone cambiar, no un fallo oculto del contrato actual. Lo mismo ocurre con la diferencia raw/typed en exportación.
+
+### F03 · P1 · Procedencia insuficiente para reproducir y verificar resultados
+
+**Evidencia:** `R/utils.R:101–119`; `R/analysis.R:477–543`; tres experimentos de identidad, parámetros y dataset derivado.
+
+`content_hash` identifica DDL y migraciones, no filas. Los filtros se guardan con `as_label()`, sin valores externos. La procedencia conservada después de filtrar describe el origen, no necesariamente el resultado actual.
+
+**Propuesta:** distinguir explícitamente:
+
+- `schema_hash`: identidad de estructura; sustituye el nombre engañoso `content_hash` en la nueva versión del contrato.
+- `snapshot_sha256`: identidad de bytes de un snapshot autocontenido e inmutable. Calcularlo al preparar el estudio, no en toda conexión.
+- `dataset_sha256`: digest de representación canónica de filas, tipos y orden, cuando se selle/exporte un resultado.
+- Receta: consulta resuelta o filtros estructurados con sus valores; columnas, grano, fuente de texto, política de páginas, zona horaria, muestreo y versiones.
+- Alcance del sello: origen o resultado sellado. No afirmar que captura automáticamente cada transformación dplyr.
+
+Versionar el sidecar y migrar productores, consumidores, documentación y pruebas juntos. No mantener dos campos alias como si fueran identidades diferentes. Un hash físico de snapshot no implica equivalencia lógica entre dos archivos SQLite reorganizados: documentar esa distinción.
+
+**Aceptación:** un cambio de datos cambia la identidad de datos aunque no cambie el esquema; reconstrucción sin el entorno R original selecciona los mismos IDs y columnas; una exportación derivada no se certifica con el digest de su padre. No hashear solo el archivo principal de una base viva con WAL.
+
+### F04 · P1 · Colecciones identificadas por nombre
+
+**Evidencia:** `R/analysis.R:397–450`; `R/quality.R:311–345`; reproducción de dos colecciones homónimas. El nombre no es una clave única.
+
+`entropia_compare_collections()` agrupa por nombre por defecto. El reporte de calidad agrega correctamente por ID y nombre, pero descarta el ID al producir `metric/group`.
+
+**Propuesta:** usar `collection_id` como identidad y el nombre como etiqueta. Conservar claves de grupo y dimensión en los resultados EDA y gráficos. Si el usuario solo aporta una columna de nombres, describir el resultado como categorías por etiqueta, no como colecciones inequívocas.
+
+**Aceptación:** dos IDs homónimos siguen separados en comparación, calidad, tablas y dashboard; cambiar la etiqueta no cambia la pertenencia. Un filtro por una colección debe usar su ID, no seleccionar involuntariamente todas sus homónimas.
+
+### F05 · P1 · Gráficos agrupados pueden ocultar o mezclar series
+
+**Evidencia:** `R/plot.R:53–54,106–112,161–174`; render y revisión de dos PNG.
+
+El temporal dibuja una línea atravesando todos los grupos salvo que el usuario añada manualmente una estética. Entidades selecciona las filas top antes de representar barras; al repetir `value` entre colecciones, las barras se apilan sin comunicar necesariamente esa dimensión.
+
+**Propuesta:** selección explícita de `group`, `colour` y/o `facet`; si la entrada conserva múltiples series y no hay estrategia elegida, pedirla con error accionable o usar una agrupación inequívoca. Definir si top-N es global o por grupo y separar identidad de entidad/etiqueta visual.
+
+**Aceptación:** dos colecciones generan dos series identificables; ningún segmento une grupos distintos. Top-N por grupo no elimina grupos pequeños inadvertidamente. Valores repetidos entre tipos o colecciones no se fusionan salvo agregación explícita.
+
+La línea única actual está documentada; se considera un comportamiento inadecuado para el flujo analítico solicitado, no un incumplimiento secreto de su ayuda.
+
+### F06 · P1 · JSON válido pero heterogéneo puede abortar todos los metadatos
+
+**Evidencia:** `R/corpus.R:508–567`; reproducción con `original_name` como array.
+
+Los campos estructurados usan `vapply(..., character(1))` sin garantizar cardinalidad escalar. Una fila impide explorar las demás. Además, `R/corpus.R:572–581` descarta claves superiores que colisionen con columnas reservadas; esto se constató por inspección, no por ejecución.
+
+**Propuesta:** validar cada campo estructurado por fila; conservar el dato original y producir un diagnóstico tabular con `item_id`, campo y problema. Un dato inválido no debe impedir acceso al resto. Preservar claves en colisión dentro de una columna/lista no ambigua en lugar de eliminarlas.
+
+**Aceptación:** arrays, objetos, nulos y escalares inesperados no abortan el lote; la anomalía es localizable; todas las claves originales siguen recuperables. El perfil debe distinguir JSON malformado de JSON válido con estructura inesperada.
+
+### F07 · P1 · Exportación de texto dependiente del locale
+
+**Evidencia:** `R/export.R:243–278`; fallo de suite en `tests/testthat/test-export.R:86`; inspección de bytes del CSV.
+
+Con `LC_ALL=C`, `Fotografía` se exportó con la secuencia literal `<U+00ED>`. Los bytes originales `195,173` fueron sustituidos por los bytes del escape textual. No es simplemente una marca `Encoding()` diferente ni un problema de orden; leer como UTF-8 no lo repara.
+
+**Propuesta:** fijar UTF-8 en la escritura CSV/TSV, tanto lazy como materializada, y mantener un descriptor de salida por exportación. Preservar comillas, saltos de línea, cabecera única y cierre ante error. No resolverlo debilitando la comparación ni obligando al usuario a perder acentos.
+
+**Aceptación:** round-trip de español, nombres no latinos, comillas y texto multilineal en locale UTF-8 y C; mismos valores en ambas rutas y varios chunks. Documentar codificación para lectores externos.
+
+### F08 · P1 · Compatibilidad puede aprobar una base sin las tablas núcleo
+
+**Evidencia:** `R/schema.R:133–159,304–326,431–453`; base sintética reproducida. `R/validate.R` sí detecta las ausencias.
+
+La comprobación de gaps omite tablas ausentes y `compatible` termina derivándose de columnas requeridas ausentes en las tablas inspeccionadas.
+
+**Propuesta:** compartir la definición ya existente de núcleo obligatorio entre validación y compatibilidad. Bajo `error`, una base sin núcleo debe rechazarse; bajo `warn`, abrir con diagnóstico y `compatible=FALSE`; bajo `allow`, permitir inspección. No convertir todas las tablas opcionales del manifiesto en obligatorias.
+
+**Aceptación:** falta de items/assets/collections al esquema actual nunca devuelve compatibilidad positiva; esquemas legacy no se penalizan por tablas aún no introducidas; el esquema real sigue revalidándose.
+
+### F09 · P2 · Grano y universo del corpus insuficientemente explícitos
+
+**Evidencia:** `R/corpus.R:369–400`; `R/analysis.R:378–380,526–530`; experimento con item sin asset.
+
+El corpus parte de items: devuelve filas por asset vinculado **más una fila por item sin asset**. No representa automáticamente todas las colecciones vacías ni todos los assets huérfanos. Con páginas y padres incluidos, `nrow()` no equivale a documentos independientes. Ordenar solo por `asset_id` tampoco desempata varios items sin asset.
+
+**Propuesta:** formalizar grano, universo y claves; preservar los items sin asset como ausencia explícita. Ofrecer un dataset por item y otro por asset sin aplanar entidades, temas y páginas en un producto cartesiano. Orden total con `item_id` y la clave de asset apropiada.
+
+**Aceptación:** reconciliar items, assets, páginas, huérfanos y filas sin asset; la prevalencia documental no aumenta por añadir páginas a un mismo item. Los recorridos EDA usan los mismos IDs elegidos por el estudio.
+
+### F10 · P2 · La exportación no garantiza orden total
+
+**Evidencia:** `R/export.R:180–195`; exportaciones sintéticas con empate reproducidas.
+
+Ordenar por las dos primeras columnas no garantiza unicidad. Detectar cualquier `ORDER BY` dentro del SQL tampoco demuestra orden externo; puede pertenecer a una ventana.
+
+**Propuesta:** preservar el orden principal solicitado y completar desempates con claves demostrables; permitir orden explícito para consultas proyectadas sin clave conocida. No prometer determinismo absoluto para una consulta arbitraria cuya clave se desconoce.
+
+**Aceptación:** mismas filas insertadas en distinto orden generan salida idéntica bajo el contrato determinista; rankings conservan su criterio primario; ventanas internas no sustituyen orden exterior.
+
+### F11 · P2 · Métricas de calidad no equivalen a utilidad científica
+
+**Evidencia estática:** `R/quality.R:138–166,244–259,297–355`; `R/corpus.R:301–306`.
+
+- Metadata no vacía cuenta como presente, incluso si no contiene campos útiles. Presencia no es completitud ni validez.
+- `empty_text` considera si todas las capas están vacías, mientras `auto` selecciona extracción por `COALESCE` aunque sea vacía. Puede existir transcripción útil y texto seleccionado vacío. Son métricas diferentes; no cambiar una definición silenciosamente.
+- Cobertura OCR de audio, o ausencia de una tarea no aplicable, no debería mostrarse como fallo de calidad.
+- La calidad opera sobre la conexión completa; si un usuario filtra un dataset, el resto de la viñeta puede seguir analizando toda la base.
+
+**Propuesta:** separar presencia, validez, completitud por campo y utilidad de la fuente de texto seleccionada. Conservar numerador, denominador, unidad, elegibilidad y política de texto. Añadir cobertura sobre la selección de IDs del estudio.
+
+**Aceptación:** distinguir `{}`, `null`, texto malformado, campo vacío y campo útil; representar «no aplicable», «sin datos» y cero real; concordancia entre selección del corpus y calidad de ese mismo subcorpus.
+
+### F12 · P2 · La capa analítica exige más materialización de la necesaria
+
+**Evidencia estática:** `R/analysis.R:12–25,511–530`; `R/corpus.R:369–396,500–529`; `R/export.R:283–310`; `R/research.R:373–382`.
+
+El builder recoge el corpus con texto/contexto por defecto y no ofrece proyección propia. Los helpers analíticos son locales. JSON/RDS/Parquet/Arrow materializan completo. La reconstrucción LLM consulta el target una vez por fila, incluso si se repite.
+
+**Propuesta:** proyección y selección de texto antes de recoger; conteos y agregados en SQL; muestreo explícito para cálculos textuales costosos; resolución de targets únicos por tipo/lotes. Mantener RDS como formato de objeto completo; no prometer streaming donde no existe.
+
+**Aceptación:** un resumen estructural no transfiere texto ni embeddings; camino SQL y local producen resultados equivalentes en datos controlados; reconstrucción no repite consultas por cada referencia al mismo target. Su contexto se etiqueta como **estado actual**, no como input histórico del LLM si la base no lo conserva.
+
+### Otros ajustes acotados
+
+- **P2, inspección:** `R/schema.R:209–241` debe distinguir `present`, tipo esperado y tipo declarado real; SQLite requiere además revisar valores, no confiar solo en afinidad.
+- **P2, inspección:** `R/schema.R:45` excluye columnas generadas VIRTUAL (`hidden=2`). Conservarlas junto con STORED, sin exponer columnas ocultas internas de FTS. Es compatibilidad futura, no un fallo observado en la base local.
+- **P2, inspección:** `R/connect.R:107–190` no protege todas las salidas de error con cierre general. Validar argumentos antes de abrir y transferir propiedad de la conexión solo al devolver éxito. No atribuir sin más la advertencia final de suite a esta ruta.
+- **P3:** corregir `vignettes/datasets.Rmd:53–69`: igualdad de filas no es `identical()` de objetos con `built_at` distinto. Aclarar caracteres crudos frente a palabras en texto de espacios (`R/analysis.R:184–185,235`).
+- **P3:** separar en documentación las funciones utilizables de los cuatro stubs de escritura. `DESCRIPTION` sigue en versión de desarrollo; no presentar el número de exports como medida de madurez.
+
+## 5. Qué debe cubrir la experiencia EDA
+
+La biblioteca debe ayudar a contestar preguntas, no obligar a descubrir nombres de tablas y reconstruir joins cada vez.
+
+| Pregunta del analista | Resultado mínimo | Contrato indispensable |
+|---|---|---|
+| ¿Qué contiene esta base? | Tablas, campos, colecciones, items, assets, tipos, fechas disponibles | Esquema real y esperado separados; recuentos con unidad |
+| ¿Qué parte elegí estudiar? | IDs del universo, filtros y política de páginas/texto | Misma selección para todas las métricas y gráficos |
+| ¿Qué datos faltan? | Faltantes, vacíos, nulos, JSON inválido y campos ausentes | Denominador por item/asset; no confundir NA con cero |
+| ¿Cómo se distribuyen las variables? | Cuantiles, mediana, dispersión, categorías, cardinalidad y atípicos | Tipo correcto; exacto o muestreado declarado |
+| ¿Cómo varía el corpus en el tiempo? | Series, fechas excluidas y cobertura temporal | Fecha documental frente a creación/importación; zona y precisión |
+| ¿Cuánto texto es utilizable? | Longitudes, distribución, idioma si existe, fuente y cobertura | Texto crudo/limpio separado; no inventar idioma o calidad OCR |
+| ¿Qué entidades/temas predominan? | Ocurrencias y prevalencia por documento/colección | IDs únicos, modelo/fuente, denominadores completos |
+| ¿Son comparables las colecciones? | Recuentos, tasas normalizadas y distribuciones | No comparar solo frecuencias absolutas ni nombres homónimos |
+| ¿Hay duplicados o relaciones incoherentes? | Duplicados por claves/huellas disponibles y huérfanos | Regla declarada; similitud no equivale a identidad |
+| ¿Puedo llevarlo a un modelo? | Tabla por unidad de observación, joins seguros y columnas seleccionables | Evitar fuga entre páginas del mismo documento y duplicación de etiquetas |
+
+### Interoperabilidad científica
+
+- Retornar tibbles, listas y `ggplot` normales; poder continuar con dplyr, tidyr, ggplot2 y herramientas externas.
+- Documentar un recorrido de texto con `tidytext` o `quanteda` como integración opcional, sin duplicar tokenización, TF-IDF o matrices dispersas en el núcleo.
+- Para `tidymodels`/recipes, mantener particiones por `item_id` —o grupo documental superior— cuando varias filas pertenecen al mismo documento. No incorporar entrenamiento automático como requisito del paquete.
+- Mantener `source`, `model_name`, confianza y estado de procesamiento al analizar resultados de IA. Frecuencia de extracción no equivale a verdad validada; entidades con el mismo nombre no son necesariamente la misma persona.
+- Embeddings: acceso raw ya disponible con opt-in. Decodificación f32/matriz dispersa o análisis de similitud pueden añadirse como extensión posterior, con dimensión/modelo/versiones explícitos; no bloquear EDA/dashboard por ello.
+- No añadir mapas hasta disponer de coordenadas o una política de geocodificación verificable. No enviar textos a servicios externos automáticamente.
+
+## 6. Interfaces y organización propuestas
+
+Estas interfaces son **propuestas, no funciones nuevas disponibles hoy**. El objetivo es pocas entradas con contratos claros, no decenas de wrappers de dplyr.
+
+### Núcleo y selección
+
+1. Extender `entropia_analysis_dataset()` para declarar `unit`, columnas, fuente de texto y política de páginas antes de materializar. Distinguir grano item/asset. Capturar esas decisiones en la receta.
+2. Formalizar internamente un universo de IDs que reutilicen corpus, calidad, entidades, temas y perfiles. No copiar la base ni construir un filtro diferente por panel.
+3. Extender `entropia_collect()` con contrato explícito opcional para salidas ambiguas; mantener la compatibilidad con `tbl_sql` ordinarios. Definir qué operaciones admiten inferencia segura y probarlas frente a las versiones de dbplyr soportadas.
+
+### EDA compartido
+
+- **`entropia_overview(con, ...)`**: superficie explícita de análisis, no accessor; ejecuta agregados SQL sobre la selección y devuelve una lista de tibbles pequeños. Incluye inventario, volumen, cobertura y exclusiones. No recoge texto completo ni BLOB por defecto.
+- **`entropia_profile(x, ...)`**: perfil de un tibble materializado con selección de variables y agrupación. Devuelve tablas de estructura, faltantes, distribuciones y categorías. Un muestreo es opt-in, con tamaño, semilla y población registrados; no cambiar exactitud silenciosamente.
+- Reutilizar los helpers actuales para temporalidad, longitudes y frecuencias; ampliar sus contratos de denominadores/identidad antes de introducir alternativas equivalentes.
+
+Cada tabla de métricas debe llevar, cuando corresponda, `metric`, clave de grupo, etiqueta, `unit`, `n`, `total`, `pct` y estado de disponibilidad. Para distribuciones, conservar nombre de variable, estadístico y valor en una tabla separada; no mezclar todo en una columna de listas opaca.
+
+### Módulos y archivos
+
+| Módulo | Ubicación propuesta | Responsabilidad |
+|---|---|---|
+| Conexión/esquema/tipos | Archivos existentes `R/connect.R`, `schema.R`, `collect.R` | Solo lectura, contrato real y conversión segura |
+| Universo/corpus/dataset | `R/corpus.R`, `R/analysis.R` | Grano, selección, joins y procedencia |
+| EDA compartido | Nuevo `R/eda.R`, apoyado en `R/quality.R` | Orquestar agregados y perfiles, sin UI |
+| Gráficos | `R/plot.R` | Visualizar tablas ya calculadas; sin consultar SQLite |
+| Dashboard | Nuevo `R/dashboard.R` | Estado de sesión e interacción; sin fórmulas analíticas duplicadas |
+| Informes | Plantilla en `inst/rmarkdown/templates/` o `inst/templates/` para Quarto | Presentar los mismos resultados congelados |
+| Exportación | `R/export.R` | Codificación, formatos y sello verificable |
+
+No introducir clases nuevas de tibble, R6 ni un repositorio paralelo de SQL para el dashboard. Los nuevos archivos solo se crearán al implementar las capacidades correspondientes, no como scaffolds vacíos.
+
+## 7. Visualización individual: cobertura requerida
+
+Todos los gráficos deben devolver `ggplot`, admitir `+ labs()/theme()/facet_*()` y poder guardarse con `ggsave()`. Las tablas subyacentes siempre deben estar disponibles.
+
+| Familia | Trabajo |
+|---|---|
+| Temporal | Corregir grupos; recuento o tasa; huecos y fechas excluidas visibles; fecha elegida en etiquetas |
+| Entidades/temas | Top-N global o por grupo explícito; frecuencia o prevalencia; identidad separada de etiqueta |
+| Cobertura/faltantes | Matriz o barras por campo y colección; denominador visible; «no aplicable» distinto de 0% |
+| Longitudes/tamaños | Histograma, ECDF y boxplot por tipo/colección; tratamiento explícito de NA y escalas log |
+| Comparación | Recuentos y tasas comparables por colección; distribuciones, no solo promedios |
+| Variables numéricas | Dispersión/correlación solo para variables válidas elegidas; excluir IDs codificados como números |
+
+Criterios transversales: etiquetas legibles en español, paleta accesible, no depender solo del color, unidades y filtros visibles, estados vacíos intencionados y tablas alternativas. No representar miles de categorías con una leyenda ilegible. Interactividad con htmlwidgets/Plotly es opcional, no un requisito para usar gráficos normales.
+
+## 8. Dashboard: alternativas y diseño recomendado
+
+### Alternativas
+
+| Alternativa | Ventaja | Coste o límite | Decisión |
+|---|---|---|---|
+| Solo plantillas Quarto | Compartir HTML sin servidor R; reproducibilidad sencilla | No recalcula SQL arbitrario desde el navegador sin backend | Necesaria para publicación, insuficiente como única experiencia exploratoria |
+| Shiny + bslib opcional dentro del paquete | Exploración reactiva, filtros y drill-down; reutiliza R | Ciclo de conexiones, sesiones, seguridad y pruebas UI | **Recomendada para dashboard interactivo** |
+| Aplicación o paquete dashboard separado desde el inicio | Ciclo de despliegue independiente | Más distribución, sincronización de versiones y mantenimiento | Posponer hasta que haya necesidades de despliegue realmente distintas |
+
+Shiny/bslib/Quarto deben ser opcionales; el núcleo seguirá instalándose y funcionando sin ellos. Quarto es también una herramienta externa: instalar un paquete R no garantiza disponer de su ejecutable.
+
+### Recorrido mínimo completo
+
+**Entrada propuesta:** `entropia_dashboard(path, ...)` construye un `shiny.appobj`; no abre el navegador ni arranca el servidor como efecto lateral de construirlo. El usuario lo ejecuta con `shiny::runApp()`. El recorrido recomendado prepara primero un snapshot con la función existente `entropia_copy()` y pasa su ruta al dashboard.
+
+1. **Resumen:** snapshot/esquema/fecha del estudio, items/assets/colecciones, tipos y advertencias de compatibilidad.
+2. **Calidad:** faltantes, cobertura de texto/metadata, elegibilidad, JSON inválido y huérfanos, con numeradores y denominadores.
+3. **Exploración:** temporalidad, longitudes, entidades, temas y comparación entre colecciones usando la misma selección.
+4. **Detalle:** tabla paginada; selección de item/asset; texto por petición y fuente visible. No cargar todo el corpus al abrir la aplicación.
+5. **Reproducibilidad/exportación:** filtros y universo visibles; descargar datos seleccionados, tablas EDA, figuras y receta/procedencia.
+
+**Filtros comunes:** colección por ID, tipo de asset, política de páginas, campo/rango temporal, fuente de texto y, donde exista, origen/modelo/confianza de entidades. No mostrar controles sin soporte en los datos. Cambiar un filtro debe actualizar KPI, tablas, gráficos y exportación con el mismo universo.
+
+### Conexiones, caché y seguridad
+
+- Abrir una conexión de solo lectura por sesión dentro de `server`; cerrarla con `session$onSessionEnded`. El llamador/operador mantiene el snapshot hasta que finalice la aplicación; una sesión no lo elimina al cerrarse.
+- Usar snapshots inmutables como modo inicial. No prometer actualización en vivo hasta definir consistencia entre paneles y renovar todos los resultados de manera coherente.
+- Caché limitada por sesión para agregados, con clave de snapshot + filtros + unidad + versión de métrica. No usar el actual hash de esquema como identidad de datos. No compartir selecciones ni datos privados entre sesiones.
+- Paginación del lado servidor con orden estable; vista previa limitada de texto; límite de descarga explícito. Cargar solo paneles necesarios y aplicar debounce o botón «Aplicar» donde reduzca consultas repetitivas.
+- No aceptar SQL libre, expresiones R evaluadas ni rutas arbitrarias desde controles web. Lista permitida de columnas y parámetros validados. Escapar contenido documental al mostrar HTML.
+- No publicar `app_settings`, claves API, rutas originales, correo de sincronización ni textos sensibles por defecto. Las exportaciones y los sidecars también necesitan una opción explícita de compartir sin rutas locales.
+- Ejecución local por defecto. Despliegue multiusuario requiere control de acceso del entorno de hosting, aislamiento de fuentes y revisión específica; el modo solo lectura no evita filtración de información.
+
+### Informe compartible
+
+Entregar una plantilla Quarto que consuma resultados EDA y procedencia ya producidos por el núcleo, con las mismas unidades y filtros. HTML estático no equivale a aplicación Shiny: puede incluir widgets precomputados, pero no consultar una SQLite local del lector ni recalcular R sin backend.
+
+La plantilla debe permitir ocultar textos/identificadores sensibles, incluir fecha/snapshot/filtros y funcionar con un ejemplo sintético. No prometer que cualquier widget usa cero recursos externos: verificar la salida publicada y sus dependencias.
+
+### Aceptación del dashboard
+
+- Dos sesiones con filtros diferentes no se contaminan ni cierran la conexión ajena.
+- Seleccionar una colección homónima no selecciona otra; KPI y exportación coinciden con sus IDs.
+- Cero resultados, texto ausente, esquema legacy y dependencia opcional ausente tienen estados explicativos, no trazas crípticas.
+- Cierre de sesión libera recursos; la fuente no cambia al explorar o exportar.
+- Navegación por teclado, etiquetas, contraste y layout se verifican en navegador real con tamaños de escritorio y pantalla estrecha.
+- Se abre la aplicación, se filtra, se inspecciona un documento y se descarga un resultado cuyo contenido coincide con la selección. Tests del núcleo o un `shiny.appobj` construido no sustituyen esta comprobación.
+
+## 9. Optimizaciones: medir antes de prometer ganancias
+
+| Optimización | Evidencia del coste potencial | Límite que no debe violarse |
+|---|---|---|
+| Cachear el manifiesto empaquetado | `R/schema.R:102–114` relee y parsea JSON repetidamente | Cachear lo inmutable, no confiar indefinidamente en el esquema vivo |
+| Reutilizar metadatos dentro de una operación | `ent_columns()` vuelve a enumerar tablas durante informes | Revalidar PRAGMA al volver a acceder; detectar cambios externos |
+| Agregar y proyectar antes de recoger | Dataset con texto/metadata completos; helpers locales | Resultados equivalentes y recopilación explícita |
+| Mantener descriptor CSV/TSV | Cada chunk escribe mediante la ruta | UTF-8, cierre seguro, cabecera única y comportamiento vacío |
+| Resolver targets LLM por claves únicas | `lapply()` por fila en `R/research.R:380–382` | Orden y referencias no resueltas conservados |
+| Evitar cómputo repetido entre paneles | Riesgo de diseño futuro, no coste actual medido | Un EDA compartido; caché acotada y aislada |
+| Ordenar con claves conocidas | Un sort adicional puede requerir B-tree temporal | No crear índices ni ejecutar ANALYZE sobre la base de usuario |
+
+Los tests de rendimiento actuales comprueban planes SQL sobre fixtures diminutos (`tests/testthat/test-performance.R:1–16`); no demuestran capacidad para corpus grandes ni latencia interactiva.
+
+**Plan de medición:** fixtures sintéticos de 10.000, 100.000 y 1.000.000 de assets, con variación de longitud OCR, proporción de páginas, cardinalidad de entidades y metadatos. Medir conexión, resumen, primera página, cambio de filtro y exportación: tiempo, consultas, filas/bytes transferidos, memoria máxima y tamaño temporal. Distinguir ejecución fría/caliente y registrar hardware/versiones. Son tamaños de ensayo propuestos, no capacidades certificadas.
+
+**Objetivos de diseño verificables:** resumen inicial sin materializar el corpus; paginación proporcional a la página, no a todas las filas; consulta de targets proporcional a tipos/lotes, no a resultados; exportación CSV con memoria acotada por chunk y tamaño de fila. Los objetivos de latencia se fijarán con esa línea base; no se inventa una mejora porcentual.
+
+## 10. Hoja de ruta por entregables revisables
+
+Cada entrega incluye código, documentación de su contrato y pruebas que defiendan resultados observables. No crear tests que solo inspeccionen nombres de funciones, wiring o que «no lance error» sin verificar valores.
+
+### Entrega A · Corrección analítica inmediata
+
+**Prioridad:** P1. **Dependencia:** ninguna.
+**Archivos:** `R/analysis.R`, `R/collect.R`, `R/corpus.R`, `R/schema.R`, `R/connect.R`, `R/export.R`, `R/plot.R`; pruebas específicas ya existentes y sus ayudas generadas.
+
+- [ ] Resolver F01, F02, F04, F05, F06, F07 y F08 mediante cambios pequeños, separables por contrato.
+- [ ] Mantener regresiones de fecha negativa/vacío semanal, alias/expresión, nombres homónimos, JSON no escalar, Unicode y núcleo ausente.
+- [ ] Ejecutar cada reproducción antes/después, después suite integrada y revisión visual de gráficos agrupados.
+- [ ] Corregir documentación que hoy aconseja trabajar alrededor de esos contratos; no conservar ejemplos que produzcan resultados engañosos.
+
+**Salida:** tipos y resultados correctos en casos comprobados, exportación Unicode válida y compatibilidad coherente. Esta entrega no necesita esperar al dashboard.
+
+### Entrega B · Dataset científico y procedencia verificable
+
+**Prioridad:** P1/P2. **Depende de:** A, especialmente tipos e identidad de colección.
+**Archivos:** `R/corpus.R`, `R/analysis.R`, `R/utils.R`, `R/export.R`; `test-dataset.R`, `test-corpus.R`, `test-export.R`; viñetas de datasets/análisis.
+
+- [ ] Formalizar F03 y F09: grano, claves, proyección, fuente de texto, páginas y universo de IDs.
+- [ ] Versionar el sidecar; separar hashes; capturar valores efectivos de filtros y resultado sellado.
+- [ ] Resolver F10: orden total demostrable y contrato cuando falta clave.
+- [ ] Actualizar el recorrido analítico para que todos sus resúmenes respeten el mismo estudio.
+
+**Salida:** un tercero reproduce un dataset y verifica sus IDs/tipos/digest sin disponer del entorno R original. Un documento con varias páginas no se multiplica inadvertidamente como observación independiente.
+
+### Entrega C · EDA reutilizable y preparación científica
+
+**Prioridad:** P2, funcionalidad central. **Depende de:** B.
+**Archivos:** nuevo `R/eda.R`, existentes `R/quality.R`, `R/analysis.R`, `R/research.R`; pruebas de denominadores/selección; nuevas guías EDA durante implementación.
+
+- [ ] Implementar overview/perfil y matriz de preguntas de la sección 5.
+- [ ] Separar presencia/validez/utilidad, documentar exclusiones temporales y denominadores; resolver F11.
+- [ ] Añadir ocurrencias frente a prevalencia por item/asset, distribuciones y diagnóstico de duplicados según claves disponibles.
+- [ ] Aplicar proyección/agregación de F12 y lectura por conjuntos para targets LLM.
+- [ ] Publicar recorridos de análisis tabular y texto; interoperabilidad de modelado sin entrenamiento automático en el núcleo.
+
+**Salida:** un analista obtiene inventario, faltantes, distribuciones y comparación del subcorpus sin SQL manual, sin descargar texto para contar y sin cambiar de universo entre métricas.
+
+### Entrega D · Visualización individual completa
+
+**Prioridad:** P2. **Depende de:** C; las correcciones de gráficos de A son independientes.
+**Archivos:** `R/plot.R`, `tests/testthat/test-plot.R`, ejemplos/viñeta de visualización y `_pkgdown.yml`.
+
+- [ ] Cubrir las familias de la sección 7 usando las tablas EDA compartidas.
+- [ ] Añadir selección explícita de grupos, top-N, tasas, unidades y estados sin datos.
+- [ ] Renderizar y revisar gráficos reales con homónimos, categorías largas, múltiples grupos y faltantes.
+
+**Salida:** gráficos publicables y extensibles, con tabla subyacente reproducible; ninguna fórmula exclusiva de un gráfico.
+
+### Entrega E · Dashboard e informe compartible
+
+**Prioridad:** P2, requisito del producto solicitado. **Depende de:** C y D.
+**Archivos:** nuevo `R/dashboard.R`, plantilla en `inst/`, `DESCRIPTION` para Suggests, documentación de ejecución/publicación y pruebas de sesiones.
+
+- [ ] Implementar recorrido completo de la sección 8, no solo una página de indicadores.
+- [ ] Aislar conexiones y caché; aplicar un universo único a KPI, plots, detalle y descarga.
+- [ ] Entregar plantilla Quarto sin duplicar métricas; comprobar dependencias opcionales y redacción de datos sensibles.
+- [ ] Ejecutar verificación en navegador de filtros, paginación, descarga, dos sesiones y cierre.
+
+**Salida:** dashboard utilizable de principio a fin y HTML compartible con procedencia. Construir un objeto de app o una plantilla sin renderizar no satisface la entrega.
+
+### Entrega F · Escala, documentación y liberación
+
+**Prioridad:** P2/P3. **Depende de:** A–E para certificar el producto completo.
+**Archivos:** benchmarks sintéticos en infraestructura de desarrollo, pruebas de rendimiento pertinentes, CI, `DESCRIPTION`, `NEWS.md`, README ES/EN, viñetas y `_pkgdown.yml`.
+
+- [ ] Ejecutar la matriz de rendimiento de la sección 9 y aplicar optimizaciones sustentadas por mediciones.
+- [ ] Cubrir la versión mínima R declarada (`>=4.1`) o elevarla explícitamente: release/oldrel actuales no demuestran por sí solos soporte de 4.1.
+- [ ] Ejecutar pruebas, `devtools::check()` con cero errores/advertencias, lint, estilo en modo verificación, spelling y construcción del sitio.
+- [ ] Probar instalación sin dependencias de gráficos/dashboard y el mensaje al solicitar funciones opcionales.
+- [ ] Publicar documentación por tareas: empezar, elegir corpus, EDA, gráficos, dashboard, exportar y resolver problemas. Separar stubs de escritura del recorrido analítico.
+
+**Salida:** versión con alcance honesto, resultados de verificación publicados y límites de tamaño/entorno conocidos. La existencia de una matriz YAML no sustituye sus resultados.
+
+## 11. Criterios finales de aceptación del producto
+
+- [ ] La fuente SQLite permanece intacta y la copia de estudio es consistente con WAL.
+- [ ] Tipos, alias y transformaciones no producen fechas falsas ni pérdida silenciosa de JSON.
+- [ ] Todas las métricas declaran unidad y denominador; filtros compartidos conservan el mismo universo.
+- [ ] Items sin asset, páginas, colecciones vacías/homónimas y metadatos heterogéneos se tratan explícitamente.
+- [ ] EDA cubre estructura, faltantes, distribuciones, temporalidad, texto, entidades/temas y comparación.
+- [ ] Los gráficos funcionan individualmente y las mismas tablas alimentan el dashboard y el informe.
+- [ ] El dashboard filtra, inspecciona y exporta datos reales de un snapshot; sesiones aisladas y cierre comprobado.
+- [ ] La exportación preserva Unicode y el contrato de tipos elegido; orden y límites de memoria son explícitos.
+- [ ] Procedencia diferencia estructura, fuente, parámetros y resultado derivado; permite verificar un estudio.
+- [ ] La documentación no presenta datos de IA como verdad validada ni un contexto actual como input histórico.
+
+## 12. Reproducciones compactas para iniciar los arreglos
+
+Los siguientes ejemplos describen el estado observado; **no son propuestas de implementación**. Cargar primero `devtools::load_all()` en la raíz. Para scripts con acentos, guardar el archivo como UTF-8.
+
+### Temporalidad y agrupación
+
+```r
+x <- tibble::tibble(
+  fecha = as.POSIXct("1969-12-31 23:59:30", tz = "UTC")
+)
+entropia_temporal_profile(x, fecha, unit = "minute")
+# Actual: 1970-01-01; esperado: 1969-12-31 23:59:00.
+
+vacio <- tibble::tibble(fecha = as.POSIXct(character(), tz = "UTC"))
+entropia_temporal_profile(vacio, fecha, unit = "week")
+# Actual: error; esperado: resultado vacío tipado.
+
+series <- tibble::tibble(
+  fecha = as.POSIXct(rep(c("2020-01-01", "2020-02-01"), 2), tz = "UTC"),
+  coleccion = c("A", "A", "B", "B"), n = c(1L, 2L, 10L, 20L)
+)
+p <- entropia_plot_temporal(series)
+length(unique(ggplot2::ggplot_build(p)$data[[1]]$group))
+# Actual: 1, pese a haber dos series.
+```
+
+### Identidad de colecciones
+
+```r
+x <- tibble::tibble(
+  collection_id = c("c1", "c2"), collection_name = c("Archivo", "Archivo"),
+  item_id = c("i1", "i2"), asset_id = c("a1", "a2")
+)
+entropia_compare_collections(x)                     # Actual: una fila.
+entropia_compare_collections(x, by = collection_id) # Control: dos filas.
+```
+
+### Tipado y metadata sobre una copia temporal
+
+```r
+local({
+  old <- options(entropiaR.schema_policy = "allow")
+  on.exit(options(old), add = TRUE)
+  f <- tempfile(fileext = ".sqlite")
+  stopifnot(file.copy("tests/testthat/fixtures/full.sqlite", f))
+  con <- entropia_connect(f, quiet = TRUE)
+  on.exit(entropia_disconnect(con), add = TRUE)
+  q <- entropia_items(con)
+
+  class(entropia_collect(q)$created_at) # POSIXct/POSIXt.
+  class(entropia_collect(dplyr::rename(q, date = created_at))$date) # integer64.
+  class(entropia_collect(dplyr::mutate(q, created_at = 1))$created_at) # POSIXct.
+
+  bad <- dplyr::mutate(
+    head(dplyr::select(q, id, metadata), 1L),
+    metadata = '{"__entropia_file_metadata":{"original_name":["a","b"]}}'
+  )
+  entropia_metadata(con, items = bad) # Actual: error de longitud en vapply.
+})
+```
+
+### Comandos de verificación
+
+En Windows, usar el ejecutable completo de R. La suite de esta auditoría se lanzó con:
+
+```text
+"C:\Program Files\R\R-4.5.2\bin\Rscript.exe" -e "devtools::test(reporter = 'summary')"
+```
+
+Registrar el locale junto a la salida. Para F07, repetir exportación con `LC_ALL=C`, inspeccionar bytes y comparar con una ejecución UTF-8; no atribuir el fallo a determinismo por el nombre del test. Las verificaciones futuras de liberación incluyen el `devtools::check()` completo que aquí no se ejecutó.
+
+## 13. Fuentes y trazabilidad
+
+### Fuentes primarias del repositorio
+
+- [Conexión y snapshots](R/connect.R), [esquema](R/schema.R), [conversión](R/collect.R), [hash estructural](R/utils.R).
+- [Corpus y metadata](R/corpus.R), [análisis/datasets](R/analysis.R), [calidad](R/quality.R), [investigación/LLM](R/research.R).
+- [Gráficos](R/plot.R), [exportación](R/export.R), [manifiesto](inst/schemas/manifest.json).
+- [Pruebas](tests/testthat), [generación de fixtures](data-raw/make_fixtures.R), [análisis reproducible actual](vignettes/analysis.Rmd), [datasets](vignettes/datasets.Rmd).
+- [CI release/oldrel](.github/workflows/R-CMD-check.yaml), [CI devel](.github/workflows/R-CMD-check-devel.yaml).
+- [Plan previo completado](docs/plans/completed/20260806-entropia-r-package.md): contexto histórico, no sustituto de la implementación ni de las verificaciones actuales.
+
+Los rangos de líneas citados corresponden a los archivos leídos durante esta auditoría; se incluyen junto a cada hallazgo para facilitar su implementación y revisión.
+
+### Documentación oficial consultada para las propuestas
+
+- [Shiny: scoping rules](https://shiny.posit.co/r/articles/improve/scoping/): separación de estado por sesión y objetos compartidos; fundamenta aislamiento de conexiones y selección.
+- [bslib: dashboards](https://rstudio.github.io/bslib/articles/dashboards/): estructura de paneles, navegación, tarjetas y layouts adaptables para Shiny.
+- [Quarto dashboards](https://quarto.org/docs/dashboards/): publicación estática y backend opcional; fundamenta la separación entre informe congelado y exploración con R en servidor.
+
+**Siguiente decisión recomendada:** aprobar la arquitectura de núcleo compartido + Shiny opcional + informe Quarto, y ejecutar primero la Entrega A. No comenzar por una fachada de dashboard sobre métricas con contratos todavía ambiguos.

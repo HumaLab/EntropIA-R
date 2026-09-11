@@ -1,0 +1,122 @@
+---
+title: "EntropIA: análisis exploratorio"
+lang: es
+format:
+  dashboard:
+    embed-resources: true
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(entropiaR)
+eda <- readRDS("overview.rds")
+```
+
+# Resumen
+
+## Row
+
+### Universo y unidades
+
+```{r}
+knitr::kable(eda$counts)
+```
+
+### Colecciones
+
+```{r}
+entropia_plot_collections(eda$collections)
+```
+
+## Row
+
+### Selección del estudio
+
+```{r}
+cat(jsonlite::toJSON(eda$selection, pretty = TRUE, auto_unbox = TRUE,
+                    null = "null", POSIXt = "ISO8601"))
+```
+
+### Procedencia
+
+```{r}
+cat(jsonlite::toJSON(eda$provenance, pretty = TRUE, auto_unbox = TRUE,
+                    null = "null", POSIXt = "ISO8601"))
+```
+
+Este informe es una instantánea de resultados agregados. No consulta SQLite desde
+el navegador. Las fechas operativas no son necesariamente fechas documentales.
+Si los identificadores están redactados, conservar la receta original en un
+entorno privado para reproducir el estudio.
+
+# Calidad
+
+## Row
+
+```{r}
+entropia_plot_coverage(eda$quality)
+```
+
+## Row
+
+```{r}
+knitr::kable(eda$quality)
+```
+
+Cada métrica conserva su unidad, numerador, denominador y disponibilidad. Ausencia
+de datos y tarea no aplicable no equivalen a cero. La cobertura no certifica la
+veracidad de los datos ni la corrección del OCR.
+
+# Exploración
+
+## Row
+
+### Temporalidad
+
+```{r}
+entropia_plot_temporal(eda$temporal, date_var = "date")
+```
+
+### Entidades
+
+```{r}
+entropia_plot_entities(eda$entities)
+```
+
+## Row
+
+### Temas
+
+```{r}
+entropia_plot_topics(eda$topics)
+```
+
+### Comparación de colecciones
+
+```{r}
+knitr::kable(eda$collections)
+```
+
+# Tablas
+
+## Row
+
+### Entidades: ocurrencias y prevalencia
+
+```{r}
+knitr::kable(eda$entities)
+```
+
+### Temas: ocurrencias y prevalencia
+
+```{r}
+knitr::kable(eda$topics)
+```
+
+Las entidades y los temas extraídos automáticamente no son hechos verificados.
+La prevalencia utiliza documentos distintos; no sumar páginas como documentos
+independientes. Este informe no incluye textos documentales.

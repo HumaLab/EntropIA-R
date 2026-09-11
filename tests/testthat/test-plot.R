@@ -29,14 +29,16 @@ plot_coverage_summary <- function(con) {
 
 # --- entropia_plot_temporal ----------------------------------------------------
 
-test_that("temporal plot is a ggplot with the expected mapping", {
+test_that("temporal series with identical labels retain distinct IDs", {
   skip_if_not_installed("ggplot2")
-  with_plot_con("full", function(con) {
-    p <- entropia_plot_temporal(plot_temporal_summary(con))
-    expect_s3_class(p, "ggplot")
-    expect_identical(rlang::as_label(p$mapping$x), "created_at")
-    expect_identical(rlang::as_label(p$mapping$y), "n")
-  })
+  x <- data.frame(date = rep(as.Date(c("2026-01-01", "2026-02-01")), 2),
+    collection_id = rep(c(1L, 2L), each = 2), collection_name = "Archivo",
+    n = c(1, 2, 10, 20))
+  b <- ggplot2::ggplot_build(entropia_plot_temporal(x))$data[[1]]
+  expect_equal(sort(vapply(split(b$y, b$group), sum, numeric(1))), c(3, 30), ignore_attr = TRUE)
+  expect_equal(sort(as.numeric(table(b$group))), c(2, 2))
+  expect_error(entropia_plot_temporal(transform(x, other = "ambiguous")),
+    class = "entropia_error_invalid_argument")
 })
 
 test_that("temporal plot auto-detects the date column and accepts explicit date_var", {
@@ -46,11 +48,13 @@ test_that("temporal plot auto-detects the date column and accepts explicit date_
     n = c(3L, 5L)
   )
   p1 <- entropia_plot_temporal(df)
-  expect_identical(rlang::as_label(p1$mapping$x), "t")
   p2 <- entropia_plot_temporal(df, date_var = "t")
-  expect_identical(rlang::as_label(p2$mapping$x), "t")
   p3 <- entropia_plot_temporal(df, date_var = t)
-  expect_identical(rlang::as_label(p3$mapping$x), "t")
+  for (p in list(p1, p2, p3)) {
+    b <- ggplot2::ggplot_build(p)$data[[2]]
+    expect_equal(b$y, c(3, 5))
+    expect_equal(as.numeric(b$x), as.numeric(df$t))
+  }
 })
 
 test_that("temporal plot renders and is user-extensible", {
@@ -59,7 +63,7 @@ test_that("temporal plot renders and is user-extensible", {
     p <- entropia_plot_temporal(plot_temporal_summary(con))
     # ggplot_build runs the full data transform; errors on invalid input
     built <- ggplot2::ggplot_build(p)
-    expect_true(length(built$data) >= 1L)
+    expect_equal(sort(built$data[[2]]$y), sort(p$data$n))
     ext <- p + ggplot2::labs(title = "Custom title")
     expect_s3_class(ext, "ggplot")
   })
@@ -92,15 +96,17 @@ test_that("temporal plot validates input", {
 
 # --- entropia_plot_entities -----------------------------------------------------
 
-test_that("entity plot is a ggplot with value/n/fill mapping", {
+test_that("entity bars do not stack identical values across types or IDs", {
   skip_if_not_installed("ggplot2")
-  with_plot_con("full", function(con) {
-    p <- entropia_plot_entities(plot_entity_summary(con))
-    expect_s3_class(p, "ggplot")
-    expect_identical(rlang::as_label(p$mapping$x), "value")
-    expect_identical(rlang::as_label(p$mapping$y), "n")
-    expect_identical(rlang::as_label(p$mapping$fill), "entity_type")
-  })
+  x <- data.frame(value = "Roma", entity_type = c("person", "place", "place"),
+    collection_id = c(1, 1, 2), collection_name = "Archivo", n = c(3, 7, 11))
+  b <- ggplot2::ggplot_build(entropia_plot_entities(x))$data[[1]]
+  expect_equal(sort(b$ymax - b$ymin), c(3, 7, 11))
+  expect_equal(anyDuplicated(b$x), 0L)
+  g <- ggplot2::ggplot_build(entropia_plot_entities(x, top = 1, top_by = "group"))$data[[1]]
+  expect_equal(sort(g$y), c(7, 11))
+  global <- ggplot2::ggplot_build(entropia_plot_entities(x, top = 1))$data[[1]]
+  expect_equal(global$y, 11)
 })
 
 test_that("entity plot honours top and reorders bars by count", {
@@ -111,13 +117,9 @@ test_that("entity plot honours top and reorders bars by count", {
     n = c(10L, 5L, 2L, 1L)
   )
   p <- entropia_plot_entities(df, top = 2)
-  # only the two most frequent rows remain in the plot data
-  expect_equal(nrow(p$data), 2L)
-  expect_identical(sort(p$data$n, decreasing = TRUE), c(10L, 5L))
-  # value is a factor reordered by count ascending so coord_flip() puts the
-  # most frequent entity on top
-  expect_s3_class(p$data$value, "factor")
-  expect_identical(levels(p$data$value), c("Ana", "Juan"))
+  b <- ggplot2::ggplot_build(p)$data[[1]]
+  expect_equal(b$y[order(b$x)], c(5, 10))
+  expect_equal(b$ymax - b$ymin, b$y)
 })
 
 test_that("entity plot accepts a custom fill column", {
@@ -129,9 +131,11 @@ test_that("entity plot accepts a custom fill column", {
     n = c(3L, 2L, 1L)
   )
   p <- entropia_plot_entities(df, fill = collection_name)
-  expect_identical(rlang::as_label(p$mapping$fill), "collection_name")
   p2 <- entropia_plot_entities(df, fill = "collection_name")
-  expect_identical(rlang::as_label(p2$mapping$fill), "collection_name")
+  b <- ggplot2::ggplot_build(p)$data[[1]]
+  expect_equal(b$fill[1], b$fill[2])
+  expect_false(b$fill[1] == b$fill[3])
+  expect_equal(b$fill, ggplot2::ggplot_build(p2)$data[[1]]$fill)
 })
 
 test_that("entity plot renders and is user-extensible", {
@@ -139,7 +143,7 @@ test_that("entity plot renders and is user-extensible", {
   with_plot_con("full", function(con) {
     p <- entropia_plot_entities(plot_entity_summary(con))
     built <- ggplot2::ggplot_build(p)
-    expect_true(length(built$data) >= 1L)
+    expect_equal(sort(built$data[[1]]$y), sort(p$data$n))
     ext <- p + ggplot2::labs(title = "Custom title")
     expect_s3_class(ext, "ggplot")
   })
@@ -162,13 +166,12 @@ test_that("entity plot validates input, top and fill", {
   expect_error(entropia_plot_entities(df, top = 1.5), class = cls)
   # fill selection
   expect_error(entropia_plot_entities(df, fill = nope), class = cls)
-  # empty input
-  expect_error(
-    entropia_plot_entities(data.frame(
-      entity_type = character(), value = character(), n = integer()
-    )),
-    class = cls
-  )
+  # Empty summaries have an intentional, renderable annotation.
+  p <- entropia_plot_entities(data.frame(
+    entity_type = character(), value = character(), n = integer()
+  ))
+  expect_warning(b <- ggplot2::ggplot_build(p), NA)
+  expect_match(b$data[[1]]$label, "Sin datos")
   # not a data.frame / lazy table
   expect_error(entropia_plot_entities(c("a")), class = cls)
   with_plot_con("full", function(con) {
@@ -178,17 +181,17 @@ test_that("entity plot validates input, top and fill", {
 
 # --- entropia_plot_coverage -----------------------------------------------------
 
-test_that("coverage plot is a ggplot with group/pct mapping, faceted by metric", {
+test_that("coverage preserves IDs and annotates missing denominators", {
   skip_if_not_installed("ggplot2")
-  with_plot_con("full", function(con) {
-    p <- entropia_plot_coverage(plot_coverage_summary(con))
-    expect_s3_class(p, "ggplot")
-    expect_identical(rlang::as_label(p$mapping$x), "group")
-    expect_identical(rlang::as_label(p$mapping$y), "pct")
-    expect_identical(rlang::as_label(p$mapping$fill), "group")
-    # the full report carries several metrics -> facets
-    expect_true(inherits(p$facet, "FacetWrap"))
-  })
+  x <- data.frame(metric = "text", group = "Archivo", group_id = c(1, 2, 3),
+    pct = c(0.2, 0.8, NA_real_), total = c(10, 10, NA),
+    status = c("ok", "ok", "no_data"))
+  expect_warning(b <- ggplot2::ggplot_build(entropia_plot_coverage(x)), NA)
+  expect_equal(sort(b$data[[1]]$y), c(0.2, 0.8))
+  expect_equal(anyDuplicated(b$data[[1]]$x), 0L)
+  expect_match(b$data[[2]]$label, "no_data")
+  expect_warning(empty <- ggplot2::ggplot_build(entropia_plot_coverage(x[3, ])), NA)
+  expect_match(empty$data[[2]]$label, "Sin valor")
 })
 
 test_that("coverage plot with a single metric is unfaceted and filtered", {
@@ -206,7 +209,7 @@ test_that("coverage plot renders and is user-extensible", {
   with_plot_con("full", function(con) {
     p <- entropia_plot_coverage(plot_coverage_summary(con))
     built <- ggplot2::ggplot_build(p)
-    expect_true(length(built$data) >= 1L)
+    expect_true(all(is.finite(built$data[[1]]$y)))
     ext <- p + ggplot2::labs(title = "Custom title")
     expect_s3_class(ext, "ggplot")
   })
@@ -228,8 +231,9 @@ test_that("coverage plot validates metric, columns, empty input and input type",
   expect_error(entropia_plot_coverage(df, metric = character(0)), class = cls)
   # missing columns
   expect_error(entropia_plot_coverage(data.frame(a = 1)), class = cls)
-  # empty input
-  expect_error(entropia_plot_coverage(df[0, ]), class = cls)
+  # Empty input is an annotated plot, not an error.
+  expect_warning(b <- ggplot2::ggplot_build(entropia_plot_coverage(df[0, ])), NA)
+  expect_match(b$data[[1]]$label, "Sin datos")
   # not a data.frame / lazy table
   expect_error(entropia_plot_coverage(c("a")), class = cls)
   with_plot_con("full", function(con) {
@@ -237,9 +241,62 @@ test_that("coverage plot validates metric, columns, empty input and input type",
   })
 })
 
+test_that("faceted temporal series never connect different IDs", {
+  skip_if_not_installed("ggplot2")
+  x <- data.frame(date = rep(as.Date(c("2026-01-01", "2026-02-01")), 2),
+    group_id = rep(c(1, 2), each = 2), group = "Igual", n = c(1, 2, 10, 20))
+  b <- ggplot2::ggplot_build(entropia_plot_temporal(x, group = group, facet = group))$data[[1]]
+  expect_equal(sort(vapply(split(b$y, b$PANEL), sum, numeric(1))), c(3, 30), ignore_attr = TRUE)
+  expect_error(entropia_plot_temporal(rbind(x, x[1, ]), group = group),
+    class = "entropia_error_invalid_argument")
+})
+
+test_that("new bar plots preserve repeated names and undefined missingness", {
+  skip_if_not_installed("ggplot2")
+  collections <- data.frame(collection_id = c(1, 2), collection_name = "Igual", n_items = c(2, 9))
+  b <- ggplot2::ggplot_build(entropia_plot_collections(collections))$data[[1]]
+  expect_equal(anyDuplicated(b$x), 0L)
+  expect_equal(sort(b$y), c(2, 9))
+  topics <- data.frame(name = c("Tema", "Tema"), group_id = c(1, 2), n = c(3, 7))
+  b <- ggplot2::ggplot_build(entropia_plot_topics(topics))$data[[1]]
+  expect_equal(anyDuplicated(b$x), 0L)
+  expect_equal(sort(b$ymax - b$ymin), c(3, 7))
+  missing <- data.frame(variable = "a", n = 0L, total = 0L, pct = NA_real_, status = "empty")
+  expect_warning(b <- ggplot2::ggplot_build(entropia_plot_missing(missing)), NA)
+  expect_match(b$data[[2]]$label, "empty")
+})
+
+test_that("distributions and scatter annotate unusable measurements without warnings", {
+  skip_if_not_installed("ggplot2")
+  x <- data.frame(a = c(NA_real_, Inf, -1), b = c(2, 3, NA_real_))
+  for (type in c("histogram", "ecdf", "boxplot")) {
+    expect_warning(b <- ggplot2::ggplot_build(entropia_plot_distribution(x, a, type = type, log = TRUE)), NA)
+    expect_match(b$data[[1]]$label, "Sin observaciones")
+  }
+  expect_warning(b <- ggplot2::ggplot_build(entropia_plot_scatter(x, a, b)), NA)
+  expect_match(b$data[[1]]$label, "Sin pares")
+  x <- data.frame(a = c(1, 2, 3, NA), b = c(4, 5, 6, 7))
+  b <- ggplot2::ggplot_build(entropia_plot_scatter(x, a, b))$data[[1]]
+  expect_equal(b$x, c(1, 2, 3))
+  expect_equal(b$y, c(4, 5, 6))
+})
+
+test_that("correlations exclude identifiers and handle constants and missing pairs", {
+  skip_if_not_installed("ggplot2")
+  x <- data.frame(id = 1:3, item_id = 3:1, a = 1:3, b = 2:4,
+    constant = 1, absent = NA_real_, date = as.Date("2026-01-01") + 0:2)
+  expect_warning(p <- entropia_plot_correlation(x, c(id, item_id, a, b, constant, absent, date)), NA)
+  expect_warning(b <- ggplot2::ggplot_build(p), NA)
+  expect_setequal(p$data$variable_x, c("a", "b", "constant", "absent"))
+  expect_equal(p$data$correlation[p$data$variable_x == "a" & p$data$variable_y == "b"], 1)
+  expect_true(all(is.na(p$data$correlation[p$data$variable_x == "constant"])))
+  expect_true(any(grepl("Sin datos", b$data[[2]]$label)))
+})
+
 # --- vdiffr snapshots (optional: run where vdiffr is installed) -----------------
 
 test_that("plot snapshots are stable", {
+  skip_if_not_installed("ggplot2")
   skip_if_not_installed("vdiffr")
   with_plot_con("full", function(con) {
     vdiffr::expect_doppelganger(
