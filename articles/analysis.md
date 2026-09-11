@@ -1,16 +1,16 @@
-# A complete reproducible analysis
+# Un análisis reproducible de punta a punta
 
-This vignette walks one end-to-end analysis: snapshot the database,
-build a provenance-stamped dataset, profile it, and export — everything
-documented so the result can be reproduced later.
+*Versión en español.* English:
+[`vignette("analysis.en")`](https://humalab.github.io/EntropIA-R/articles/analysis.en.md).
 
-## 1. Snapshot, then connect
+Recorrido: snapshot → overview → dataset con procedencia → perfiles →
+gráficos → exportar.
 
-The database may be live under EntropIA. Before analysis, take a
-snapshot with
+## 1. Snapshot y conexión
+
+Si EntropIA puede estar abierta, copiá primero con
 [`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md)
-and run against *that*, so the analysis is immune to writes landing
-mid-run and the provenance records a stable source.
+y analizá *esa* copia.
 
 ``` r
 
@@ -18,14 +18,13 @@ con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", packag
 snap <- tempfile(fileext = ".sqlite")
 entropia_copy(con, snap)
 snap_con <- entropia_connect(snap)
-entropia_disconnect(con) # original connection no longer needed
+entropia_disconnect(con)
 ```
 
-## 2. Inventory the snapshot
+## 2. Inventario del snapshot
 
 [`entropia_overview()`](https://humalab.github.io/EntropIA-R/reference/entropia_overview.md)
-is the cheap first pass: counts, quality and entity prevalence without
-collecting OCR text.
+es el primer paso barato: recuentos y calidad sin bajar OCR.
 
 ``` r
 
@@ -46,11 +45,10 @@ eda$collections
 #> 1 11111111-1111-4111-8111-111111111111 Archivo de prueba       3        5     5
 ```
 
-## 3. Build the analysis dataset
+## 3. Dataset de análisis
 
 [`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
-applies filters to the corpus, collects it, and stamps provenance v2.
-This is the boundary: everything after it is ordinary tibble work.
+filtra el corpus, colecta y sella procedencia v2.
 
 ``` r
 
@@ -86,20 +84,17 @@ entropia_provenance(corpus)
 #>   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732
 #>   dataset hash:   c7d9e919196ad9347a4ba5b7fdeff6a8bfe94e3703ee2f79d05624a7f93a40f0
 #>   scope:          origin
-#>   source path:    /tmp/Rtmp4aRJz3/file20892eefe2c.sqlite
+#>   source path:    /tmp/RtmpRTrjsU/file204c3fc6895f.sqlite
 #>   package:        0.0.0.9000
-#>   built at:       2026-09-11T17:35:54.337Z
+#>   built at:       2026-09-11T17:53:11.589Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
-## 4. Temporal profile
+## 4. Perfil temporal
 
-When were assets created?
-[`entropia_temporal_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_temporal_profile.md)
-buckets a date column. Collect the asset accessor directly —
+Colectá el accesor:
 [`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
-types its millisecond timestamps to `POSIXct`, which the profiler
-requires:
+tipa ms a `POSIXct`.
 
 ``` r
 
@@ -116,11 +111,7 @@ temporal
 #> 5 2026-01-15 12:07:40     1
 ```
 
-## 5. Document lengths
-
-[`entropia_document_lengths()`](https://humalab.github.io/EntropIA-R/reference/entropia_document_lengths.md)
-appends character and word counts per document to any tibble carrying a
-text column:
+## 5. Longitudes de documento
 
 ``` r
 
@@ -137,15 +128,11 @@ lengths |> select(id, n_chars, n_words)
 #> 5 33333333-3333-4333-8333-333333333335      23       4
 ```
 
-Empty text counts as 0; `NA` text stays `NA`.
+Texto vacío cuenta 0; `NA` sigue `NA`.
 
-## 6. Entities
+## 6. Entidades
 
-[`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
-excludes soft-deleted rows by default and surfaces provenance (source
-model) per entity.
-[`entropia_entity_frequency()`](https://humalab.github.io/EntropIA-R/reference/entropia_entity_frequency.md)
-tallies them by type:
+Por defecto se ocultan filas `manual_deleted`.
 
 ``` r
 
@@ -159,10 +146,9 @@ entropia_entity_frequency(entities)
 #> 3 place        Plaza de Mayo             1
 ```
 
-## 7. Topics
+## 7. Temas
 
-Topics are normalized UPPERCASE names. Join `item_topics` to `topics`,
-then tally:
+Nombres normalizados a MAYÚSCULAS. Unir `item_topics` con `topics`:
 
 ``` r
 
@@ -176,11 +162,9 @@ entropia_topic_frequency(left_join(item_topics, topics, by = c("topic_id" = "id"
 #> 2 SINDICATO     1
 ```
 
-## 8. Collections side by side
+## 8. Colecciones lado a lado
 
-[`entropia_compare_collections()`](https://humalab.github.io/EntropIA-R/reference/entropia_compare_collections.md)
-groups by `collection_id` when that column exists, and keeps
-`collection_name` as a label:
+Agrupa por `collection_id` cuando existe; el nombre es etiqueta.
 
 ``` r
 
@@ -191,11 +175,7 @@ entropia_compare_collections(corpus)
 #> 1 11111111-1111-4111-8111-111111111111 Archivo de prueba       3        5     5
 ```
 
-## 9. Corpus quality
-
-[`entropia_corpus_quality()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus_quality.md)
-reports OCR coverage, transcription presence, and empty texts per asset
-type, plus metadata coverage per collection:
+## 9. Calidad del corpus
 
 ``` r
 
@@ -216,10 +196,7 @@ quality
 #> 10 transcription_presence pdf              pdf   asset     0     3  0     ok
 ```
 
-## 10. Visualize
-
-`entropia_plot_*` helpers wrap the analysis summaries in ggplot2
-(Suggests) and return ordinary `ggplot` objects you can extend:
+## 10. Visualizar
 
 ``` r
 
@@ -249,11 +226,9 @@ entropia_plot_collections(eda$collections)
 
 ![](analysis_files/figure-html/unnamed-chunk-13-2.png)
 
-## 11. Export with provenance
+## 11. Exportar con procedencia
 
-The dataset exports as-is (RDS keeps class and provenance; CSV is
-streamed for lazy inputs). Always write the provenance sidecar
-alongside:
+RDS conserva clase y sello; CSV perezoso se streamea.
 
 ``` r
 
@@ -266,8 +241,6 @@ prov_path <- tempfile(fileext = "-prov.json")
 entropia_write_provenance(corpus, prov_path)
 ```
 
-The RDS round-trips with its provenance intact:
-
 ``` r
 
 back <- readRDS(rds_path)
@@ -275,16 +248,14 @@ entropia_provenance(back)[["name"]]
 #> [1] "corpus_full"
 ```
 
-## Cleanup
-
 ``` r
 
 entropia_disconnect(snap_con)
 ```
 
-That is the loop: snapshot → overview → stamped dataset → analyze →
-export with a sidecar. See
+Siguiente:
 [`vignette("eda")`](https://humalab.github.io/EntropIA-R/articles/eda.md)
-and
-[`vignette("dashboard")`](https://humalab.github.io/EntropIA-R/articles/dashboard.md)
-for the shared tables and the local app.
+y
+[`vignette("dashboard")`](https://humalab.github.io/EntropIA-R/articles/dashboard.md).
+English:
+[`vignette("analysis.en")`](https://humalab.github.io/EntropIA-R/articles/analysis.en.md).

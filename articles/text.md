@@ -1,19 +1,17 @@
-# Extracting texts and metadata
+# Extraer textos y metadatos
 
-## The text layers
+*Versión en español.* English:
+[`vignette("text.en")`](https://humalab.github.io/EntropIA-R/articles/text.en.md).
 
-An asset can have up to three machine-readable text layers, stored in
-three 1:1 tables:
+## Capas de texto
 
-| Table | Meaning | Main columns |
+Un asset puede tener hasta tres capas, 1:1 con `assets`:
+
+| Tabla | Significado | Columnas principales |
 |----|----|----|
-| `extractions` | OCR / PDF text extraction | `text_content`, `method`, `confidence` |
-| `transcriptions` | Speech-to-text for audio | `text_content`, `language`, `duration_ms`, `segments` |
-| `layouts` | Layout analysis (regions/blocks) | `regions`, `blocks`, `image_width`, `image_height` |
-
-Each row is keyed deterministically to its asset (`ext-`, `trx-`, `lay-`
-plus the asset id), so the layer tables join 1:1 to `assets` with no
-fan-out.
+| `extractions` | OCR / texto de PDF | `text_content`, `method`, `confidence` |
+| `transcriptions` | Audio a texto | `text_content`, `language`, `duration_ms`, `segments` |
+| `layouts` | Análisis de layout | `regions`, `blocks`, `image_width`, `image_height` |
 
 ``` r
 
@@ -38,18 +36,17 @@ entropia_layouts(con) |> entropia_collect()
 #> # ℹ 1 more variable: created_at <dttm>
 ```
 
-## The best text per asset
+## El mejor texto por asset
 
 [`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
-returns one row per asset with a single `text` column — the best
-available text per asset. `source` selects the layer:
+devuelve una fila por asset con una columna `text`. `source`:
 
-- `"extraction"` — the OCR/PDF extraction text only;
-- `"transcription"` — the audio transcription text only;
-- `"auto"` (default) — extraction **when that layer exists**, even if
-  the extraction text is empty, otherwise transcription. This matches
-  the corpus `COALESCE` rule. Coverage metrics that mean “any layer
-  useful” are named separately in `entropia_overview()$quality`.
+- `"extraction"` — solo OCR/PDF;
+- `"transcription"` — solo transcripción;
+- `"auto"` (defecto) — extracción **si esa capa existe**, aunque el
+  texto esté vacío; si no, transcripción. Es la regla `COALESCE` del
+  corpus. Las métricas de “alguna capa útil” están en
+  `entropia_overview()$quality`.
 
 ``` r
 
@@ -65,7 +62,7 @@ entropia_text(con) |> entropia_collect()
 #> # ℹ 2 more variables: page_number <int>, text <chr>
 ```
 
-Assets with neither layer keep their row and get `NA` text:
+Assets sin capa conservan la fila con `text = NA`:
 
 ``` r
 
@@ -80,13 +77,11 @@ entropia_text(con) |>
 #> # ℹ 2 more variables: page_number <int>, text <chr>
 ```
 
-## OCR markers
+## Marcadores OCR
 
-EntropIA’s PDF extraction embeds *image markers* in the text —
-`![](page=n,bbox=[...])` — one per embedded page image. They are noise
-for text analysis, so
+La extracción de PDF inserta `![](page=n,bbox=[...])`.
 [`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
-strips them by default. See the raw text first:
+los saca por defecto (CTE recursivo en SQL, sigue perezoso):
 
 ``` r
 
@@ -95,8 +90,6 @@ raw$text[1]
 #> [1] "![](page=1,bbox=[10,10,500,700]) La huelga general de 1920 movilizo a los obreros."
 ```
 
-And the stripped version:
-
 ``` r
 
 clean <- entropia_text(con) |> entropia_collect()
@@ -104,14 +97,7 @@ clean$text[1]
 #> [1] " La huelga general de 1920 movilizo a los obreros."
 ```
 
-The stripping happens in SQL (a recursive CTE), so it stays lazy and
-composable — you can `filter`/`mutate` on top of
-[`entropia_text()`](https://humalab.github.io/EntropIA-R/reference/entropia_text.md)
-and the whole query still runs on SQLite.
-
-## Restricting to specific assets
-
-`assets` accepts a character vector of asset ids or a lazy `tbl_sql`:
+## Restringir a ciertos assets
 
 ``` r
 
@@ -126,12 +112,11 @@ entropia_text(con, assets = ids) |> entropia_collect()
 #> # ℹ 2 more variables: page_number <int>, text <chr>
 ```
 
-## JSON columns become list-columns
+## JSON a list-columns
 
 [`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
-applies the column contract. JSON-in-TEXT columns become list-columns
-via `jsonlite`, so `transcriptions.segments` (an array of
-`{start_ms, end_ms, text}` objects) comes back as a list of data frames:
+aplica el contrato. `transcriptions.segments` vuelve como lista de data
+frames:
 
 ``` r
 
@@ -142,17 +127,11 @@ trx$segments[[1]]
 #> 2     2500   5000 a la huelga
 ```
 
-The same applies to `items.metadata`, `rag_messages.sources`, and
-`llm_results.result`.
+## Metadatos
 
-## Metadata
-
-[`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
-parses `items.metadata` into tidy rows (see
-[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md)).
-Non-scalar file-metadata fields no longer abort the whole batch: the row
-is kept, the original JSON stays in `raw_metadata`, and
-`attr(..., "diagnostics")` lists `item_id`, field and problem.
+Campos no escalares de file-metadata ya no abortan el lote: se conserva
+la fila, el JSON original en `raw_metadata`, y
+`attr(..., "diagnostics")` lista `item_id`, campo y problema.
 
 ``` r
 
@@ -166,12 +145,10 @@ entropia_metadata(con)
 #> # ℹ 2 more variables: extra_metadata <list>, page_count <list>
 ```
 
-Malformed JSON never fails the collect — it warns (with row context) and
-yields `NA`. Use `parse = FALSE` for the raw text.
+JSON malformado avisa (con fila) y da `NA`. `parse = FALSE` deja el
+texto crudo.
 
-## Coverage at a glance
-
-To see which assets are missing a text layer, use the coverage helpers:
+## Cobertura
 
 ``` r
 
@@ -185,12 +162,6 @@ entropia_ocr_coverage(con, by = "asset") |> entropia_collect()
 #> 4 33333333-3333… 222222… image      11111111-111… Archivo de pru…              0
 #> 5 33333333-3333… 222222… audio      11111111-111… Archivo de pru…              0
 #> # ℹ 1 more variable: text_empty <int>
-```
-
-Or the combined quality report:
-
-``` r
-
 entropia_corpus_quality(con)
 #> # A tibble: 10 × 8
 #>    metric                 group_id         group unit      n total    pct status
@@ -207,15 +178,12 @@ entropia_corpus_quality(con)
 #> 10 transcription_presence pdf              pdf   asset     0     3  0     ok
 ```
 
-## Cleaning up
-
 ``` r
 
 entropia_disconnect(con)
 ```
 
-Next:
-[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md)
-for composing lazy queries, or
-[`vignette("datasets")`](https://humalab.github.io/EntropIA-R/articles/datasets.md)
-for building reproducible analysis datasets.
+Siguiente:
+[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md).
+English:
+[`vignette("text.en")`](https://humalab.github.io/EntropIA-R/articles/text.en.md).

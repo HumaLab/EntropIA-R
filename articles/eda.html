@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Exploratory analysis of an EntropIA corpus • entropiaR</title>
+<title>Análisis exploratorio de un corpus EntropIA • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Exploratory analysis of an EntropIA corpus">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Análisis exploratorio de un corpus EntropIA">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Exploratory analysis of an EntropIA corpus</h1>
+      <h1>Análisis exploratorio de un corpus EntropIA</h1>
             
       
 
@@ -59,19 +59,20 @@
 
     
     
-<p>Start with a snapshot, then one shared overview. Do not collect the
-full corpus until a table of counts tells you the universe is the one
-you want.</p>
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/eda.en.html">vignette("eda.en")</a></code>.</p>
+<p>Empezá con un snapshot y un solo overview. No bajes el corpus
+completo hasta que los recuentos confirmen el universo.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
 <span>  <span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>,</span>
 <span>  package <span class="op">=</span> <span class="st">"entropiaR"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="inventory-without-loading-text">Inventory without loading text<a class="anchor" aria-label="anchor" href="#inventory-without-loading-text"></a>
+<h2 id="inventario-sin-cargar-texto">Inventario sin cargar texto<a class="anchor" aria-label="anchor" href="#inventario-sin-cargar-texto"></a>
 </h2>
-<p><code><a href="../reference/entropia_overview.html">entropia_overview()</a></code> aggregates in SQLite. It never
-materialises OCR text, JSON metadata or embedding BLOBs.</p>
+<p><code><a href="../reference/entropia_overview.html">entropia_overview()</a></code> agrega en SQLite. Nunca materializa
+OCR, JSON ni BLOB.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_overview.html">entropia_overview</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">eda</span><span class="op">)</span></span>
@@ -98,17 +99,14 @@ materialises OCR text, JSON metadata or embedding BLOBs.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> audio          1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> image          1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> pdf            3</span></span></code></pre></div>
-<p><code>counts</code> uses explicit units (<code>item</code>,
-<code>asset</code>, <code>collection</code>). <code>n</code> in
-<code>collections</code> is the number of <em>rows in the study
-query</em> (assets plus items without an asset), not a synonym for
-<code>n_items</code>.</p>
+<p><code>counts</code> declara unidad (<code>item</code>,
+<code>asset</code>, <code>collection</code>). El <code>n</code> de
+<code>collections</code> es filas de la consulta de estudio (assets más
+ítems sin asset), no un sinónimo de <code>n_items</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="one-universe-many-tables">One universe, many tables<a class="anchor" aria-label="anchor" href="#one-universe-many-tables"></a>
+<h2 id="un-universo-muchas-tablas">Un universo, muchas tablas<a class="anchor" aria-label="anchor" href="#un-universo-muchas-tablas"></a>
 </h2>
-<p>Every table in <code>eda</code> uses the same selection. Filter by
-asset type or drop PDF page assets without rewriting joins:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pdfs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_overview.html">entropia_overview</a></span><span class="op">(</span><span class="va">con</span>, asset_types <span class="op">=</span> <span class="st">"pdf"</span>, page_assets <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">pdfs</span><span class="op">$</span><span class="va">counts</span></span>
@@ -147,8 +145,7 @@ asset type or drop PDF page assets without rewriting joins:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $min_confidence</span></span>
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
-<p>An empty ID vector selects nothing (it does not fall back to
-“all”):</p>
+<p>Un vector de IDs vacío no selecciona “todo”: selecciona nada.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_overview.html">entropia_overview</a></span><span class="op">(</span><span class="va">con</span>, collection_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">counts</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
@@ -161,7 +158,7 @@ asset type or drop PDF page assets without rewriting joins:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> pages                asset          0</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="quality-numerators-denominators-status">Quality: numerators, denominators, status<a class="anchor" aria-label="anchor" href="#quality-numerators-denominators-status"></a>
+<h2 id="calidad-numerador-denominador-status">Calidad: numerador, denominador, status<a class="anchor" aria-label="anchor" href="#calidad-numerador-denominador-status"></a>
 </h2>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span><span class="op">$</span><span class="va">quality</span></span>
@@ -179,27 +176,26 @@ asset type or drop PDF page assets without rewriting joins:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> ocr_coverage      audio                 audio asset     0     1  0     ok    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> ocr_coverage      image                 image asset     0     1  0     ok    </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 13 more rows</span></span></span></code></pre></div>
-<p>Read <code>status</code> before <code>pct</code>:</p>
+<p>Leé <code>status</code> antes que <code>pct</code>:</p>
 <ul>
 <li>
-<code>ok</code> — the rate is defined;</li>
+<code>ok</code> — la tasa está definida;</li>
 <li>
-<code>empty</code> — eligible rows exist but the field/layer is
-empty;</li>
+<code>empty</code> — hay filas elegibles pero el campo/capa está
+vacío;</li>
 <li>
-<code>no_data</code> — no rows in the denominator;</li>
+<code>no_data</code> — denominador 0;</li>
 <li>
-<code>not_applicable</code> — the metric does not apply to that
-group (e.g. OCR on audio, depending on eligibility);</li>
+<code>not_applicable</code> — la métrica no aplica a ese grupo;</li>
 <li>
-<code>invalid</code> — JSON that does not parse.</li>
+<code>invalid</code> — JSON que no parsea.</li>
 </ul>
-<p><code>metadata_coverage</code> is <em>presence</em> of metadata text.
-<code>metadata_validity</code> is JSON syntax, not “the document has an
-author and a date”.</p>
+<p><code>metadata_coverage</code> es <em>presencia</em> de texto.
+<code>metadata_validity</code> es sintaxis JSON, no “el documento tiene
+autor y fecha”.</p>
 </div>
 <div class="section level2">
-<h2 id="entities-and-topics-occurrence-vs-prevalence">Entities and topics: occurrence vs prevalence<a class="anchor" aria-label="anchor" href="#entities-and-topics-occurrence-vs-prevalence"></a>
+<h2 id="entidades-y-temas-ocurrencia-vs-prevalencia">Entidades y temas: ocurrencia vs prevalencia<a class="anchor" aria-label="anchor" href="#entidades-y-temas-ocurrencia-vs-prevalencia"></a>
 </h2>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span><span class="op">$</span><span class="va">entities</span></span>
@@ -215,15 +211,13 @@ author and a date”.</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> HUELGA        1       1     3 0.333</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> SINDICATO     1       1     3 0.333</span></span></code></pre></div>
-<p><code>n</code> is the number of rows (mentions). <code>n_items</code>
-is distinct items. <code>pct</code> is <code>n_items / total</code>
-where <code>total</code> is the number of items in the universe — items
-with no entity still sit in the denominator.</p>
-<p>Soft-deleted entities (<code>source = "manual_deleted"</code>) stay
-out unless you pass that source explicitly.</p>
+<p><code>n</code> son menciones (filas). <code>n_items</code> son ítems
+distintos. <code>pct</code> es <code>n_items / total</code> con
+<code>total</code> = ítems del universo — los ítems sin entidad siguen
+en el denominador.</p>
 </div>
 <div class="section level2">
-<h2 id="temporal-profile-and-exclusions">Temporal profile and exclusions<a class="anchor" aria-label="anchor" href="#temporal-profile-and-exclusions"></a>
+<h2 id="tiempo-y-exclusiones">Tiempo y exclusiones<a class="anchor" aria-label="anchor" href="#tiempo-y-exclusiones"></a>
 </h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span><span class="op">$</span><span class="va">temporal</span></span>
@@ -236,16 +230,13 @@ out unless you pass that source explicitly.</p>
 <span><span class="co">#&gt;   missing invalid</span></span>
 <span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       0       0</span></span></code></pre></div>
-<p>Buckets are UTC month starts of the chosen <code>date_var</code>
-(default <code>item_created_at</code>). That column is an
-<em>operational</em> timestamp (created / imported), not necessarily the
-date of the historical document.</p>
+<p>Los buckets son inicios de mes UTC de <code>date_var</code> (defecto
+<code>item_created_at</code>). Esa fecha es <strong>operativa</strong>
+(alta/importación), no necesariamente la del documento histórico.</p>
 </div>
 <div class="section level2">
-<h2 id="profile-a-collected-tibble">Profile a collected tibble<a class="anchor" aria-label="anchor" href="#profile-a-collected-tibble"></a>
+<h2 id="perfil-de-un-tibble-recolectado">Perfil de un tibble recolectado<a class="anchor" aria-label="anchor" href="#perfil-de-un-tibble-recolectado"></a>
 </h2>
-<p>Overview stays on SQL. Local distributions need a collected
-table:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lengths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -318,12 +309,7 @@ table:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sampling$row_indices</span></span>
 <span><span class="co">#&gt; [1] 1 2 3 4 5</span></span></code></pre></div>
-<p><code><a href="../reference/entropia_profile.html">entropia_profile()</a></code> returns <code>structure</code>,
-<code>missing</code>, <code>numeric</code>, <code>categorical</code>,
-<code>duplicates</code> and <code>sampling</code>. Numeric ID columns
-are described but not treated as scientific measurements in correlation
-plots (see <code><a href="../articles/visualize.html">vignette("visualize")</a></code>).</p>
-<p>Sampling is opt-in and does not change <code>.Random.seed</code>:</p>
+<p>El muestreo es opt-in y no cambia <code>.Random.seed</code>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">before</span> <span class="op">&lt;-</span> <span class="va">.Random.seed</span></span>
@@ -331,18 +317,12 @@ plots (see <code><a href="../articles/visualize.html">vignette("visualize")</a><
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">.Random.seed</span>, <span class="va">before</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="hand-off">Hand-off<a class="anchor" aria-label="anchor" href="#hand-off"></a>
-</h2>
-<p>The same <code>eda</code> object feeds ggplot helpers, the Shiny
-dashboard and <code><a href="../reference/entropia_report.html">entropia_report()</a></code> — do not recompute a
-different filter per panel.</p>
+<p>El mismo objeto <code>eda</code> alimenta ggplot, el dashboard y
+<code><a href="../reference/entropia_report.html">entropia_report()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-<p>Next: <code><a href="../articles/visualize.html">vignette("visualize")</a></code>, or
-<code><a href="../articles/analysis.html">vignette("analysis")</a></code> for a full snapshot → dataset → export
-loop.</p>
+<p>Siguiente: <code><a href="../articles/visualize.html">vignette("visualize")</a></code>. English:
+<code><a href="../articles/eda.en.html">vignette("eda.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

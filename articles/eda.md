@@ -1,8 +1,10 @@
-# Exploratory analysis of an EntropIA corpus
+# Análisis exploratorio de un corpus EntropIA
 
-Start with a snapshot, then one shared overview. Do not collect the full
-corpus until a table of counts tells you the universe is the one you
-want.
+*Versión en español.* English:
+[`vignette("eda.en")`](https://humalab.github.io/EntropIA-R/articles/eda.en.md).
+
+Empezá con un snapshot y un solo overview. No bajes el corpus completo
+hasta que los recuentos confirmen el universo.
 
 ``` r
 
@@ -12,11 +14,10 @@ con <- entropia_connect(system.file(
 ))
 ```
 
-## Inventory without loading text
+## Inventario sin cargar texto
 
 [`entropia_overview()`](https://humalab.github.io/EntropIA-R/reference/entropia_overview.md)
-aggregates in SQLite. It never materialises OCR text, JSON metadata or
-embedding BLOBs.
+agrega en SQLite. Nunca materializa OCR, JSON ni BLOB.
 
 ``` r
 
@@ -47,14 +48,11 @@ eda$asset_types
 #> 3 pdf            3
 ```
 
-`counts` uses explicit units (`item`, `asset`, `collection`). `n` in
-`collections` is the number of *rows in the study query* (assets plus
-items without an asset), not a synonym for `n_items`.
+`counts` declara unidad (`item`, `asset`, `collection`). El `n` de
+`collections` es filas de la consulta de estudio (assets más ítems sin
+asset), no un sinónimo de `n_items`.
 
-## One universe, many tables
-
-Every table in `eda` uses the same selection. Filter by asset type or
-drop PDF page assets without rewriting joins:
+## Un universo, muchas tablas
 
 ``` r
 
@@ -97,7 +95,7 @@ pdfs$selection
 #> NULL
 ```
 
-An empty ID vector selects nothing (it does not fall back to “all”):
+Un vector de IDs vacío no selecciona “todo”: selecciona nada.
 
 ``` r
 
@@ -112,7 +110,7 @@ entropia_overview(con, collection_ids = character())$counts
 #> 5 pages                asset          0
 ```
 
-## Quality: numerators, denominators, status
+## Calidad: numerador, denominador, status
 
 ``` r
 
@@ -133,19 +131,18 @@ eda$quality
 #> # ℹ 13 more rows
 ```
 
-Read `status` before `pct`:
+Leé `status` antes que `pct`:
 
-- `ok` — the rate is defined;
-- `empty` — eligible rows exist but the field/layer is empty;
-- `no_data` — no rows in the denominator;
-- `not_applicable` — the metric does not apply to that group (e.g. OCR
-  on audio, depending on eligibility);
-- `invalid` — JSON that does not parse.
+- `ok` — la tasa está definida;
+- `empty` — hay filas elegibles pero el campo/capa está vacío;
+- `no_data` — denominador 0;
+- `not_applicable` — la métrica no aplica a ese grupo;
+- `invalid` — JSON que no parsea.
 
-`metadata_coverage` is *presence* of metadata text. `metadata_validity`
-is JSON syntax, not “the document has an author and a date”.
+`metadata_coverage` es *presencia* de texto. `metadata_validity` es
+sintaxis JSON, no “el documento tiene autor y fecha”.
 
-## Entities and topics: occurrence vs prevalence
+## Entidades y temas: ocurrencia vs prevalencia
 
 ``` r
 
@@ -164,14 +161,11 @@ eda$topics
 #> 2 SINDICATO     1       1     3 0.333
 ```
 
-`n` is the number of rows (mentions). `n_items` is distinct items. `pct`
-is `n_items / total` where `total` is the number of items in the
-universe — items with no entity still sit in the denominator.
+`n` son menciones (filas). `n_items` son ítems distintos. `pct` es
+`n_items / total` con `total` = ítems del universo — los ítems sin
+entidad siguen en el denominador.
 
-Soft-deleted entities (`source = "manual_deleted"`) stay out unless you
-pass that source explicitly.
-
-## Temporal profile and exclusions
+## Tiempo y exclusiones
 
 ``` r
 
@@ -187,13 +181,11 @@ attr(eda$temporal, "exclusions")
 #> 1       0       0
 ```
 
-Buckets are UTC month starts of the chosen `date_var` (default
-`item_created_at`). That column is an *operational* timestamp (created /
-imported), not necessarily the date of the historical document.
+Los buckets son inicios de mes UTC de `date_var` (defecto
+`item_created_at`). Esa fecha es **operativa** (alta/importación), no
+necesariamente la del documento histórico.
 
-## Profile a collected tibble
-
-Overview stays on SQL. Local distributions need a collected table:
+## Perfil de un tibble recolectado
 
 ``` r
 
@@ -270,13 +262,7 @@ entropia_profile(lengths, columns = c("n_chars", "n_words"))
 #> [1] 1 2 3 4 5
 ```
 
-[`entropia_profile()`](https://humalab.github.io/EntropIA-R/reference/entropia_profile.md)
-returns `structure`, `missing`, `numeric`, `categorical`, `duplicates`
-and `sampling`. Numeric ID columns are described but not treated as
-scientific measurements in correlation plots (see
-[`vignette("visualize")`](https://humalab.github.io/EntropIA-R/articles/visualize.md)).
-
-Sampling is opt-in and does not change `.Random.seed`:
+El muestreo es opt-in y no cambia `.Random.seed`:
 
 ``` r
 
@@ -288,19 +274,15 @@ identical(.Random.seed, before)
 #> [1] TRUE
 ```
 
-## Hand-off
-
-The same `eda` object feeds ggplot helpers, the Shiny dashboard and
-[`entropia_report()`](https://humalab.github.io/EntropIA-R/reference/entropia_report.md)
-— do not recompute a different filter per panel.
+El mismo objeto `eda` alimenta ggplot, el dashboard y
+[`entropia_report()`](https://humalab.github.io/EntropIA-R/reference/entropia_report.md).
 
 ``` r
 
 entropia_disconnect(con)
 ```
 
-Next:
-[`vignette("visualize")`](https://humalab.github.io/EntropIA-R/articles/visualize.md),
-or
-[`vignette("analysis")`](https://humalab.github.io/EntropIA-R/articles/analysis.md)
-for a full snapshot → dataset → export loop.
+Siguiente:
+[`vignette("visualize")`](https://humalab.github.io/EntropIA-R/articles/visualize.md).
+English:
+[`vignette("eda.en")`](https://humalab.github.io/EntropIA-R/articles/eda.en.md).

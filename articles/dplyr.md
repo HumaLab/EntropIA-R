@@ -1,13 +1,15 @@
-# Lazy queries with dplyr
+# Consultas perezosas con dplyr
 
-## Everything is a lazy table
+*Versión en español.* English:
+[`vignette("dplyr.en")`](https://humalab.github.io/EntropIA-R/articles/dplyr.en.md).
 
-Every accessor returns a `tbl_sql` backed by SQLite. That means you can
-compose the whole `dplyr` grammar — `filter`, `select`, `mutate`,
-`arrange`, `group_by`, `summarise`, `left_join` — and the *entire query*
-is translated to SQL and executed by SQLite. Nothing is loaded into R
-until you
-[`collect()`](https://dplyr.tidyverse.org/reference/compute.html).
+## Todo es una tabla perezosa
+
+Cada accesor es un `tbl_sql`. Podés componer `filter`, `select`,
+`mutate`, `arrange`, `group_by`, `summarise`, `left_join` y **toda** la
+consulta se traduce a SQL. Nada entra a R hasta
+[`collect()`](https://dplyr.tidyverse.org/reference/compute.html) /
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md).
 
 ``` r
 
@@ -25,13 +27,12 @@ entropia_items(con) |>
 #> 3 22222222-2222-4222-8222-222222222223 Fotografía de la marcha
 ```
 
-The `entropiaR` package deliberately defines *no* custom verbs. `dplyr`
-works because the accessors are plain `tbl_sql` — zero magic, and you
-can read dbplyr documentation for the full verb vocabulary.
+El paquete no define verbos propios. dplyr funciona porque los accesores
+son `tbl_sql` planos.
 
-## Filters and selection push down
+## Los filtros bajan a SQLite
 
-This never pulls the `items` table into memory:
+Esto no baja la tabla `items` a memoria:
 
 ``` r
 
@@ -39,8 +40,6 @@ q <- entropia_items(con) |>
   filter(grepl("huelga", title, ignore.case = TRUE)) |>
   select(id, title, created_at)
 ```
-
-You can inspect the generated SQL to confirm the work stays on SQLite:
 
 ``` r
 
@@ -50,11 +49,6 @@ dbplyr::sql_render(q)
 #> FROM `items`
 #> WHERE (grepl('huelga', `title`, 1 AS `ignore.case`))
 ```
-
-tidyselect works natively too — the
-[`select()`](https://dplyr.tidyverse.org/reference/select.html) above
-could have been written with helpers like
-[`starts_with()`](https://tidyselect.r-lib.org/reference/starts_with.html):
 
 ``` r
 
@@ -69,10 +63,7 @@ entropia_items(con) |>
 #> 3 22222222-2222-4222-8222-222222222223 1768478700000
 ```
 
-## Joins across accessors
-
-Because every accessor is a `tbl_sql`, you can join them directly.
-Entities join to items for context:
+## Joins entre accesores
 
 ``` r
 
@@ -88,12 +79,11 @@ entropia_entities(con) |>
 #> 3 organization Sindicato Ferroviario Carta al sindicato
 ```
 
-Note that
 [`entropia_entities()`](https://humalab.github.io/EntropIA-R/reference/entropia_entities.md)
-excludes soft-deleted rows by default (`source = 'manual_deleted'`), and
-`min_confidence` filters on confidence — both push down to SQL.
+excluye borrados lógicos (`source = 'manual_deleted'`) salvo que pidas
+lo contrario.
 
-## Grouped summaries
+## Resúmenes agrupados
 
 ``` r
 
@@ -110,12 +100,10 @@ entropia_assets(con) |>
 #> 3 audio     1      40960
 ```
 
-## Parameter-safe full-text search
+## Búsqueda full-text segura
 
 [`entropia_search()`](https://humalab.github.io/EntropIA-R/reference/entropia_search.md)
-wraps SQLite’s FTS5 index and is injection-safe: your query text is
-escaped via `dbQuoteString` before it is spliced into `MATCH`. Results
-come back ranked by BM25.
+usa FTS5; el texto se escapa con `dbQuoteString`. Ranking BM25.
 
 ``` r
 
@@ -126,8 +114,6 @@ entropia_search(con, "huelga") |> collect()
 #> 1 22222… Mani… 11111111-111… "{\"__e…      1.e12      1.e12 "Manifiest… -1.10e-6
 #> 2 22222… Cart… 11111111-111… "{\"__e…      1.e12      1.e12 "Carta al … -1.01e-6
 ```
-
-`index = "chunks"` searches the RAG chunk index instead:
 
 ``` r
 
@@ -141,16 +127,9 @@ entropia_search(con, "huelga", index = "chunks") |> collect()
 #> #   dimensions <int>, rank <dbl>
 ```
 
-Multi-word queries are AND-ed, `limit` truncates the ranked result, and
-the query itself is never interpolated into SQL.
+## Collect aplica el contrato
 
-## Collecting applies the column contract
-
-[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
-is [`collect()`](https://dplyr.tidyverse.org/reference/compute.html)
-plus the package’s column contract: millisecond timestamps become
-`POSIXct`, JSON-in-TEXT columns become list-columns, and embedding BLOBs
-stay `raw` (and are not selected unless you opt in).
+Timestamps en ms → `POSIXct`; JSON → list-columns.
 
 ``` r
 
@@ -160,8 +139,8 @@ items$created_at
 #> [3] "2026-01-15 12:05:00 UTC"
 ```
 
-Rename keeps the type of the *source* column. A new expression that
-reuses a timestamp name does **not** get converted:
+`rename` conserva el tipo de la columna **origen**. Una expresión nueva
+que reutiliza el nombre de un timestamp **no** se convierte:
 
 ``` r
 
@@ -171,17 +150,8 @@ class(entropia_collect(mutate(entropia_items(con), created_at = 1))$created_at)
 #> [1] "numeric"
 ```
 
-Joins have no automatic contract — pass `schema =` when you need typed
-columns on a joined query (see
+Los joins no tienen contrato automático: pasá `schema =` (ver
 [`?entropia_collect`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)).
-
-The pure timestamp helpers back this:
-[`entropia_datetime()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime.md)
-converts milliseconds,
-[`entropia_datetime_s()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime_s.md)
-seconds, and
-[`entropia_datetime_auto()`](https://humalab.github.io/EntropIA-R/reference/entropia_datetime_auto.md)
-uses a magnitude guard for columns whose units have drifted over time:
 
 ``` r
 
@@ -193,15 +163,12 @@ entropia_datetime_auto(c(1768478400000, 1768478400))
 #> [1] "2026-01-15 12:00:00 UTC" "2026-01-15 12:00:00 UTC"
 ```
 
-## Cleaning up
-
 ``` r
 
 entropia_disconnect(con)
 ```
 
-Next:
-[`vignette("eda")`](https://humalab.github.io/EntropIA-R/articles/eda.md)
-for SQL-side inventory, or
-[`vignette("datasets")`](https://humalab.github.io/EntropIA-R/articles/datasets.md)
-for reproducible analysis datasets.
+Siguiente:
+[`vignette("eda")`](https://humalab.github.io/EntropIA-R/articles/eda.md).
+English:
+[`vignette("dplyr.en")`](https://humalab.github.io/EntropIA-R/articles/dplyr.en.md).

@@ -1,8 +1,10 @@
-# Plotting EntropIA summaries
+# Graficar resúmenes de EntropIA
 
-Plot helpers consume **already-summarised tibbles**. They never query
-SQLite. ggplot2 is in Suggests: install it to plot; the rest of the
-package works without it.
+*Versión en español.* English:
+[`vignette("visualize.en")`](https://humalab.github.io/EntropIA-R/articles/visualize.en.md).
+
+Los helpers de gráfico consumen **tibbles ya resumidos**. No consultan
+SQLite. ggplot2 está en Suggests.
 
 ``` r
 
@@ -13,7 +15,7 @@ con <- entropia_connect(system.file(
 eda <- entropia_overview(con)
 ```
 
-## Collections and coverage
+## Colecciones y cobertura
 
 ``` r
 
@@ -29,11 +31,11 @@ entropia_plot_coverage(eda$quality, metric = "ocr_coverage")
 
 ![](visualize_files/figure-html/unnamed-chunk-2-2.png)
 
-Coverage uses `group` as the axis label and `group_id` when present, so
-two collections named “Archivo” stay two bars. `status` of `no_data` /
-`not_applicable` is annotated rather than drawn as 0%.
+La cobertura usa `group` como etiqueta y `group_id` si existe: dos
+colecciones llamadas “Archivo” siguen siendo dos barras. `no_data` /
+`not_applicable` se anotan, no se dibujan como 0%.
 
-## Entities and topics
+## Entidades y temas
 
 ``` r
 
@@ -49,12 +51,12 @@ entropia_plot_topics(eda$topics)
 
 ![](visualize_files/figure-html/unnamed-chunk-3-2.png)
 
-`top` keeps the most frequent rows. `top_by = "group"` (entities only)
-takes the top-N *inside each group* instead of globally.
+`top` deja las filas más frecuentes. `top_by = "group"` (solo entidades)
+toma el top-N *dentro de cada grupo*.
 
-## Time series
+## Series temporales
 
-Overview temporal data uses a column named `date`:
+El temporal de overview usa la columna `date`:
 
 ``` r
 
@@ -63,10 +65,7 @@ entropia_plot_temporal(eda$temporal, date_var = "date")
 
 ![](visualize_files/figure-html/unnamed-chunk-4-1.png)
 
-A profile built with
-`entropia_temporal_profile(..., by = collection_name)` must pass `group`
-(or the helper errors when several leftover columns could be the
-series):
+Un perfil con `by` exige `group` si quedan varias columnas candidatas:
 
 ``` r
 
@@ -77,7 +76,7 @@ entropia_plot_temporal(by_title)
 
 ![](visualize_files/figure-html/unnamed-chunk-5-1.png)
 
-## Lengths and missingness
+## Longitudes y faltantes
 
 ``` r
 
@@ -103,11 +102,9 @@ entropia_plot_missing(prof$missing)
 
 ![](visualize_files/figure-html/unnamed-chunk-6-3.png)
 
-Empty input draws a “Sin datos…” annotation rather than crashing.
+Una entrada vacía dibuja “Sin datos…” en lugar de fallar.
 
-## Extend and save
-
-Every helper returns a plain `ggplot`:
+## Extender y guardar
 
 ``` r
 
@@ -124,6 +121,7 @@ file.exists(tmp)
 entropia_disconnect(con)
 ```
 
-Next:
-[`vignette("dashboard")`](https://humalab.github.io/EntropIA-R/articles/dashboard.md)
-to put the same tables in a local app.
+Siguiente:
+[`vignette("dashboard")`](https://humalab.github.io/EntropIA-R/articles/dashboard.md).
+English:
+[`vignette("visualize.en")`](https://humalab.github.io/EntropIA-R/articles/visualize.en.md).

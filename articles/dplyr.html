@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Lazy queries with dplyr • entropiaR</title>
+<title>Consultas perezosas con dplyr • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Lazy queries with dplyr">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Consultas perezosas con dplyr">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Lazy queries with dplyr</h1>
+      <h1>Consultas perezosas con dplyr</h1>
             
       
 
@@ -59,16 +59,17 @@
 
     
     
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/dplyr.en.html">vignette("dplyr.en")</a></code>.</p>
 <div class="section level2">
-<h2 id="everything-is-a-lazy-table">Everything is a lazy table<a class="anchor" aria-label="anchor" href="#everything-is-a-lazy-table"></a>
+<h2 id="todo-es-una-tabla-perezosa">Todo es una tabla perezosa<a class="anchor" aria-label="anchor" href="#todo-es-una-tabla-perezosa"></a>
 </h2>
-<p>Every accessor returns a <code>tbl_sql</code> backed by SQLite. That
-means you can compose the whole <code>dplyr</code> grammar —
+<p>Cada accesor es un <code>tbl_sql</code>. Podés componer
 <code>filter</code>, <code>select</code>, <code>mutate</code>,
 <code>arrange</code>, <code>group_by</code>, <code>summarise</code>,
-<code>left_join</code> — and the <em>entire query</em> is translated to
-SQL and executed by SQLite. Nothing is loaded into R until you
-<code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code>.</p>
+<code>left_join</code> y <strong>toda</strong> la consulta se traduce a
+SQL. Nada entra a R hasta <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code> /
+<code><a href="../reference/entropia_collect.html">entropia_collect()</a></code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>, package <span class="op">=</span> <span class="st">"entropiaR"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -82,29 +83,23 @@ SQL and executed by SQLite. Nothing is loaded into R until you
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 22222222-2222-4222-8222-222222222221 Manifiesto de la huelga</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 22222222-2222-4222-8222-222222222222 Carta al sindicato     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 22222222-2222-4222-8222-222222222223 Fotografía de la marcha</span></span></code></pre></div>
-<p>The <code>entropiaR</code> package deliberately defines <em>no</em>
-custom verbs. <code>dplyr</code> works because the accessors are plain
-<code>tbl_sql</code> — zero magic, and you can read dbplyr documentation
-for the full verb vocabulary.</p>
+<p>El paquete no define verbos propios. dplyr funciona porque los
+accesores son <code>tbl_sql</code> planos.</p>
 </div>
 <div class="section level2">
-<h2 id="filters-and-selection-push-down">Filters and selection push down<a class="anchor" aria-label="anchor" href="#filters-and-selection-push-down"></a>
+<h2 id="los-filtros-bajan-a-sqlite">Los filtros bajan a SQLite<a class="anchor" aria-label="anchor" href="#los-filtros-bajan-a-sqlite"></a>
 </h2>
-<p>This never pulls the <code>items</code> table into memory:</p>
+<p>Esto no baja la tabla <code>items</code> a memoria:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"huelga"</span>, <span class="va">title</span>, ignore.case <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">id</span>, <span class="va">title</span>, <span class="va">created_at</span><span class="op">)</span></span></code></pre></div>
-<p>You can inspect the generated SQL to confirm the work stays on
-SQLite:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">dbplyr</span><span class="fu">::</span><span class="fu"><a href="https://dbplyr.tidyverse.org/reference/sql_build.html" class="external-link">sql_render</a></span><span class="op">(</span><span class="va">q</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Named arguments ignored for SQL grepl</span></span>
 <span><span class="co">#&gt; &lt;SQL&gt; SELECT `id`, `title`, `created_at`</span></span>
 <span><span class="co">#&gt; FROM `items`</span></span>
 <span><span class="co">#&gt; WHERE (grepl('huelga', `title`, 1 AS `ignore.case`))</span></span></code></pre></div>
-<p>tidyselect works natively too — the <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select()</a></code> above could
-have been written with helpers like <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with()</a></code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">id</span>, <span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"created"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -117,10 +112,8 @@ have been written with helpers like <code><a href="https://tidyselect.r-lib.org/
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 22222222-2222-4222-8222-222222222223 1<span style="text-decoration: underline;">768</span>478<span style="text-decoration: underline;">700</span>000</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="joins-across-accessors">Joins across accessors<a class="anchor" aria-label="anchor" href="#joins-across-accessors"></a>
+<h2 id="joins-entre-accesores">Joins entre accesores<a class="anchor" aria-label="anchor" href="#joins-entre-accesores"></a>
 </h2>
-<p>Because every accessor is a <code>tbl_sql</code>, you can join them
-directly. Entities join to items for context:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_entities.html">entropia_entities</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"item_id"</span> <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -132,13 +125,12 @@ directly. Entities join to items for context:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> person       Juan Pérez            Manifiesto de la huelga</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> place        Plaza de Mayo         Manifiesto de la huelga</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> organization Sindicato Ferroviario Carta al sindicato</span></span></code></pre></div>
-<p>Note that <code><a href="../reference/entropia_entities.html">entropia_entities()</a></code> excludes soft-deleted rows
-by default (<code>source = 'manual_deleted'</code>), and
-<code>min_confidence</code> filters on confidence — both push down to
-SQL.</p>
+<p><code><a href="../reference/entropia_entities.html">entropia_entities()</a></code> excluye borrados lógicos
+(<code>source = 'manual_deleted'</code>) salvo que pidas lo
+contrario.</p>
 </div>
 <div class="section level2">
-<h2 id="grouped-summaries">Grouped summaries<a class="anchor" aria-label="anchor" href="#grouped-summaries"></a>
+<h2 id="resúmenes-agrupados">Resúmenes agrupados<a class="anchor" aria-label="anchor" href="#res%C3%BAmenes-agrupados"></a>
 </h2>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_assets.html">entropia_assets</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -154,12 +146,10 @@ SQL.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> audio     1      <span style="text-decoration: underline;">40</span>960</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="parameter-safe-full-text-search">Parameter-safe full-text search<a class="anchor" aria-label="anchor" href="#parameter-safe-full-text-search"></a>
+<h2 id="búsqueda-full-text-segura">Búsqueda full-text segura<a class="anchor" aria-label="anchor" href="#b%C3%BAsqueda-full-text-segura"></a>
 </h2>
-<p><code><a href="../reference/entropia_search.html">entropia_search()</a></code> wraps SQLite’s FTS5 index and is
-injection-safe: your query text is escaped via
-<code>dbQuoteString</code> before it is spliced into <code>MATCH</code>.
-Results come back ranked by BM25.</p>
+<p><code><a href="../reference/entropia_search.html">entropia_search()</a></code> usa FTS5; el texto se escapa con
+<code>dbQuoteString</code>. Ranking BM25.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_search.html">entropia_search</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"huelga"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 8</span></span></span>
@@ -167,8 +157,6 @@ Results come back ranked by BM25.</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 22222… Mani… 11111111-111… <span style="color: #949494;">"</span>{\"__e…      1.<span style="color: #949494;">e</span>12      1.<span style="color: #949494;">e</span>12 <span style="color: #949494;">"</span>Manifiest… -<span style="color: #BB0000;">1.10</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-6</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 22222… Cart… 11111111-111… <span style="color: #949494;">"</span>{\"__e…      1.<span style="color: #949494;">e</span>12      1.<span style="color: #949494;">e</span>12 <span style="color: #949494;">"</span>Carta al … -<span style="color: #BB0000;">1.01</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-6</span></span></span></code></pre></div>
-<p><code>index = "chunks"</code> searches the RAG chunk index
-instead:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_search.html">entropia_search</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"huelga"</span>, index <span class="op">=</span> <span class="st">"chunks"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 15</span></span></span>
@@ -178,38 +166,26 @@ instead:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 8 more variables: start_char &lt;int&gt;, end_char &lt;int&gt;, source_text_hash &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   chunking_contract &lt;chr&gt;, embedding_model &lt;chr&gt;, embedding_contract &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   dimensions &lt;int&gt;, rank &lt;dbl&gt;</span></span></span></code></pre></div>
-<p>Multi-word queries are AND-ed, <code>limit</code> truncates the
-ranked result, and the query itself is never interpolated into SQL.</p>
 </div>
 <div class="section level2">
-<h2 id="collecting-applies-the-column-contract">Collecting applies the column contract<a class="anchor" aria-label="anchor" href="#collecting-applies-the-column-contract"></a>
+<h2 id="collect-aplica-el-contrato">Collect aplica el contrato<a class="anchor" aria-label="anchor" href="#collect-aplica-el-contrato"></a>
 </h2>
-<p><code><a href="../reference/entropia_collect.html">entropia_collect()</a></code> is <code><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect()</a></code> plus the
-package’s column contract: millisecond timestamps become
-<code>POSIXct</code>, JSON-in-TEXT columns become list-columns, and
-embedding BLOBs stay <code>raw</code> (and are not selected unless you
-opt in).</p>
+<p>Timestamps en ms → <code>POSIXct</code>; JSON → list-columns.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">items</span><span class="op">$</span><span class="va">created_at</span></span>
 <span><span class="co">#&gt; [1] "2026-01-15 12:01:00 UTC" "2026-01-15 12:03:00 UTC"</span></span>
 <span><span class="co">#&gt; [3] "2026-01-15 12:05:00 UTC"</span></span></code></pre></div>
-<p>Rename keeps the type of the <em>source</em> column. A new expression
-that reuses a timestamp name does <strong>not</strong> get
-converted:</p>
+<p><code>rename</code> conserva el tipo de la columna
+<strong>origen</strong>. Una expresión nueva que reutiliza el nombre de
+un timestamp <strong>no</strong> se convierte:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>, imported <span class="op">=</span> <span class="va">created_at</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">imported</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "POSIXct" "POSIXt"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>, created_at <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">created_at</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "numeric"</span></span></code></pre></div>
-<p>Joins have no automatic contract — pass <code>schema =</code> when
-you need typed columns on a joined query (see
-<code><a href="../reference/entropia_collect.html">?entropia_collect</a></code>).</p>
-<p>The pure timestamp helpers back this:
-<code><a href="../reference/entropia_datetime.html">entropia_datetime()</a></code> converts milliseconds,
-<code><a href="../reference/entropia_datetime_s.html">entropia_datetime_s()</a></code> seconds, and
-<code><a href="../reference/entropia_datetime_auto.html">entropia_datetime_auto()</a></code> uses a magnitude guard for columns
-whose units have drifted over time:</p>
+<p>Los joins no tienen contrato automático: pasá <code>schema =</code>
+(ver <code><a href="../reference/entropia_collect.html">?entropia_collect</a></code>).</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_datetime.html">entropia_datetime</a></span><span class="op">(</span><span class="fl">1768478400000</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "2026-01-15 12:00:00 UTC"</span></span>
@@ -217,15 +193,10 @@ whose units have drifted over time:</p>
 <span><span class="co">#&gt; [1] "2026-01-15 12:00:00 UTC"</span></span>
 <span><span class="fu"><a href="../reference/entropia_datetime_auto.html">entropia_datetime_auto</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1768478400000</span>, <span class="fl">1768478400</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "2026-01-15 12:00:00 UTC" "2026-01-15 12:00:00 UTC"</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="cleaning-up">Cleaning up<a class="anchor" aria-label="anchor" href="#cleaning-up"></a>
-</h2>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-<p>Next: <code><a href="../articles/eda.html">vignette("eda")</a></code> for SQL-side inventory, or
-<code><a href="../articles/datasets.html">vignette("datasets")</a></code> for reproducible analysis
-datasets.</p>
+<p>Siguiente: <code><a href="../articles/eda.html">vignette("eda")</a></code>. English:
+<code><a href="../articles/dplyr.en.html">vignette("dplyr.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>A complete reproducible analysis • entropiaR</title>
+<title>Un análisis reproducible de punta a punta • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="A complete reproducible analysis">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Un análisis reproducible de punta a punta">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>A complete reproducible analysis</h1>
+      <h1>Un análisis reproducible de punta a punta</h1>
             
       
 
@@ -59,28 +59,27 @@
 
     
     
-<p>This vignette walks one end-to-end analysis: snapshot the database,
-build a provenance-stamped dataset, profile it, and export — everything
-documented so the result can be reproduced later.</p>
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/analysis.en.html">vignette("analysis.en")</a></code>.</p>
+<p>Recorrido: snapshot → overview → dataset con procedencia → perfiles →
+gráficos → exportar.</p>
 <div class="section level2">
-<h2 id="snapshot-then-connect">1. Snapshot, then connect<a class="anchor" aria-label="anchor" href="#snapshot-then-connect"></a>
+<h2 id="snapshot-y-conexión">1. Snapshot y conexión<a class="anchor" aria-label="anchor" href="#snapshot-y-conexi%C3%B3n"></a>
 </h2>
-<p>The database may be live under EntropIA. Before analysis, take a
-snapshot with <code><a href="../reference/entropia_copy.html">entropia_copy()</a></code> and run against
-<em>that</em>, so the analysis is immune to writes landing mid-run and
-the provenance records a stable source.</p>
+<p>Si EntropIA puede estar abierta, copiá primero con
+<code><a href="../reference/entropia_copy.html">entropia_copy()</a></code> y analizá <em>esa</em> copia.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>, package <span class="op">=</span> <span class="st">"entropiaR"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">snap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".sqlite"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_copy.html">entropia_copy</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">snap</span><span class="op">)</span></span>
 <span><span class="va">snap_con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="va">snap</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="co"># original connection no longer needed</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="inventory-the-snapshot">2. Inventory the snapshot<a class="anchor" aria-label="anchor" href="#inventory-the-snapshot"></a>
+<h2 id="inventario-del-snapshot">2. Inventario del snapshot<a class="anchor" aria-label="anchor" href="#inventario-del-snapshot"></a>
 </h2>
-<p><code><a href="../reference/entropia_overview.html">entropia_overview()</a></code> is the cheap first pass: counts,
-quality and entity prevalence without collecting OCR text.</p>
+<p><code><a href="../reference/entropia_overview.html">entropia_overview()</a></code> es el primer paso barato: recuentos
+y calidad sin bajar OCR.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_overview.html">entropia_overview</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span></span>
 <span><span class="va">eda</span><span class="op">$</span><span class="va">counts</span></span>
@@ -99,11 +98,10 @@ quality and entity prevalence without collecting OCR text.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 11111111-1111-4111-8111-111111111111 Archivo de prueba       3        5     5</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="build-the-analysis-dataset">3. Build the analysis dataset<a class="anchor" aria-label="anchor" href="#build-the-analysis-dataset"></a>
+<h2 id="dataset-de-análisis">3. Dataset de análisis<a class="anchor" aria-label="anchor" href="#dataset-de-an%C3%A1lisis"></a>
 </h2>
-<p><code><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset()</a></code> applies filters to the
-corpus, collects it, and stamps provenance v2. This is the boundary:
-everything after it is ordinary tibble work.</p>
+<p><code><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset()</a></code> filtra el corpus, colecta y
+sella procedencia v2.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset</a></span><span class="op">(</span><span class="va">snap_con</span>, name <span class="op">=</span> <span class="st">"corpus_full"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Missing values are always removed in SQL aggregation functions.</span></span>
@@ -134,18 +132,16 @@ everything after it is ordinary tibble work.</p>
 <span><span class="co">#&gt;   schema hash:    09d4c603b66d68c4c0cef0f51ff09a04fb30a49fe200907ef69693d11dd25732</span></span>
 <span><span class="co">#&gt;   dataset hash:   c7d9e919196ad9347a4ba5b7fdeff6a8bfe94e3703ee2f79d05624a7f93a40f0</span></span>
 <span><span class="co">#&gt;   scope:          origin</span></span>
-<span><span class="co">#&gt;   source path:    /tmp/Rtmp4aRJz3/file20892eefe2c.sqlite</span></span>
+<span><span class="co">#&gt;   source path:    /tmp/RtmpRTrjsU/file204c3fc6895f.sqlite</span></span>
 <span><span class="co">#&gt;   package:        0.0.0.9000</span></span>
-<span><span class="co">#&gt;   built at:       2026-09-11T17:35:54.337Z</span></span>
+<span><span class="co">#&gt;   built at:       2026-09-11T17:53:11.589Z</span></span>
 <span><span class="co">#&gt;   R version:      R version 4.6.1 (2026-06-24)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="temporal-profile">4. Temporal profile<a class="anchor" aria-label="anchor" href="#temporal-profile"></a>
+<h2 id="perfil-temporal">4. Perfil temporal<a class="anchor" aria-label="anchor" href="#perfil-temporal"></a>
 </h2>
-<p>When were assets created? <code><a href="../reference/entropia_temporal_profile.html">entropia_temporal_profile()</a></code>
-buckets a date column. Collect the asset accessor directly —
-<code><a href="../reference/entropia_collect.html">entropia_collect()</a></code> types its millisecond timestamps to
-<code>POSIXct</code>, which the profiler requires:</p>
+<p>Colectá el accesor: <code><a href="../reference/entropia_collect.html">entropia_collect()</a></code> tipa ms a
+<code>POSIXct</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">assets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_assets.html">entropia_assets</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">temporal</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_temporal_profile.html">entropia_temporal_profile</a></span><span class="op">(</span><span class="va">assets</span>, <span class="va">created_at</span>, unit <span class="op">=</span> <span class="st">"second"</span><span class="op">)</span></span>
@@ -160,10 +156,8 @@ buckets a date column. Collect the asset accessor directly —
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2026-01-15 <span style="color: #949494;">12:07:40</span>     1</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="document-lengths">5. Document lengths<a class="anchor" aria-label="anchor" href="#document-lengths"></a>
+<h2 id="longitudes-de-documento">5. Longitudes de documento<a class="anchor" aria-label="anchor" href="#longitudes-de-documento"></a>
 </h2>
-<p><code><a href="../reference/entropia_document_lengths.html">entropia_document_lengths()</a></code> appends character and word
-counts per document to any tibble carrying a text column:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">texts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">lengths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_document_lengths.html">entropia_document_lengths</a></span><span class="op">(</span><span class="va">texts</span><span class="op">)</span></span>
@@ -176,15 +170,12 @@ counts per document to any tibble carrying a text column:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 33333333-3333-4333-8333-333333333333      <span style="color: #BB0000;">NA</span>      <span style="color: #BB0000;">NA</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 33333333-3333-4333-8333-333333333334      <span style="color: #BB0000;">NA</span>      <span style="color: #BB0000;">NA</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 33333333-3333-4333-8333-333333333335      23       4</span></span></code></pre></div>
-<p>Empty text counts as 0; <code>NA</code> text stays
-<code>NA</code>.</p>
+<p>Texto vacío cuenta 0; <code>NA</code> sigue <code>NA</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="entities">6. Entities<a class="anchor" aria-label="anchor" href="#entities"></a>
+<h2 id="entidades">6. Entidades<a class="anchor" aria-label="anchor" href="#entidades"></a>
 </h2>
-<p><code><a href="../reference/entropia_entities.html">entropia_entities()</a></code> excludes soft-deleted rows by
-default and surfaces provenance (source model) per entity.
-<code><a href="../reference/entropia_entity_frequency.html">entropia_entity_frequency()</a></code> tallies them by type:</p>
+<p>Por defecto se ocultan filas <code>manual_deleted</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">entities</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_entities.html">entropia_entities</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_entity_frequency.html">entropia_entity_frequency</a></span><span class="op">(</span><span class="va">entities</span><span class="op">)</span></span>
@@ -196,10 +187,10 @@ default and surfaces provenance (source model) per entity.
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> place        Plaza de Mayo             1</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="topics">7. Topics<a class="anchor" aria-label="anchor" href="#topics"></a>
+<h2 id="temas">7. Temas<a class="anchor" aria-label="anchor" href="#temas"></a>
 </h2>
-<p>Topics are normalized UPPERCASE names. Join <code>item_topics</code>
-to <code>topics</code>, then tally:</p>
+<p>Nombres normalizados a MAYÚSCULAS. Unir <code>item_topics</code> con
+<code>topics</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">item_topics</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_item_topics.html">entropia_item_topics</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">topics</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_topics.html">entropia_topics</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -211,11 +202,10 @@ to <code>topics</code>, then tally:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> SINDICATO     1</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="collections-side-by-side">8. Collections side by side<a class="anchor" aria-label="anchor" href="#collections-side-by-side"></a>
+<h2 id="colecciones-lado-a-lado">8. Colecciones lado a lado<a class="anchor" aria-label="anchor" href="#colecciones-lado-a-lado"></a>
 </h2>
-<p><code><a href="../reference/entropia_compare_collections.html">entropia_compare_collections()</a></code> groups by
-<code>collection_id</code> when that column exists, and keeps
-<code>collection_name</code> as a label:</p>
+<p>Agrupa por <code>collection_id</code> cuando existe; el nombre es
+etiqueta.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_compare_collections.html">entropia_compare_collections</a></span><span class="op">(</span><span class="va">corpus</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 5</span></span></span>
@@ -224,11 +214,8 @@ to <code>topics</code>, then tally:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 11111111-1111-4111-8111-111111111111 Archivo de prueba       3        5     5</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="corpus-quality">9. Corpus quality<a class="anchor" aria-label="anchor" href="#corpus-quality"></a>
+<h2 id="calidad-del-corpus">9. Calidad del corpus<a class="anchor" aria-label="anchor" href="#calidad-del-corpus"></a>
 </h2>
-<p><code><a href="../reference/entropia_corpus_quality.html">entropia_corpus_quality()</a></code> reports OCR coverage,
-transcription presence, and empty texts per asset type, plus metadata
-coverage per collection:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">quality</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_corpus_quality.html">entropia_corpus_quality</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span></span>
 <span><span class="va">quality</span></span>
@@ -247,11 +234,8 @@ coverage per collection:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> transcription_presence pdf              pdf   asset     0     3  0     ok</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="visualize">10. Visualize<a class="anchor" aria-label="anchor" href="#visualize"></a>
+<h2 id="visualizar">10. Visualizar<a class="anchor" aria-label="anchor" href="#visualizar"></a>
 </h2>
-<p><code>entropia_plot_*</code> helpers wrap the analysis summaries in
-ggplot2 (Suggests) and return ordinary <code>ggplot</code> objects you
-can extend:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_plot_temporal.html">entropia_plot_temporal</a></span><span class="op">(</span><span class="va">temporal</span><span class="op">)</span></span></code></pre></div>
 <p><img src="analysis_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="576"></p>
@@ -266,11 +250,9 @@ can extend:</p>
 <p><img src="analysis_files/figure-html/unnamed-chunk-13-2.png" class="r-plt" alt="" width="576"></p>
 </div>
 <div class="section level2">
-<h2 id="export-with-provenance">11. Export with provenance<a class="anchor" aria-label="anchor" href="#export-with-provenance"></a>
+<h2 id="exportar-con-procedencia">11. Exportar con procedencia<a class="anchor" aria-label="anchor" href="#exportar-con-procedencia"></a>
 </h2>
-<p>The dataset exports as-is (RDS keeps class and provenance; CSV is
-streamed for lazy inputs). Always write the provenance sidecar
-alongside:</p>
+<p>RDS conserva clase y sello; CSV perezoso se streamea.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">export_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span>, <span class="va">export_path</span><span class="op">)</span></span>
@@ -279,21 +261,15 @@ alongside:</p>
 <span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="va">corpus</span>, <span class="va">rds_path</span>, format <span class="op">=</span> <span class="st">"rds"</span><span class="op">)</span></span>
 <span><span class="va">prov_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">"-prov.json"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_write_provenance.html">entropia_write_provenance</a></span><span class="op">(</span><span class="va">corpus</span>, <span class="va">prov_path</span><span class="op">)</span></span></code></pre></div>
-<p>The RDS round-trips with its provenance intact:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">back</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">rds_path</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_provenance.html">entropia_provenance</a></span><span class="op">(</span><span class="va">back</span><span class="op">)</span><span class="op">[[</span><span class="st">"name"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "corpus_full"</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="cleanup">Cleanup<a class="anchor" aria-label="anchor" href="#cleanup"></a>
-</h2>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span></span></code></pre></div>
-<p>That is the loop: snapshot → overview → stamped dataset → analyze →
-export with a sidecar. See <code><a href="../articles/eda.html">vignette("eda")</a></code> and
-<code><a href="../articles/dashboard.html">vignette("dashboard")</a></code> for the shared tables and the local
-app.</p>
+<p>Siguiente: <code><a href="../articles/eda.html">vignette("eda")</a></code> y
+<code><a href="../articles/dashboard.html">vignette("dashboard")</a></code>. English:
+<code><a href="../articles/analysis.en.html">vignette("analysis.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

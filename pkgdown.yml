@@ -2,17 +2,27 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  administration.en: administration.en.html
   administration: administration.html
+  analysis.en: analysis.en.html
   analysis: analysis.html
+  connect.en: connect.en.html
   connect: connect.html
+  corpus.en: corpus.en.html
   corpus: corpus.html
+  dashboard.en: dashboard.en.html
   dashboard: dashboard.html
+  datasets.en: datasets.en.html
   datasets: datasets.html
+  dplyr.en: dplyr.en.html
   dplyr: dplyr.html
+  eda.en: eda.en.html
   eda: eda.html
+  text.en: text.en.html
   text: text.html
+  visualize.en: visualize.en.html
   visualize: visualize.html
-last_built: 2026-09-11T17:35Z
+last_built: 2026-09-11T17:52Z
 urls:
   reference: https://humalab.github.io/EntropIA-R/reference
   article: https://humalab.github.io/EntropIA-R/articles

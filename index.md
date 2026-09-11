@@ -142,7 +142,14 @@ corpus, overview, export) funciona sin ellos.
 
 ## Documentación
 
-Artículos (vignettes), en orden de uso:
+El **español es el idioma principal** (este README y
+[`vignette("connect")`](https://humalab.github.io/EntropIA-R/articles/connect.md),
+etc.). El inglés es la versión secundaria:
+[README.en.md](https://humalab.github.io/EntropIA-R/README.en.md) y
+[`vignette("connect.en")`](https://humalab.github.io/EntropIA-R/articles/connect.en.md),
+etc.
+
+Artículos, en orden de uso:
 
 1.  [`vignette("connect")`](https://humalab.github.io/EntropIA-R/articles/connect.md)
     — abrir, validar, snapshot

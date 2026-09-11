@@ -1,27 +1,25 @@
-# Safe data administration
+# Administración segura de los datos
 
-## v1 is read-only, by design
+*Versión en español.* English:
+[`vignette("administration.en")`](https://humalab.github.io/EntropIA-R/articles/administration.en.md).
 
-The EntropIA SQLite database is not a plain table store. It is guarded
-by a sync engine and **81 triggers** (48 oplog-capture triggers maintain
-`sync_row_versions`, and 33 collection-activity triggers maintain
-`collections.updated_at`), and it may be *live* under the EntropIA
-desktop app at the moment you connect. A bug in a write path could
-corrupt a database that took years to build.
+## v1 es solo lectura, por diseño
 
-So v1 makes writes impossible rather than merely discouraged:
+La SQLite de EntropIA no es un almacén plano: 81 triggers (48 de oplog,
+33 de actividad de colección) y, a menudo, la app de escritorio abierta.
+Un bug de escritura puede romper años de trabajo.
+
+v1 hace las escrituras *imposibles*, no solo desaconsejadas:
 
 ``` r
 
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
 ```
 
-- the connection is opened with SQLite’s read-only flags and
-  `PRAGMA query_only = ON` is re-asserted on open;
-- the write API exists as **stubs** with the v2 signatures, but every
-  one errors with `entropia_error_write_disabled` before touching the
-  database;
-- `entropia_connect(write = TRUE)` is rejected at the door.
+- flags de solo lectura + `PRAGMA query_only = ON`;
+- la API de escritura existe como **stubs** con las firmas de v2, pero
+  cada una falla con `entropia_error_write_disabled`;
+- `entropia_connect(write = TRUE)` se rechaza en la puerta.
 
 ``` r
 
@@ -46,23 +44,17 @@ entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "en
 #>   vignettes/administration.Rmd for the design.
 ```
 
-Every stub error message names the verb, states that v1 is read-only,
-points at the v2 plan, and suggests
-`entropia_connect(path, write = TRUE)` for v2.
+## WAL y la base viva
 
-## WAL and the live database
+Con EntropIA abierta puede haber `-wal` / `-shm`. Leer a través del WAL
+es seguro. Dos reglas:
 
-While EntropIA runs, the database may have `-wal` and `-shm` sidecar
-files and be journaling in WAL mode. Reading through WAL is safe — a
-read-only client sees a consistent snapshot. Two practical rules:
-
-- **Never** copy the database with a file copy while sidecars exist; use
-  [`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md),
-  which reads *through* the sidecars and emits one self-contained
-  snapshot via `VACUUM INTO`.
-- If the database is busy,
+- **Nunca** copies el archivo a mano si hay sidecars; usá
+  [`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md)
+  (`VACUUM INTO`).
+- Si está ocupada,
   [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md)
-  raises `entropia_error_locked` with guidance to retry or snapshot.
+  lanza `entropia_error_locked`.
 
 ``` r
 
@@ -70,16 +62,12 @@ copy_path <- tempfile(fileext = ".sqlite")
 entropia_copy(con, copy_path)
 ```
 
-## Schema compatibility policy
+## Política de esquema
 
-Because the database evolves, the package checks the schema on open and
-acts on `options(entropiaR.schema_policy)`:
-
-- `"warn"` (default) — warn and proceed for older/newer schemas when
-  core tables exist; **missing `collections`/`items`/`assets` is an
-  error**;
-- `"error"` — hard stop on any incompatibility;
-- `"allow"` — silent open, then inspect with
+- `"warn"` (defecto) — avisa en older/newer si el núcleo existe; **sin
+  `collections`/`items`/`assets` es error**;
+- `"error"` — corta cualquier incompatibilidad;
+- `"allow"` — abre en silencio y después
   [`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md).
 
 ``` r
@@ -90,16 +78,7 @@ entropia_schema_compat(con)$compatible
 #> [1] TRUE
 ```
 
-## The v2 write design
-
-Full write support is designed and documented here; it is implemented in
-v2. The design is deliberately conservative:
-
-**Connection.** `entropia_connect(path, write = TRUE)` will open
-read-write, set `PRAGMA foreign_keys = ON`, and warn loudly when the
-database may be live in EntropIA.
-
-**Verbs — all transactional, all guarded:**
+## Diseño de escritura v2 (aún no implementado)
 
 ``` r
 
@@ -109,40 +88,20 @@ entropia_upsert(con, table, data, by, dry_run = TRUE)
 entropia_delete(con, table, filter, all = FALSE, confirm = FALSE)
 ```
 
-- `dry_run = TRUE` is the default for writes: validate against the
-  column contract, show what would change, change nothing.
-- [`entropia_update()`](https://humalab.github.io/EntropIA-R/reference/entropia_update.md)
-  requires `by` and never touches primary keys.
-- [`entropia_upsert()`](https://humalab.github.io/EntropIA-R/reference/entropia_upsert.md)
-  is implemented as `INSERT ... ON CONFLICT(id) DO UPDATE` — **never**
-  `INSERT OR REPLACE`, because the sync engine bans it (rowid
-  reassignment breaks FTS5 rowid joins).
-- [`entropia_delete()`](https://humalab.github.io/EntropIA-R/reference/entropia_delete.md)
-  requires a `filter`; deleting a whole table needs `all = TRUE` *and*
-  `confirm = TRUE`.
-- Every verb runs inside
-  [`DBI::dbWithTransaction()`](https://dbi.r-dbi.org/reference/dbWithTransaction.html).
-- Statements are parameterized only; `INSERT OR REPLACE` and manual
-  `PRAGMA` fiddling are outside the supported surface.
-- A global guard, `options(entropiaR.write_dry_run = TRUE)`, forces
-  dry-run for the whole session.
+- `dry_run = TRUE` por defecto;
+- `upsert` es `INSERT ... ON CONFLICT`, **nunca** `INSERT OR REPLACE`
+  (rompe FTS5);
+- `delete` de tabla entera pide `all = TRUE` y `confirm = TRUE`;
+- todo transaccional y parametrizado.
 
-**Triggers are respected, never fought.** The 81 triggers are part of
-the schema contract. `collections.updated_at`, for example, is
-trigger-maintained — a v2 writer would not touch it directly. Validation
-runs against the same column contract the read path uses, so a write can
-never introduce a row the reader cannot understand.
-
-## What this means for you today
-
-For v1 you can treat the database as immutable input. Administer it with
-the EntropIA app, snapshot it with
-[`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md)
-for analysis, and know that `entropiaR` cannot corrupt it. When v2
-lands, the same verbs will be the safe, validated path — but until then
-the stubs are the guarantee.
+Hoy: la base es input inmutable. Administrala con EntropIA, snapshot con
+[`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md),
+y `entropiaR` no puede corromperla.
 
 ``` r
 
 entropia_disconnect(con)
 ```
+
+English:
+[`vignette("administration.en")`](https://humalab.github.io/EntropIA-R/articles/administration.en.md).

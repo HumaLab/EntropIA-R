@@ -1,20 +1,21 @@
-# Connecting to an EntropIA database
+# Conectar una base EntropIA
 
-## Read-only by design
+*Versión en español.* English:
+[`vignette("connect.en")`](https://humalab.github.io/EntropIA-R/articles/connect.en.md).
 
-EntropIA stores your corpus in a SQLite database. The `entropiaR`
-package is the tidy, typed interface to that database — and in v1 it is
-**read-only by construction**.
+## Solo lectura, por diseño
+
+EntropIA guarda el corpus en SQLite. `entropiaR` es la interfaz tidy y
+tipada, y en v1 es **solo lectura de construcción**:
 [`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md)
-opens the file with SQLite’s read-only flags and re-asserts
-`PRAGMA query_only = ON`, so nothing in this package can ever modify
-your database. This is deliberate: the database may be *live* under the
-EntropIA desktop app (WAL journal, a sync engine, and 81 triggers guard
-the schema), and a read-only client is safe to point at it at any time.
+abre el archivo con flags de lectura y reafirma
+`PRAGMA query_only = ON`. Nada de este paquete puede modificar la base.
+Es deliberado: la base puede estar *viva* bajo la app de escritorio
+(WAL, motor de sync, 81 triggers).
 
 ``` r
 
-# Even requesting a write connection fails in v1.
+# Pedir escritura falla en v1.
 entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"),
   write = TRUE
 )
@@ -24,11 +25,9 @@ entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "en
 #>   vignettes/administration.Rmd for the design.
 ```
 
-## Opening a connection
+## Abrir una conexión
 
-The package ships a small example database so you can follow along
-without your own data. Connect to it with
-[`entropia_connect()`](https://humalab.github.io/EntropIA-R/reference/entropia_connect.md):
+El paquete trae una base de ejemplo. Conectala así:
 
 ``` r
 
@@ -39,11 +38,9 @@ con
 #>   Extensions: TRUE
 ```
 
-The result is an `entropia_conn`, a specialized DBI connection. It *is*
-a real `SQLiteConnection`, so every DBI function keeps working, and it
-carries a few extra attributes — the file path, the open mode, the
-schema version, and a **schema** hash (DDL + migrations, not row
-contents):
+El resultado es un `entropia_conn`: un `SQLiteConnection` de DBI, con
+ruta, modo, versión de esquema y **hash de esquema** (DDL + migraciones,
+no el contenido de las filas):
 
 ``` r
 
@@ -62,15 +59,15 @@ DBI::dbIsValid(con)
 #> [1] TRUE
 ```
 
-Connect to your own EntropIA database the same way:
+Tu base de EntropIA se abre igual:
 
 ``` r
 
-con <- entropia_connect("path/to/entropia.sqlite")
+con <- entropia_connect("ruta/a/entropia.sqlite")
 ```
 
-The path must be an existing SQLite file. Missing files and non-SQLite
-files raise typed, actionable errors:
+El archivo tiene que existir y ser SQLite. Si falta o no es SQLite, el
+error es tipado:
 
 ``` r
 
@@ -87,16 +84,15 @@ notsqlite <- tempfile(fileext = ".txt")
 writeLines("not a database", notsqlite)
 entropia_connect(notsqlite)
 #> Error in `entropia_connect()`:
-#> ! /tmp/Rtmpdir4vY/file20c12d8c8e59.txt is not a SQLite database.
+#> ! /tmp/RtmpDYbR7Q/file20bf7ca174d1.txt is not a SQLite database.
 #> ℹ entropiaR reads EntropIA SQLite databases. The file does not begin with the
 #>   SQLite header.
 ```
 
-## The schema version
+## Versión de esquema
 
-There is no numeric schema version in the EntropIA database — the
-authoritative version is the newest row in the `_migrations` table.
-`entropiaR` reads it for you:
+No hay versión numérica. La autoridad es la fila más nueva de
+`_migrations`:
 
 ``` r
 
@@ -105,9 +101,8 @@ entropia_schema_version(con)
 ```
 
 [`entropia_schema_compat()`](https://humalab.github.io/EntropIA-R/reference/entropia_schema_compat.md)
-classifies the database against the column contract shipped with the
-package (`known`, `newer`, `older`, or `unknown`) and reports any
-missing columns:
+clasifica la base (`known`, `newer`, `older`, `unknown`) y lista
+columnas faltantes:
 
 ``` r
 
@@ -119,8 +114,7 @@ compat$compatible
 ```
 
 [`entropia_schema_info()`](https://humalab.github.io/EntropIA-R/reference/entropia_schema_info.md)
-lists every readable table with the columns and the type contract the
-package will apply on collect:
+lista tablas legibles, presencia real, tipo esperado y tipo SQLite vivo:
 
 ``` r
 
@@ -141,11 +135,7 @@ head(schema, 10)
 #> 10 annotat… y      REAL  TRUE     dbl      0007_annot… manif… TRUE     REAL
 ```
 
-## A compact status report
-
-[`entropia_status()`](https://humalab.github.io/EntropIA-R/reference/entropia_status.md)
-gives you the headline numbers at a glance — path, mode, schema version,
-row counts, sync freshness, and WAL state:
+## Estado compacto
 
 ``` r
 
@@ -161,25 +151,22 @@ entropia_status(con)
 #>   wal sidecar:    FALSE
 ```
 
-## Schema compatibility policy
+## Política de compatibilidad
 
-Because EntropIA evolves, `entropiaR` checks the schema on open and
-behaves according to `options(entropiaR.schema_policy)`:
+`options(entropiaR.schema_policy)`:
 
-- `"warn"` (default) — warn and proceed for older/newer schemas **when
-  the core tables `collections`, `items` and `assets` exist**;
-- `"error"` — hard stop on any incompatibility, including a missing core
-  table;
-- `"allow"` — open anyway so you can run
+- `"warn"` (defecto) — avisa y sigue en esquemas older/newer **si
+  existen** las tablas núcleo `collections`, `items` y `assets`;
+- `"error"` — corta ante cualquier incompatibilidad, incluida un núcleo
+  ausente;
+- `"allow"` — abre igual para poder correr
   [`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md).
 
-A SQLite file that only has `_migrations` and no corpus tables is
-**not** compatible. That used to print `compatible = TRUE`; it no longer
-does.
+Un SQLite que solo tiene `_migrations` **no** es compatible.
 
 ``` r
 
-options(entropiaR.schema_policy = "warn") # the default; scoped to this session
+options(entropiaR.schema_policy = "warn")
 entropia_schema_info(con) |>
   utils::head(8)
 #> # A tibble: 8 × 9
@@ -195,16 +182,11 @@ entropia_schema_info(con) |>
 #> 8 annotati… color  TEXT  TRUE     NA       0007_annot… manif… TRUE     TEXT
 ```
 
-`schema_info` now distinguishes `presence` (column exists live) from the
-manifest `type` and the SQLite `live_type`.
-
-## Validating the database
+## Validar
 
 [`entropia_validate()`](https://humalab.github.io/EntropIA-R/reference/entropia_validate.md)
-runs a structural diagnostic: core tables present, required columns
-present, per-table row counts, empty-database detection, and
-relationship sanity. It returns a findings tibble — an empty one means a
-clean bill of health:
+diagnostica estructura: tablas núcleo, columnas requeridas, recuentos,
+base vacía. Un tibble vacío de hallazgos es un OK:
 
 ``` r
 
@@ -215,13 +197,12 @@ findings
 #> #   message <chr>
 ```
 
-## Snapshotting for long analyses
+## Snapshot para análisis largos
 
-If you are about to run something long or heavy, snapshot the database
-first with
+Si vas a trabajar rato, copiá primero con
 [`entropia_copy()`](https://humalab.github.io/EntropIA-R/reference/entropia_copy.md).
-It uses SQLite’s `VACUUM INTO`, which reads *through* any WAL sidecars
-and writes a single self-contained file — a safe, stable working copy:
+Usa `VACUUM INTO`: lee a través del WAL y escribe un archivo
+autocontenido.
 
 ``` r
 
@@ -254,12 +235,10 @@ entropia_status(copy_con)$row_counts
 entropia_disconnect(copy_con)
 ```
 
-## Closing
+## Cerrar
 
-Close a connection with
-[`entropia_disconnect()`](https://humalab.github.io/EntropIA-R/reference/entropia_disconnect.md).
-It is idempotent — closing twice is harmless — and after closing,
-`dbIsValid()` reports `FALSE`:
+[`entropia_disconnect()`](https://humalab.github.io/EntropIA-R/reference/entropia_disconnect.md)
+es idempotente:
 
 ``` r
 
@@ -268,7 +247,7 @@ DBI::dbIsValid(con)
 #> [1] FALSE
 ```
 
-That is the whole connection surface. Next, explore the corpus with
-[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md),
-or pull text and metadata with
-[`vignette("text")`](https://humalab.github.io/EntropIA-R/articles/text.md).
+Siguiente:
+[`vignette("corpus")`](https://humalab.github.io/EntropIA-R/articles/corpus.md).
+English:
+[`vignette("connect.en")`](https://humalab.github.io/EntropIA-R/articles/connect.en.md).

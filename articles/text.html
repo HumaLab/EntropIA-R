@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Extracting texts and metadata • entropiaR</title>
+<title>Extraer textos y metadatos • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Extracting texts and metadata">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Extraer textos y metadatos">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Extracting texts and metadata</h1>
+      <h1>Extraer textos y metadatos</h1>
             
       
 
@@ -59,11 +59,13 @@
 
     
     
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/text.en.html">vignette("text.en")</a></code>.</p>
 <div class="section level2">
-<h2 id="the-text-layers">The text layers<a class="anchor" aria-label="anchor" href="#the-text-layers"></a>
+<h2 id="capas-de-texto">Capas de texto<a class="anchor" aria-label="anchor" href="#capas-de-texto"></a>
 </h2>
-<p>An asset can have up to three machine-readable text layers, stored in
-three 1:1 tables:</p>
+<p>Un asset puede tener hasta tres capas, 1:1 con
+<code>assets</code>:</p>
 <table class="table">
 <colgroup>
 <col width="33%">
@@ -71,14 +73,14 @@ three 1:1 tables:</p>
 <col width="33%">
 </colgroup>
 <thead><tr class="header">
-<th>Table</th>
-<th>Meaning</th>
-<th>Main columns</th>
+<th>Tabla</th>
+<th>Significado</th>
+<th>Columnas principales</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td><code>extractions</code></td>
-<td>OCR / PDF text extraction</td>
+<td>OCR / texto de PDF</td>
 <td>
 <code>text_content</code>, <code>method</code>,
 <code>confidence</code>
@@ -86,7 +88,7 @@ three 1:1 tables:</p>
 </tr>
 <tr class="even">
 <td><code>transcriptions</code></td>
-<td>Speech-to-text for audio</td>
+<td>Audio a texto</td>
 <td>
 <code>text_content</code>, <code>language</code>,
 <code>duration_ms</code>, <code>segments</code>
@@ -94,7 +96,7 @@ three 1:1 tables:</p>
 </tr>
 <tr class="odd">
 <td><code>layouts</code></td>
-<td>Layout analysis (regions/blocks)</td>
+<td>Análisis de layout</td>
 <td>
 <code>regions</code>, <code>blocks</code>, <code>image_width</code>,
 <code>image_height</code>
@@ -102,9 +104,6 @@ three 1:1 tables:</p>
 </tr>
 </tbody>
 </table>
-<p>Each row is keyed deterministically to its asset (<code>ext-</code>,
-<code>trx-</code>, <code>lay-</code> plus the asset id), so the layer
-tables join 1:1 to <code>assets</code> with no fan-out.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>, package <span class="op">=</span> <span class="st">"entropiaR"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_extractions.html">entropia_extractions</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -127,23 +126,20 @@ tables join 1:1 to <code>assets</code> with no fan-out.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: created_at &lt;dttm&gt;</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="the-best-text-per-asset">The best text per asset<a class="anchor" aria-label="anchor" href="#the-best-text-per-asset"></a>
+<h2 id="el-mejor-texto-por-asset">El mejor texto por asset<a class="anchor" aria-label="anchor" href="#el-mejor-texto-por-asset"></a>
 </h2>
-<p><code><a href="../reference/entropia_text.html">entropia_text()</a></code> returns one row per asset with a single
-<code>text</code> column — the best available text per asset.
-<code>source</code> selects the layer:</p>
+<p><code><a href="../reference/entropia_text.html">entropia_text()</a></code> devuelve una fila por asset con una
+columna <code>text</code>. <code>source</code>:</p>
 <ul>
 <li>
-<code>"extraction"</code> — the OCR/PDF extraction text only;</li>
+<code>"extraction"</code> — solo OCR/PDF;</li>
 <li>
-<code>"transcription"</code> — the audio transcription text
-only;</li>
+<code>"transcription"</code> — solo transcripción;</li>
 <li>
-<code>"auto"</code> (default) — extraction <strong>when that layer
-exists</strong>, even if the extraction text is empty, otherwise
-transcription. This matches the corpus <code>COALESCE</code> rule.
-Coverage metrics that mean “any layer useful” are named separately in
-<code>entropia_overview()$quality</code>.</li>
+<code>"auto"</code> (defecto) — extracción <strong>si esa capa
+existe</strong>, aunque el texto esté vacío; si no, transcripción. Es la
+regla <code>COALESCE</code> del corpus. Las métricas de “alguna capa
+útil” están en <code>entropia_overview()$quality</code>.</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -156,8 +152,7 @@ Coverage metrics that mean “any layer useful” are named separately in
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 33333333-3333… 222222… stor… image  <span style="text-decoration: underline;">5</span>120      1.<span style="color: #949494;">e</span>12          0 <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 33333333-3333… 222222… stor… audio <span style="text-decoration: underline;">40</span>960      1.<span style="color: #949494;">e</span>12          0 <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: page_number &lt;int&gt;, text &lt;chr&gt;</span></span></span></code></pre></div>
-<p>Assets with neither layer keep their row and get <code>NA</code>
-text:</p>
+<p>Assets sin capa conservan la fila con <code>text = NA</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -170,31 +165,23 @@ text:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: page_number &lt;int&gt;, text &lt;chr&gt;</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="ocr-markers">OCR markers<a class="anchor" aria-label="anchor" href="#ocr-markers"></a>
+<h2 id="marcadores-ocr">Marcadores OCR<a class="anchor" aria-label="anchor" href="#marcadores-ocr"></a>
 </h2>
-<p>EntropIA’s PDF extraction embeds <em>image markers</em> in the text —
-<code>![](page=n,bbox=[...])</code> — one per embedded page image. They
-are noise for text analysis, so <code><a href="../reference/entropia_text.html">entropia_text()</a></code> strips them
-by default. See the raw text first:</p>
+<p>La extracción de PDF inserta <code>![](page=n,bbox=[...])</code>.
+<code><a href="../reference/entropia_text.html">entropia_text()</a></code> los saca por defecto (CTE recursivo en SQL,
+sigue perezoso):</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">con</span>, strip_markers <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">raw</span><span class="op">$</span><span class="va">text</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "![](page=1,bbox=[10,10,500,700]) La huelga general de 1920 movilizo a los obreros."</span></span></code></pre></div>
-<p>And the stripped version:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">clean</span><span class="op">$</span><span class="va">text</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] " La huelga general de 1920 movilizo a los obreros."</span></span></code></pre></div>
-<p>The stripping happens in SQL (a recursive CTE), so it stays lazy and
-composable — you can <code>filter</code>/<code>mutate</code> on top of
-<code><a href="../reference/entropia_text.html">entropia_text()</a></code> and the whole query still runs on
-SQLite.</p>
 </div>
 <div class="section level2">
-<h2 id="restricting-to-specific-assets">Restricting to specific assets<a class="anchor" aria-label="anchor" href="#restricting-to-specific-assets"></a>
+<h2 id="restringir-a-ciertos-assets">Restringir a ciertos assets<a class="anchor" aria-label="anchor" href="#restringir-a-ciertos-assets"></a>
 </h2>
-<p><code>assets</code> accepts a character vector of asset ids or a lazy
-<code>tbl_sql</code>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_assets.html">entropia_assets</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">type</span> <span class="op">==</span> <span class="st">"audio"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -207,32 +194,25 @@ SQLite.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: page_number &lt;int&gt;, text &lt;chr&gt;</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="json-columns-become-list-columns">JSON columns become list-columns<a class="anchor" aria-label="anchor" href="#json-columns-become-list-columns"></a>
+<h2 id="json-a-list-columns">JSON a list-columns<a class="anchor" aria-label="anchor" href="#json-a-list-columns"></a>
 </h2>
-<p><code><a href="../reference/entropia_collect.html">entropia_collect()</a></code> applies the column contract.
-JSON-in-TEXT columns become list-columns via <code>jsonlite</code>, so
-<code>transcriptions.segments</code> (an array of
-<code>{start_ms, end_ms, text}</code> objects) comes back as a list of
-data frames:</p>
+<p><code><a href="../reference/entropia_collect.html">entropia_collect()</a></code> aplica el contrato.
+<code>transcriptions.segments</code> vuelve como lista de data
+frames:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">trx</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_transcriptions.html">entropia_transcriptions</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">trx</span><span class="op">$</span><span class="va">segments</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="co">#&gt;   start_ms end_ms        text</span></span>
 <span><span class="co">#&gt; 1        0   2500  Compañeros</span></span>
 <span><span class="co">#&gt; 2     2500   5000 a la huelga</span></span></code></pre></div>
-<p>The same applies to <code>items.metadata</code>,
-<code>rag_messages.sources</code>, and
-<code>llm_results.result</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="metadata">Metadata<a class="anchor" aria-label="anchor" href="#metadata"></a>
+<h2 id="metadatos">Metadatos<a class="anchor" aria-label="anchor" href="#metadatos"></a>
 </h2>
-<p><code><a href="../reference/entropia_metadata.html">entropia_metadata()</a></code> parses <code>items.metadata</code>
-into tidy rows (see <code><a href="../articles/corpus.html">vignette("corpus")</a></code>). Non-scalar
-file-metadata fields no longer abort the whole batch: the row is kept,
-the original JSON stays in <code>raw_metadata</code>, and
-<code>attr(..., "diagnostics")</code> lists <code>item_id</code>, field
-and problem.</p>
+<p>Campos no escalares de file-metadata ya no abortan el lote: se
+conserva la fila, el JSON original en <code>raw_metadata</code>, y
+<code>attr(..., "diagnostics")</code> lista <code>item_id</code>, campo
+y problema.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_metadata.html">entropia_metadata</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 7</span></span></span>
@@ -242,15 +222,12 @@ and problem.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 22222222-2222-42… carta.mp3     /docs/carta.… 2026-01-15 <span style="color: #949494;">12:06:00</span> <span style="color: #949494;">"</span>{\"__entro…</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 22222222-2222-42… <span style="color: #BB0000;">NA</span>            <span style="color: #BB0000;">NA</span>            <span style="color: #BB0000;">NA</span>                   <span style="color: #BB0000;">NA</span>         </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: extra_metadata &lt;list&gt;, page_count &lt;list&gt;</span></span></span></code></pre></div>
-<p>Malformed JSON never fails the collect — it warns (with row context)
-and yields <code>NA</code>. Use <code>parse = FALSE</code> for the raw
-text.</p>
+<p>JSON malformado avisa (con fila) y da <code>NA</code>.
+<code>parse = FALSE</code> deja el texto crudo.</p>
 </div>
 <div class="section level2">
-<h2 id="coverage-at-a-glance">Coverage at a glance<a class="anchor" aria-label="anchor" href="#coverage-at-a-glance"></a>
+<h2 id="cobertura">Cobertura<a class="anchor" aria-label="anchor" href="#cobertura"></a>
 </h2>
-<p>To see which assets are missing a text layer, use the coverage
-helpers:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_ocr_coverage.html">entropia_ocr_coverage</a></span><span class="op">(</span><span class="va">con</span>, by <span class="op">=</span> <span class="st">"asset"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 7</span></span></span>
@@ -261,10 +238,8 @@ helpers:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 33333333-3333… 222222… pdf        11111111-111… Archivo de pru…              0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 33333333-3333… 222222… image      11111111-111… Archivo de pru…              0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 33333333-3333… 222222… audio      11111111-111… Archivo de pru…              0</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: text_empty &lt;int&gt;</span></span></span></code></pre></div>
-<p>Or the combined quality report:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_corpus_quality.html">entropia_corpus_quality</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: text_empty &lt;int&gt;</span></span></span>
+<span><span class="fu"><a href="../reference/entropia_corpus_quality.html">entropia_corpus_quality</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 8</span></span></span>
 <span><span class="co">#&gt;    metric                 group_id         group unit      n total    pct status</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
@@ -278,15 +253,10 @@ helpers:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> transcription_presence audio            audio asset     1     1  1     ok    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> transcription_presence image            image asset     0     1  0     ok    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> transcription_presence pdf              pdf   asset     0     3  0     ok</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="cleaning-up">Cleaning up<a class="anchor" aria-label="anchor" href="#cleaning-up"></a>
-</h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-<p>Next: <code><a href="../articles/dplyr.html">vignette("dplyr")</a></code> for composing lazy queries, or
-<code><a href="../articles/datasets.html">vignette("datasets")</a></code> for building reproducible analysis
-datasets.</p>
+<p>Siguiente: <code><a href="../articles/dplyr.html">vignette("dplyr")</a></code>. English:
+<code><a href="../articles/text.en.html">vignette("text.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

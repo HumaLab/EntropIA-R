@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Exploring the corpus • entropiaR</title>
+<title>Explorar el corpus • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Exploring the corpus">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Explorar el corpus">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Exploring the corpus</h1>
+      <h1>Explorar el corpus</h1>
             
       
 
@@ -59,33 +59,29 @@
 
     
     
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/corpus.en.html">vignette("corpus.en")</a></code>.</p>
 <div class="section level2">
-<h2 id="the-domain-model">The domain model<a class="anchor" aria-label="anchor" href="#the-domain-model"></a>
+<h2 id="el-modelo-de-dominio">El modelo de dominio<a class="anchor" aria-label="anchor" href="#el-modelo-de-dominio"></a>
 </h2>
-<p>EntropIA organizes your research material in a three-level
-hierarchy:</p>
+<p>EntropIA organiza el material en tres niveles:</p>
 <pre><code>collections ──→ items ──→ assets</code></pre>
 <ul>
-<li>a <strong>collection</strong> is a research project or folder
-(e.g. “Conflicto SOIP 1965-66”);</li>
-<li>an <strong>item</strong> is one document inside a collection (a
-newspaper page, a letter, a photo);</li>
-<li>an <strong>asset</strong> is one physical file belonging to an item
-— an image, a PDF, or an audio recording. A PDF item usually has one
-asset <em>per page</em>; PDF page assets point at their parent asset via
-<code>parent_asset_id</code> and carry a <code>page_number</code>.</li>
+<li>una <strong>colección</strong> es un proyecto o carpeta;</li>
+<li>un <strong>ítem</strong> es un documento dentro de la
+colección;</li>
+<li>un <strong>asset</strong> es un archivo físico (imagen, PDF o
+audio). Un PDF suele tener un asset <em>por página</em>, con
+<code>parent_asset_id</code> y <code>page_number</code>.</li>
 </ul>
-<p>Everything else hangs off this spine: text layers
-(<code>extractions</code>, <code>transcriptions</code>,
-<code>layouts</code>), entities and triples, notes and annotations,
-topics, LLM results, and RAG artifacts.</p>
+<p>El resto cuelga de esa espina: capas de texto, entidades, notas,
+temas, resultados de LLM y RAG.</p>
 </div>
 <div class="section level2">
-<h2 id="accessors-are-lazy">Accessors are lazy<a class="anchor" aria-label="anchor" href="#accessors-are-lazy"></a>
+<h2 id="los-accesores-son-perezosos">Los accesores son perezosos<a class="anchor" aria-label="anchor" href="#los-accesores-son-perezosos"></a>
 </h2>
-<p>Every accessor returns a lazy <code>tbl_sql</code> — a query that has
-<em>not</em> run yet. SQLite does the work when you collect. Nothing is
-loaded into R memory until you ask:</p>
+<p>Cada accesor devuelve un <code>tbl_sql</code>: la consulta
+<strong>todavía no corrió</strong>. SQLite trabaja cuando colectás.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>, package <span class="op">=</span> <span class="st">"entropiaR"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
@@ -97,12 +93,9 @@ loaded into R memory until you ask:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 22222222-2222-… Mani… 11111111-111… <span style="color: #949494;">"</span>{\"__e…      1.<span style="color: #949494;">e</span>12      1.<span style="color: #949494;">e</span>12 <span style="color: #949494;">"</span>Manifiest…</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 22222222-2222-… Cart… 11111111-111… <span style="color: #949494;">"</span>{\"__e…      1.<span style="color: #949494;">e</span>12      1.<span style="color: #949494;">e</span>12 <span style="color: #949494;">"</span>Carta al …</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 22222222-2222-… Foto… 11111111-111…  <span style="color: #BB0000;">NA</span>           1.<span style="color: #949494;">e</span>12      1.<span style="color: #949494;">e</span>12 <span style="color: #949494;">"</span>Fotografí…</span></span></code></pre></div>
-<p>Because these are <code>tbl_sql</code>, you can pipe them straight
-into dplyr verbs and the whole query is translated to SQL (see
-<code><a href="../articles/dplyr.html">vignette("dplyr")</a></code>).</p>
 </div>
 <div class="section level2">
-<h2 id="the-three-spine-accessors">The three spine accessors<a class="anchor" aria-label="anchor" href="#the-three-spine-accessors"></a>
+<h2 id="los-tres-accesores-de-la-espina">Los tres accesores de la espina<a class="anchor" aria-label="anchor" href="#los-tres-accesores-de-la-espina"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_collections.html">entropia_collections</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -129,38 +122,23 @@ into dplyr verbs and the whole query is translated to SQL (see
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 33333333-3333… 222222… stor… image  <span style="text-decoration: underline;">5</span>120      1.<span style="color: #949494;">e</span>12          0 <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 33333333-3333… 222222… stor… audio <span style="text-decoration: underline;">40</span>960      1.<span style="color: #949494;">e</span>12          0 <span style="color: #BB0000;">NA</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: page_number &lt;int&gt;</span></span></span></code></pre></div>
-<p>Notice the PDF pages: assets <code>...3332</code> and
-<code>...3333</code> carry a <code>parent_asset_id</code> and a
-<code>page_number</code>, while the top-level PDF asset does not. You
-can join pages back to their parent:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">assets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_assets.html">entropia_assets</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">assets</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">page_number</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>asset_id <span class="op">=</span> <span class="va">id</span>, <span class="va">page_number</span>, <span class="va">parent_asset_id</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">assets</span>, <span class="va">id</span>, <span class="va">type</span><span class="op">)</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parent_asset_id"</span> <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
-<span><span class="co">#&gt;   asset_id                             page_number parent_asset_id         type </span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 33333333-3333-4333-8333-333333333332           1 33333333-3333-4333-833… pdf  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 33333333-3333-4333-8333-333333333333           2 33333333-3333-4333-833… pdf</span></span></code></pre></div>
-<p>The asset accessor never selects BLOB columns such as
-<code>embedding</code> — those are opt-in (see
-<code><a href="../reference/entropia_embeddings.html">entropia_embeddings()</a></code> /
+<p>Las páginas PDF llevan <code>parent_asset_id</code> y
+<code>page_number</code>. El accesor de assets nunca selecciona BLOB
+(<code>embedding</code>): eso es opt-in
+(<code><a href="../reference/entropia_embeddings.html">entropia_embeddings()</a></code> /
 <code><a href="../reference/entropia_chunks.html">entropia_chunks()</a></code>).</p>
 </div>
 <div class="section level2">
-<h2 id="the-corpus-view">The corpus view<a class="anchor" aria-label="anchor" href="#the-corpus-view"></a>
+<h2 id="la-vista-corpus">La vista corpus<a class="anchor" aria-label="anchor" href="#la-vista-corpus"></a>
 </h2>
-<p><code><a href="../reference/entropia_corpus.html">entropia_corpus()</a></code> is the workhorse: it joins items,
-collections and assets in one lazy query. Grain is <strong>one row per
-linked asset, plus one row per item that has no asset</strong>
-(<code>asset_id</code> is then <code>NA</code>). Orphan assets (no
-parent item) and empty collections do not appear. Prefixed timestamps
-stay integers until you pass an explicit contract into
-<code><a href="../reference/entropia_collect.html">entropia_collect()</a></code> — the join has no single-table
-contract.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<p><code><a href="../reference/entropia_corpus.html">entropia_corpus()</a></code> une ítems, colecciones y assets. El
+grano es <strong>una fila por asset vinculado, más una fila por ítem sin
+asset</strong> (<code>asset_id</code> entonces es <code>NA</code>).
+Assets huérfanos y colecciones vacías no aparecen. Los timestamps
+prefijados siguen enteros hasta un <code>schema</code> explícito en
+<code><a href="../reference/entropia_collect.html">entropia_collect()</a></code>: el join no tiene contrato de una sola
+tabla.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="va">corpus</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "item_id"                "item_title"             "collection_id"         </span></span>
@@ -170,7 +148,7 @@ contract.</p>
 <span><span class="co">#&gt; [13] "asset_type"             "asset_size"             "asset_created_at"      </span></span>
 <span><span class="co">#&gt; [16] "asset_sort_index"       "parent_asset_id"        "page_number"           </span></span>
 <span><span class="co">#&gt; [19] "text"</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corpus</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">item_title</span>, <span class="va">asset_type</span>, <span class="va">page_number</span>, <span class="va">text</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -183,12 +161,12 @@ contract.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Carta al sindicato      audio               <span style="color: #BB0000;">NA</span> Compañeros, a la huelga        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Fotografía de la marcha image               <span style="color: #BB0000;">NA</span> <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
 <div class="section level3">
-<h3 id="filtering">Filtering<a class="anchor" aria-label="anchor" href="#filtering"></a>
+<h3 id="filtros">Filtros<a class="anchor" aria-label="anchor" href="#filtros"></a>
 </h3>
-<p><code>collections</code> matches <code>collections.name</code>.
-Prefer <code>collection_ids</code> when names can collide (the name is
-<strong>not</strong> unique in the schema):</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<p><code>collections</code> compara <code>collections.name</code>.
+Preferí <code>collection_ids</code> si los nombres pueden repetirse (el
+nombre <strong>no</strong> es único):</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span>, asset_types <span class="op">=</span> <span class="st">"pdf"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -198,9 +176,9 @@ Prefer <code>collection_ids</code> when names can collide (the name is
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
-<p>By default the corpus includes PDF <em>page</em> assets. Set
-<code>page_assets = FALSE</code> to see only top-level assets:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<p>Por defecto el corpus incluye páginas PDF.
+<code>page_assets = FALSE</code> deja solo assets de primer nivel:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -209,22 +187,20 @@ Prefer <code>collection_ids</code> when names can collide (the name is
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
-<p><code>include_deleted</code> is reserved for the v2 read-write
-release; in v1 the flag has no effect (the corpus carries no soft-delete
-marker).</p>
+<p><code>include_deleted</code> está reservado para v2; en v1 no tiene
+efecto.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="item-metadata">Item metadata<a class="anchor" aria-label="anchor" href="#item-metadata"></a>
+<h2 id="metadatos-del-ítem">Metadatos del ítem<a class="anchor" aria-label="anchor" href="#metadatos-del-%C3%ADtem"></a>
 </h2>
-<p><code><a href="../reference/entropia_metadata.html">entropia_metadata()</a></code> parses the JSON inside
-<code>items.metadata</code> into tidy rows: the
-<code>__entropia_file_metadata</code> fields become proper columns
+<p><code><a href="../reference/entropia_metadata.html">entropia_metadata()</a></code> parsea el JSON de
+<code>items.metadata</code>: campos de
+<code>__entropia_file_metadata</code> a columnas
 (<code>original_name</code>, <code>original_path</code>,
-<code>imported_at</code> as a <code>POSIXct</code>), and any remaining
-top-level keys become list-columns. Items without metadata get a row
-with <code>NA</code>s rather than disappearing:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code>imported_at</code> como <code>POSIXct</code>). Ítems sin metadata
+quedan con <code>NA</code>, no desaparecen.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_metadata.html">entropia_metadata</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 7</span></span></span>
 <span><span class="co">#&gt;   item_id           original_name original_path imported_at         raw_metadata</span></span>
@@ -233,15 +209,11 @@ with <code>NA</code>s rather than disappearing:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 22222222-2222-42… carta.mp3     /docs/carta.… 2026-01-15 <span style="color: #949494;">12:06:00</span> <span style="color: #949494;">"</span>{\"__entro…</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 22222222-2222-42… <span style="color: #BB0000;">NA</span>            <span style="color: #BB0000;">NA</span>            <span style="color: #BB0000;">NA</span>                   <span style="color: #BB0000;">NA</span>         </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: extra_metadata &lt;list&gt;, page_count &lt;list&gt;</span></span></span></code></pre></div>
-<p>Pass <code>parse = FALSE</code> to see the raw JSON text instead.</p>
-</div>
-<div class="section level2">
-<h2 id="cleaning-up">Cleaning up<a class="anchor" aria-label="anchor" href="#cleaning-up"></a>
-</h2>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<p><code>parse = FALSE</code> devuelve el JSON crudo.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-<p>Next: <code><a href="../articles/text.html">vignette("text")</a></code> for text extraction and metadata,
-or <code><a href="../articles/dplyr.html">vignette("dplyr")</a></code> for composing lazy queries.</p>
+<p>Siguiente: <code><a href="../articles/text.html">vignette("text")</a></code>. English:
+<code><a href="../articles/corpus.en.html">vignette("corpus.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Safe data administration • entropiaR</title>
+<title>Administración segura de los datos • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Safe data administration">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Administración segura de los datos">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Safe data administration</h1>
+      <h1>Administración segura de los datos</h1>
             
       
 
@@ -59,29 +59,26 @@
 
     
     
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/administration.en.html">vignette("administration.en")</a></code>.</p>
 <div class="section level2">
-<h2 id="v1-is-read-only-by-design">v1 is read-only, by design<a class="anchor" aria-label="anchor" href="#v1-is-read-only-by-design"></a>
+<h2 id="v1-es-solo-lectura-por-diseño">v1 es solo lectura, por diseño<a class="anchor" aria-label="anchor" href="#v1-es-solo-lectura-por-dise%C3%B1o"></a>
 </h2>
-<p>The EntropIA SQLite database is not a plain table store. It is
-guarded by a sync engine and <strong>81 triggers</strong> (48
-oplog-capture triggers maintain <code>sync_row_versions</code>, and 33
-collection-activity triggers maintain
-<code>collections.updated_at</code>), and it may be <em>live</em> under
-the EntropIA desktop app at the moment you connect. A bug in a write
-path could corrupt a database that took years to build.</p>
-<p>So v1 makes writes impossible rather than merely discouraged:</p>
+<p>La SQLite de EntropIA no es un almacén plano: 81 triggers (48 de
+oplog, 33 de actividad de colección) y, a menudo, la app de escritorio
+abierta. Un bug de escritura puede romper años de trabajo.</p>
+<p>v1 hace las escrituras <em>imposibles</em>, no solo
+desaconsejadas:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>, package <span class="op">=</span> <span class="st">"entropiaR"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <ul>
-<li>the connection is opened with SQLite’s read-only flags and
-<code>PRAGMA query_only = ON</code> is re-asserted on open;</li>
-<li>the write API exists as <strong>stubs</strong> with the v2
-signatures, but every one errors with
-<code>entropia_error_write_disabled</code> before touching the
-database;</li>
+<li>flags de solo lectura + <code>PRAGMA query_only = ON</code>;</li>
+<li>la API de escritura existe como <strong>stubs</strong> con las
+firmas de v2, pero cada una falla con
+<code>entropia_error_write_disabled</code>;</li>
 <li>
-<code>entropia_connect(write = TRUE)</code> is rejected at the
-door.</li>
+<code>entropia_connect(write = TRUE)</code> se rechaza en la
+puerta.</li>
 </ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_insert.html">entropia_insert</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"items"</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"nope"</span><span class="op">)</span><span class="op">)</span></span>
@@ -100,46 +97,36 @@ door.</li>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Write access is not available in entropiaR v1.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> v1 is read-only. Write support ships in v2 -- see</span></span>
 <span><span class="co">#&gt;   <span style="color: #0000BB;">vignettes/administration.Rmd</span> for the design.</span></span></code></pre></div>
-<p>Every stub error message names the verb, states that v1 is read-only,
-points at the v2 plan, and suggests
-<code>entropia_connect(path, write = TRUE)</code> for v2.</p>
 </div>
 <div class="section level2">
-<h2 id="wal-and-the-live-database">WAL and the live database<a class="anchor" aria-label="anchor" href="#wal-and-the-live-database"></a>
+<h2 id="wal-y-la-base-viva">WAL y la base viva<a class="anchor" aria-label="anchor" href="#wal-y-la-base-viva"></a>
 </h2>
-<p>While EntropIA runs, the database may have <code>-wal</code> and
-<code>-shm</code> sidecar files and be journaling in WAL mode. Reading
-through WAL is safe — a read-only client sees a consistent snapshot. Two
-practical rules:</p>
+<p>Con EntropIA abierta puede haber <code>-wal</code> /
+<code>-shm</code>. Leer a través del WAL es seguro. Dos reglas:</p>
 <ul>
 <li>
-<strong>Never</strong> copy the database with a file copy while
-sidecars exist; use <code><a href="../reference/entropia_copy.html">entropia_copy()</a></code>, which reads
-<em>through</em> the sidecars and emits one self-contained snapshot via
-<code>VACUUM INTO</code>.</li>
-<li>If the database is busy, <code><a href="../reference/entropia_connect.html">entropia_connect()</a></code> raises
-<code>entropia_error_locked</code> with guidance to retry or
-snapshot.</li>
+<strong>Nunca</strong> copies el archivo a mano si hay sidecars; usá
+<code><a href="../reference/entropia_copy.html">entropia_copy()</a></code> (<code>VACUUM INTO</code>).</li>
+<li>Si está ocupada, <code><a href="../reference/entropia_connect.html">entropia_connect()</a></code> lanza
+<code>entropia_error_locked</code>.</li>
 </ul>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">copy_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".sqlite"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_copy.html">entropia_copy</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">copy_path</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="schema-compatibility-policy">Schema compatibility policy<a class="anchor" aria-label="anchor" href="#schema-compatibility-policy"></a>
+<h2 id="política-de-esquema">Política de esquema<a class="anchor" aria-label="anchor" href="#pol%C3%ADtica-de-esquema"></a>
 </h2>
-<p>Because the database evolves, the package checks the schema on open
-and acts on <code>options(entropiaR.schema_policy)</code>:</p>
 <ul>
 <li>
-<code>"warn"</code> (default) — warn and proceed for older/newer
-schemas when core tables exist; <strong>missing
-<code>collections</code>/<code>items</code>/<code>assets</code> is an
+<code>"warn"</code> (defecto) — avisa en older/newer si el núcleo
+existe; <strong>sin
+<code>collections</code>/<code>items</code>/<code>assets</code> es
 error</strong>;</li>
 <li>
-<code>"error"</code> — hard stop on any incompatibility;</li>
+<code>"error"</code> — corta cualquier incompatibilidad;</li>
 <li>
-<code>"allow"</code> — silent open, then inspect with
+<code>"allow"</code> — abre en silencio y después
 <code><a href="../reference/entropia_validate.html">entropia_validate()</a></code>.</li>
 </ul>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -149,15 +136,8 @@ error</strong>;</li>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="the-v2-write-design">The v2 write design<a class="anchor" aria-label="anchor" href="#the-v2-write-design"></a>
+<h2 id="diseño-de-escritura-v2-aún-no-implementado">Diseño de escritura v2 (aún no implementado)<a class="anchor" aria-label="anchor" href="#dise%C3%B1o-de-escritura-v2-a%C3%BAn-no-implementado"></a>
 </h2>
-<p>Full write support is designed and documented here; it is implemented
-in v2. The design is deliberately conservative:</p>
-<p><strong>Connection.</strong>
-<code>entropia_connect(path, write = TRUE)</code> will open read-write,
-set <code>PRAGMA foreign_keys = ON</code>, and warn loudly when the
-database may be live in EntropIA.</p>
-<p><strong>Verbs — all transactional, all guarded:</strong></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_insert.html">entropia_insert</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">table</span>, <span class="va">data</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_update.html">entropia_update</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">table</span>, <span class="va">data</span>, <span class="va">by</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -165,46 +145,21 @@ database may be live in EntropIA.</p>
 <span><span class="fu"><a href="../reference/entropia_delete.html">entropia_delete</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">table</span>, <span class="va">filter</span>, all <span class="op">=</span> <span class="cn">FALSE</span>, confirm <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <ul>
 <li>
-<code>dry_run = TRUE</code> is the default for writes: validate
-against the column contract, show what would change, change
-nothing.</li>
+<code>dry_run = TRUE</code> por defecto;</li>
 <li>
-<code><a href="../reference/entropia_update.html">entropia_update()</a></code> requires <code>by</code> and never
-touches primary keys.</li>
+<code>upsert</code> es <code>INSERT ... ON CONFLICT</code>,
+<strong>nunca</strong> <code>INSERT OR REPLACE</code> (rompe FTS5);</li>
 <li>
-<code><a href="../reference/entropia_upsert.html">entropia_upsert()</a></code> is implemented as
-<code>INSERT ... ON CONFLICT(id) DO UPDATE</code> —
-<strong>never</strong> <code>INSERT OR REPLACE</code>, because the sync
-engine bans it (rowid reassignment breaks FTS5 rowid joins).</li>
-<li>
-<code><a href="../reference/entropia_delete.html">entropia_delete()</a></code> requires a <code>filter</code>;
-deleting a whole table needs <code>all = TRUE</code> <em>and</em>
-<code>confirm = TRUE</code>.</li>
-<li>Every verb runs inside <code><a href="https://dbi.r-dbi.org/reference/dbWithTransaction.html" class="external-link">DBI::dbWithTransaction()</a></code>.</li>
-<li>Statements are parameterized only; <code>INSERT OR REPLACE</code>
-and manual <code>PRAGMA</code> fiddling are outside the supported
-surface.</li>
-<li>A global guard,
-<code>options(entropiaR.write_dry_run = TRUE)</code>, forces dry-run for
-the whole session.</li>
+<code>delete</code> de tabla entera pide <code>all = TRUE</code> y
+<code>confirm = TRUE</code>;</li>
+<li>todo transaccional y parametrizado.</li>
 </ul>
-<p><strong>Triggers are respected, never fought.</strong> The 81
-triggers are part of the schema contract.
-<code>collections.updated_at</code>, for example, is trigger-maintained
-— a v2 writer would not touch it directly. Validation runs against the
-same column contract the read path uses, so a write can never introduce
-a row the reader cannot understand.</p>
-</div>
-<div class="section level2">
-<h2 id="what-this-means-for-you-today">What this means for you today<a class="anchor" aria-label="anchor" href="#what-this-means-for-you-today"></a>
-</h2>
-<p>For v1 you can treat the database as immutable input. Administer it
-with the EntropIA app, snapshot it with <code><a href="../reference/entropia_copy.html">entropia_copy()</a></code> for
-analysis, and know that <code>entropiaR</code> cannot corrupt it. When
-v2 lands, the same verbs will be the safe, validated path — but until
-then the stubs are the guarantee.</p>
+<p>Hoy: la base es input inmutable. Administrala con EntropIA, snapshot
+con <code><a href="../reference/entropia_copy.html">entropia_copy()</a></code>, y <code>entropiaR</code> no puede
+corromperla.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<p>English: <code><a href="../articles/administration.en.html">vignette("administration.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

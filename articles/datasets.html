@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Reproducible analysis datasets • entropiaR</title>
+<title>Datasets de análisis reproducibles • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Reproducible analysis datasets">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Datasets de análisis reproducibles">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Reproducible analysis datasets</h1>
+      <h1>Datasets de análisis reproducibles</h1>
             
       
 
@@ -59,24 +59,21 @@
 
     
     
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/datasets.en.html">vignette("datasets.en")</a></code>.</p>
 <div class="section level2">
-<h2 id="why-provenance">Why provenance?<a class="anchor" aria-label="anchor" href="#why-provenance"></a>
+<h2 id="para-qué-sirve-la-procedencia">Para qué sirve la procedencia<a class="anchor" aria-label="anchor" href="#para-qu%C3%A9-sirve-la-procedencia"></a>
 </h2>
-<p>A research corpus changes over time: EntropIA keeps syncing, the
-schema evolves, and a “just filter and collect” workflow makes it
-impossible to say later <em>which</em> data produced a result.
-<code>entropiaR</code> solves this at the boundary where a query becomes
-a dataset: <code><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset()</a></code> records exactly what
-went in.</p>
+<p>El corpus cambia: EntropIA sincroniza, el esquema evoluciona. Un
+<code>filter</code> + <code>collect</code> suelto no dice <em>qué</em>
+datos produjeron un resultado. <code><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset()</a></code>
+sella esa frontera.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>, package <span class="op">=</span> <span class="st">"entropiaR"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="building-a-dataset">Building a dataset<a class="anchor" aria-label="anchor" href="#building-a-dataset"></a>
+<h2 id="armar-un-dataset">Armar un dataset<a class="anchor" aria-label="anchor" href="#armar-un-dataset"></a>
 </h2>
-<p><code><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset()</a></code> takes a connection, applies
-filter expressions to the corpus, collects it, and stamps
-provenance:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset</a></span><span class="op">(</span><span class="va">con</span>, name <span class="op">=</span> <span class="st">"pdf_documents"</span>, <span class="va">asset_type</span> <span class="op">==</span> <span class="st">"pdf"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: Missing values are always removed in SQL aggregation functions.</span></span>
@@ -98,12 +95,10 @@ provenance:</p>
 <span><span class="co">#&gt; <span style="color: #949494;">#   asset_type &lt;chr&gt;, asset_size &lt;int&gt;, asset_created_at &lt;dttm&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   asset_sort_index &lt;int&gt;, parent_asset_id &lt;chr&gt;, page_number &lt;int&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   text &lt;chr&gt;</span></span></span></code></pre></div>
-<p>The result is a tibble with class <code>entropia_dataset</code>, plus
-an <code>entropia_prov</code> attribute (version 2 sidecar) recording
-the schema version, the schema hash, the source-file snapshot digest, a
-canonical digest of the collected rows, the resolved SQL, the selection
-recipe, the source path, the filter labels, the package version, a build
-timestamp, and the R version.</p>
+<p>El tibble lleva <code>entropia_prov</code> (sidecar v2): versión de
+esquema, hash de esquema, digest del archivo fuente, digest canónico de
+filas, SQL resuelto, receta de selección, ruta, filtros, versiones y
+<code>built_at</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_provenance.html">entropia_provenance</a></span><span class="op">(</span><span class="va">ds</span><span class="op">)</span></span>
 <span><span class="co">#&gt; entropiaR dataset provenance</span></span>
@@ -115,11 +110,10 @@ timestamp, and the R version.</p>
 <span><span class="co">#&gt;   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite</span></span>
 <span><span class="co">#&gt;   filters:        asset_type == "pdf"</span></span>
 <span><span class="co">#&gt;   package:        0.0.0.9000</span></span>
-<span><span class="co">#&gt;   built at:       2026-09-11T17:36:12.490Z</span></span>
+<span><span class="co">#&gt;   built at:       2026-09-11T17:53:43.668Z</span></span>
 <span><span class="co">#&gt;   R version:      R version 4.6.1 (2026-06-24)</span></span></code></pre></div>
-<p>Multiple filters compose, and they push down to SQL before the
-collect. <code>unit = "item"</code> collapses to one row per document;
-<code>text = FALSE</code> skips OCR:</p>
+<p><code>unit = "item"</code> colapsa a una fila por documento;
+<code>text = FALSE</code> omite OCR:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset</a></span><span class="op">(</span><span class="va">con</span>, name <span class="op">=</span> <span class="st">"audio_items"</span>, <span class="va">asset_type</span> <span class="op">==</span> <span class="st">"audio"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -129,37 +123,31 @@ collect. <code>unit = "item"</code> collapses to one row per document;
 <span><span class="co">#&gt; [1] 9</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="determinism">Determinism<a class="anchor" aria-label="anchor" href="#determinism"></a>
+<h2 id="determinismo">Determinismo<a class="anchor" aria-label="anchor" href="#determinismo"></a>
 </h2>
-<p>Identical inputs produce identical datasets. Rows are arranged on a
-stable item/asset key before collecting, so row order never depends on
-the physical layout of the database:</p>
+<p>Misma entrada → mismas filas (orden <code>item_id</code> +
+<code>asset_id</code>):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">asset_type</span> <span class="op">==</span> <span class="st">"image"</span><span class="op">)</span></span>
 <span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_analysis_dataset.html">entropia_analysis_dataset</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">asset_type</span> <span class="op">==</span> <span class="st">"image"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">)</span> <span class="co"># data bytes identical</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/entropia_provenance.html">entropia_provenance</a></span><span class="op">(</span><span class="va">a</span><span class="op">)</span><span class="op">[[</span><span class="st">"dataset_sha256"</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>  <span class="fu"><a href="../reference/entropia_provenance.html">entropia_provenance</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span><span class="op">[[</span><span class="st">"dataset_sha256"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p>Only <code>built_at</code> differs between builds. Structural
-identity (<code>schema_hash</code>) and data identity
-(<code>dataset_sha256</code>) are separate claims: an UPDATE that
-changes rows leaves <code>schema_hash</code> intact but changes the data
-digest, and reading <code><a href="../reference/entropia_provenance.html">entropia_provenance()</a></code> on a
-<em>derived</em> object re-computes the current digest, marks
-<code>scope = "derived"</code>, and keeps the origin digest and SQL
-under <code>origin</code> instead of claiming the original query
-reproduces transformed rows.</p>
+<p>Solo <code>built_at</code> cambia entre builds.
+<code>schema_hash</code> es identidad estructural;
+<code>dataset_sha256</code> es identidad de datos. Sobre un objeto
+<em>derivado</em>, <code><a href="../reference/entropia_provenance.html">entropia_provenance()</a></code> recalcula el
+digest, marca <code>scope = "derived"</code> y guarda origen en
+<code>origin</code> — no afirma que el SQL original reproduzca las filas
+transformadas.</p>
 </div>
 <div class="section level2">
-<h2 id="provenance-sidecars">Provenance sidecars<a class="anchor" aria-label="anchor" href="#provenance-sidecars"></a>
+<h2 id="sidecar-json">Sidecar JSON<a class="anchor" aria-label="anchor" href="#sidecar-json"></a>
 </h2>
-<p><code><a href="../reference/entropia_write_provenance.html">entropia_write_provenance()</a></code> writes the provenance as a
-JSON sidecar, so a dataset and its <code>-prov.json</code> file travel
-together and survive email, archives, and other people’s machines:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">prov_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">"-prov.json"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_write_provenance.html">entropia_write_provenance</a></span><span class="op">(</span><span class="va">ds</span>, <span class="va">prov_path</span><span class="op">)</span></span>
@@ -176,41 +164,27 @@ together and survive email, archives, and other people’s machines:</p>
 <span><span class="co">#&gt; [9] "  \"query\": \"SELECT\\n  `item_id`,\\n  `item_title`,\\n  `collection_id`,\\n  `metadata`,\\n  `item_created_at`,\\n  `item_updated_at`,\\n  `collection_name`,\\n  `collection_description`,\\n  `collection_created_at`,\\n  `collection_updated_at`,\\n  `asset_id`,\\n  `asset_path`,\\n  `asset_type`,\\n  `asset_size`,\\n  `asset_created_at`,\\n  `asset_sort_index`,\\n  `parent_asset_id`,\\n  `page_number`,\\n  COALESCE(`text_ext`, `text_trx`) AS `text`\\nFROM (\\n  SELECT\\n    `items`.`id` AS `item_id`,\\n    `title` AS `item_title`,\\n    `collection_id`,\\n    `metadata`,\\n    `items`.`created_at` AS `item_created_at`,\\n    `items`.`updated_at` AS `item_updated_at`,\\n    `name` AS `collection_name`,\\n    `description` AS `collection_description`,\\n    `collections`.`created_at` AS `collection_created_at`,\\n    `collections`.`updated_at` AS `collection_updated_at`,\\n    `assets`.`id` AS `asset_id`,\\n    `path` AS `asset_path`,\\n    `type` AS `asset_type`,\\n    `size` AS `asset_size`,\\n    `assets`.`created_at` AS `asset_created_at`,\\n    `sort_index` AS `asset_sort_index`,\\n    `parent_asset_id`,\\n    `page_number`,\\n    `extractions`.`text_content` AS `text_ext`,\\n    `transcriptions`.`text_content` AS `text_trx`\\n  FROM `items`\\n  LEFT JOIN `collections`\\n    ON (`items`.`collection_id` = `collections`.`id`)\\n  LEFT JOIN `assets`\\n    ON (`items`.`id` = `assets`.`item_id`)\\n  LEFT JOIN `extractions`\\n    ON (`assets`.`id` = `extractions`.`asset_id`)\\n  LEFT JOIN `transcriptions`\\n    ON (`assets`.`id` = `transcriptions`.`asset_id`)\\n) AS `q01`\\nWHERE (`asset_type` = 'pdf')\\nORDER BY `item_id`, `asset_id`\","</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="exporting">Exporting<a class="anchor" aria-label="anchor" href="#exporting"></a>
+<h2 id="exportar">Exportar<a class="anchor" aria-label="anchor" href="#exportar"></a>
 </h2>
-<p><code><a href="../reference/entropia_export.html">entropia_export()</a></code> writes a dataset or a lazy query to
-disk. Delimited formats (csv/tsv) are <em>streamed</em> for lazy inputs
-— they fetch in chunks and never collect the whole result — and the
-output is deterministically ordered. JSON, RDS, parquet and arrow are
-whole-file formats.</p>
+<p>CSV/TSV perezosos se <em>streamean</em>. JSON/RDS/parquet/arrow son
+archivo completo. CSV se escribe en UTF-8 real.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">csv_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>, <span class="va">csv_path</span><span class="op">)</span> <span class="co"># lazy input, streamed</span></span>
+<span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span>, <span class="va">csv_path</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">csv_path</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rds_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="va">ds</span>, <span class="va">rds_path</span>, format <span class="op">=</span> <span class="st">"rds"</span><span class="op">)</span> <span class="co"># class + provenance intact</span></span>
+<span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="va">ds</span>, <span class="va">rds_path</span>, format <span class="op">=</span> <span class="st">"rds"</span><span class="op">)</span></span>
 <span><span class="va">back</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">rds_path</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">back</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "entropia_dataset" "tbl_df"           "tbl"              "data.frame"</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">json_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/entropia_export.html">entropia_export</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_corpus.html">entropia_corpus</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span><span class="op">)</span>, <span class="va">json_path</span>, format <span class="op">=</span> <span class="st">"json"</span><span class="op">)</span></span>
-<span><span class="fu">jsonlite</span><span class="fu">::</span><span class="fu"><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">fromJSON</a></span><span class="op">(</span><span class="va">json_path</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
-<p>parquet/arrow are available when the <code>arrow</code> package is
-installed (it is a Suggests dependency, so <code>entropia_export</code>
-fails with clear guidance rather than a load error when it is not).</p>
 </div>
 <div class="section level2">
-<h2 id="recommended-workflow">Recommended workflow<a class="anchor" aria-label="anchor" href="#recommended-workflow"></a>
+<h2 id="flujo-recomendado">Flujo recomendado<a class="anchor" aria-label="anchor" href="#flujo-recomendado"></a>
 </h2>
-<p>For anything that will take a while, snapshot the database first,
-then build datasets against the snapshot. The provenance then records
-the <em>snapshot</em> as the source, so the analysis is immune to writes
-landing in the meantime:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<p>Snapshot primero; la procedencia registra <em>ese</em> archivo:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">snap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".sqlite"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_copy.html">entropia_copy</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">snap</span><span class="op">)</span></span>
 <span><span class="va">snap_con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="va">snap</span><span class="op">)</span></span>
@@ -218,15 +192,10 @@ landing in the meantime:</p>
 <span><span class="fu"><a href="../reference/entropia_provenance.html">entropia_provenance</a></span><span class="op">(</span><span class="va">stable</span><span class="op">)</span><span class="op">[[</span><span class="st">"source_path"</span><span class="op">]</span><span class="op">]</span> <span class="op">==</span> <span class="va">snap</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">snap_con</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="cleaning-up">Cleaning up<a class="anchor" aria-label="anchor" href="#cleaning-up"></a>
-</h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-<p>Next: <code><a href="../articles/analysis.html">vignette("analysis")</a></code> for a complete end-to-end
-analysis, or <code><a href="../articles/administration.html">vignette("administration")</a></code> for the safety
-model around the database.</p>
+<p>Siguiente: <code><a href="../articles/analysis.html">vignette("analysis")</a></code>. English:
+<code><a href="../articles/datasets.en.html">vignette("datasets.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

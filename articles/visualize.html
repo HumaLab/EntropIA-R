@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Plotting EntropIA summaries • entropiaR</title>
+<title>Graficar resúmenes de EntropIA • entropiaR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Plotting EntropIA summaries">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Graficar resúmenes de EntropIA">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -50,7 +50,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Plotting EntropIA summaries</h1>
+      <h1>Graficar resúmenes de EntropIA</h1>
             
       
 
@@ -59,9 +59,10 @@
 
     
     
-<p>Plot helpers consume <strong>already-summarised tibbles</strong>.
-They never query SQLite. ggplot2 is in Suggests: install it to plot; the
-rest of the package works without it.</p>
+<p><em>Versión en español.</em> English:
+<code><a href="../articles/visualize.en.html">vignette("visualize.en")</a></code>.</p>
+<p>Los helpers de gráfico consumen <strong>tibbles ya
+resumidos</strong>. No consultan SQLite. ggplot2 está en Suggests.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_connect.html">entropia_connect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
 <span>  <span class="st">"extdata"</span>, <span class="st">"entropia-example.sqlite"</span>,</span>
@@ -69,7 +70,7 @@ rest of the package works without it.</p>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">eda</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_overview.html">entropia_overview</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="collections-and-coverage">Collections and coverage<a class="anchor" aria-label="anchor" href="#collections-and-coverage"></a>
+<h2 id="colecciones-y-cobertura">Colecciones y cobertura<a class="anchor" aria-label="anchor" href="#colecciones-y-cobertura"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_plot_collections.html">entropia_plot_collections</a></span><span class="op">(</span><span class="va">eda</span><span class="op">$</span><span class="va">collections</span><span class="op">)</span></span></code></pre></div>
@@ -77,13 +78,13 @@ rest of the package works without it.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_plot_coverage.html">entropia_plot_coverage</a></span><span class="op">(</span><span class="va">eda</span><span class="op">$</span><span class="va">quality</span>, metric <span class="op">=</span> <span class="st">"ocr_coverage"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualize_files/figure-html/unnamed-chunk-2-2.png" class="r-plt" alt="" width="576"></p>
-<p>Coverage uses <code>group</code> as the axis label and
-<code>group_id</code> when present, so two collections named “Archivo”
-stay two bars. <code>status</code> of <code>no_data</code> /
-<code>not_applicable</code> is annotated rather than drawn as 0%.</p>
+<p>La cobertura usa <code>group</code> como etiqueta y
+<code>group_id</code> si existe: dos colecciones llamadas “Archivo”
+siguen siendo dos barras. <code>no_data</code> /
+<code>not_applicable</code> se anotan, no se dibujan como 0%.</p>
 </div>
 <div class="section level2">
-<h2 id="entities-and-topics">Entities and topics<a class="anchor" aria-label="anchor" href="#entities-and-topics"></a>
+<h2 id="entidades-y-temas">Entidades y temas<a class="anchor" aria-label="anchor" href="#entidades-y-temas"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_plot_entities.html">entropia_plot_entities</a></span><span class="op">(</span><span class="va">eda</span><span class="op">$</span><span class="va">entities</span><span class="op">)</span></span></code></pre></div>
@@ -91,21 +92,19 @@ stay two bars. <code>status</code> of <code>no_data</code> /
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_plot_topics.html">entropia_plot_topics</a></span><span class="op">(</span><span class="va">eda</span><span class="op">$</span><span class="va">topics</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualize_files/figure-html/unnamed-chunk-3-2.png" class="r-plt" alt="" width="576"></p>
-<p><code>top</code> keeps the most frequent rows.
-<code>top_by = "group"</code> (entities only) takes the top-N <em>inside
-each group</em> instead of globally.</p>
+<p><code>top</code> deja las filas más frecuentes.
+<code>top_by = "group"</code> (solo entidades) toma el top-N <em>dentro
+de cada grupo</em>.</p>
 </div>
 <div class="section level2">
-<h2 id="time-series">Time series<a class="anchor" aria-label="anchor" href="#time-series"></a>
+<h2 id="series-temporales">Series temporales<a class="anchor" aria-label="anchor" href="#series-temporales"></a>
 </h2>
-<p>Overview temporal data uses a column named <code>date</code>:</p>
+<p>El temporal de overview usa la columna <code>date</code>:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_plot_temporal.html">entropia_plot_temporal</a></span><span class="op">(</span><span class="va">eda</span><span class="op">$</span><span class="va">temporal</span>, date_var <span class="op">=</span> <span class="st">"date"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualize_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="576"></p>
-<p>A profile built with
-<code>entropia_temporal_profile(..., by = collection_name)</code> must
-pass <code>group</code> (or the helper errors when several leftover
-columns could be the series):</p>
+<p>Un perfil con <code>by</code> exige <code>group</code> si quedan
+varias columnas candidatas:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">items</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_items.html">entropia_items</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">by_title</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_temporal_profile.html">entropia_temporal_profile</a></span><span class="op">(</span><span class="va">items</span>, <span class="va">created_at</span>, unit <span class="op">=</span> <span class="st">"day"</span><span class="op">)</span></span>
@@ -113,7 +112,7 @@ columns could be the series):</p>
 <p><img src="visualize_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="576"></p>
 </div>
 <div class="section level2">
-<h2 id="lengths-and-missingness">Lengths and missingness<a class="anchor" aria-label="anchor" href="#lengths-and-missingness"></a>
+<h2 id="longitudes-y-faltantes">Longitudes y faltantes<a class="anchor" aria-label="anchor" href="#longitudes-y-faltantes"></a>
 </h2>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lengths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_document_lengths.html">entropia_document_lengths</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_collect.html">entropia_collect</a></span><span class="op">(</span><span class="fu"><a href="../reference/entropia_text.html">entropia_text</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -127,12 +126,11 @@ columns could be the series):</p>
 <span><span class="va">prof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_profile.html">entropia_profile</a></span><span class="op">(</span><span class="va">lengths</span>, columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n_chars"</span>, <span class="st">"n_words"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/entropia_plot_missing.html">entropia_plot_missing</a></span><span class="op">(</span><span class="va">prof</span><span class="op">$</span><span class="va">missing</span><span class="op">)</span></span></code></pre></div>
 <p><img src="visualize_files/figure-html/unnamed-chunk-6-3.png" class="r-plt" alt="" width="576"></p>
-<p>Empty input draws a “Sin datos…” annotation rather than crashing.</p>
+<p>Una entrada vacía dibuja “Sin datos…” en lugar de fallar.</p>
 </div>
 <div class="section level2">
-<h2 id="extend-and-save">Extend and save<a class="anchor" aria-label="anchor" href="#extend-and-save"></a>
+<h2 id="extender-y-guardar">Extender y guardar<a class="anchor" aria-label="anchor" href="#extender-y-guardar"></a>
 </h2>
-<p>Every helper returns a plain <code>ggplot</code>:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/entropia_plot_entities.html">entropia_plot_entities</a></span><span class="op">(</span><span class="va">eda</span><span class="op">$</span><span class="va">entities</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Ocurrencias, no identidades resueltas"</span><span class="op">)</span></span>
@@ -142,8 +140,8 @@ columns could be the series):</p>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/entropia_disconnect.html">entropia_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
-<p>Next: <code><a href="../articles/dashboard.html">vignette("dashboard")</a></code> to put the same tables in a
-local app.</p>
+<p>Siguiente: <code><a href="../articles/dashboard.html">vignette("dashboard")</a></code>. English:
+<code><a href="../articles/visualize.en.html">vignette("visualize.en")</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

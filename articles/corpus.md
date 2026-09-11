@@ -1,29 +1,26 @@
-# Exploring the corpus
+# Explorar el corpus
 
-## The domain model
+*Versión en español.* English:
+[`vignette("corpus.en")`](https://humalab.github.io/EntropIA-R/articles/corpus.en.md).
 
-EntropIA organizes your research material in a three-level hierarchy:
+## El modelo de dominio
+
+EntropIA organiza el material en tres niveles:
 
     collections ──→ items ──→ assets
 
-- a **collection** is a research project or folder (e.g. “Conflicto SOIP
-  1965-66”);
-- an **item** is one document inside a collection (a newspaper page, a
-  letter, a photo);
-- an **asset** is one physical file belonging to an item — an image, a
-  PDF, or an audio recording. A PDF item usually has one asset *per
-  page*; PDF page assets point at their parent asset via
-  `parent_asset_id` and carry a `page_number`.
+- una **colección** es un proyecto o carpeta;
+- un **ítem** es un documento dentro de la colección;
+- un **asset** es un archivo físico (imagen, PDF o audio). Un PDF suele
+  tener un asset *por página*, con `parent_asset_id` y `page_number`.
 
-Everything else hangs off this spine: text layers (`extractions`,
-`transcriptions`, `layouts`), entities and triples, notes and
-annotations, topics, LLM results, and RAG artifacts.
+El resto cuelga de esa espina: capas de texto, entidades, notas, temas,
+resultados de LLM y RAG.
 
-## Accessors are lazy
+## Los accesores son perezosos
 
-Every accessor returns a lazy `tbl_sql` — a query that has *not* run
-yet. SQLite does the work when you collect. Nothing is loaded into R
-memory until you ask:
+Cada accesor devuelve un `tbl_sql`: la consulta **todavía no corrió**.
+SQLite trabaja cuando colectás.
 
 ``` r
 
@@ -39,11 +36,7 @@ items
 #> 3 22222222-2222-… Foto… 11111111-111…  NA           1.e12      1.e12 "Fotografí…
 ```
 
-Because these are `tbl_sql`, you can pipe them straight into dplyr verbs
-and the whole query is translated to SQL (see
-[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md)).
-
-## The three spine accessors
+## Los tres accesores de la espina
 
 ``` r
 
@@ -79,40 +72,21 @@ entropia_assets(con) |> collect()
 #> # ℹ 1 more variable: page_number <int>
 ```
 
-Notice the PDF pages: assets `...3332` and `...3333` carry a
-`parent_asset_id` and a `page_number`, while the top-level PDF asset
-does not. You can join pages back to their parent:
-
-``` r
-
-assets <- entropia_assets(con) |> collect()
-assets |>
-  filter(!is.na(page_number)) |>
-  select(asset_id = id, page_number, parent_asset_id) |>
-  left_join(select(assets, id, type), by = c("parent_asset_id" = "id"))
-#> # A tibble: 2 × 4
-#>   asset_id                             page_number parent_asset_id         type 
-#>   <chr>                                      <int> <chr>                   <chr>
-#> 1 33333333-3333-4333-8333-333333333332           1 33333333-3333-4333-833… pdf  
-#> 2 33333333-3333-4333-8333-333333333333           2 33333333-3333-4333-833… pdf
-```
-
-The asset accessor never selects BLOB columns such as `embedding` —
-those are opt-in (see
-[`entropia_embeddings()`](https://humalab.github.io/EntropIA-R/reference/entropia_embeddings.md)
+Las páginas PDF llevan `parent_asset_id` y `page_number`. El accesor de
+assets nunca selecciona BLOB (`embedding`): eso es opt-in
+([`entropia_embeddings()`](https://humalab.github.io/EntropIA-R/reference/entropia_embeddings.md)
 /
 [`entropia_chunks()`](https://humalab.github.io/EntropIA-R/reference/entropia_chunks.md)).
 
-## The corpus view
+## La vista corpus
 
 [`entropia_corpus()`](https://humalab.github.io/EntropIA-R/reference/entropia_corpus.md)
-is the workhorse: it joins items, collections and assets in one lazy
-query. Grain is **one row per linked asset, plus one row per item that
-has no asset** (`asset_id` is then `NA`). Orphan assets (no parent item)
-and empty collections do not appear. Prefixed timestamps stay integers
-until you pass an explicit contract into
-[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md)
-— the join has no single-table contract.
+une ítems, colecciones y assets. El grano es **una fila por asset
+vinculado, más una fila por ítem sin asset** (`asset_id` entonces es
+`NA`). Assets huérfanos y colecciones vacías no aparecen. Los timestamps
+prefijados siguen enteros hasta un `schema` explícito en
+[`entropia_collect()`](https://humalab.github.io/EntropIA-R/reference/entropia_collect.md):
+el join no tiene contrato de una sola tabla.
 
 ``` r
 
@@ -142,10 +116,10 @@ corpus |>
 #> 5 Fotografía de la marcha image               NA NA
 ```
 
-### Filtering
+### Filtros
 
-`collections` matches `collections.name`. Prefer `collection_ids` when
-names can collide (the name is **not** unique in the schema):
+`collections` compara `collections.name`. Preferí `collection_ids` si
+los nombres pueden repetirse (el nombre **no** es único):
 
 ``` r
 
@@ -160,8 +134,8 @@ entropia_corpus(con, collection_ids = ids[1]) |>
 #> [1] 5
 ```
 
-By default the corpus includes PDF *page* assets. Set
-`page_assets = FALSE` to see only top-level assets:
+Por defecto el corpus incluye páginas PDF. `page_assets = FALSE` deja
+solo assets de primer nivel:
 
 ``` r
 
@@ -175,17 +149,14 @@ entropia_corpus(con, page_assets = FALSE) |>
 #> [1] 3
 ```
 
-`include_deleted` is reserved for the v2 read-write release; in v1 the
-flag has no effect (the corpus carries no soft-delete marker).
+`include_deleted` está reservado para v2; en v1 no tiene efecto.
 
-## Item metadata
+## Metadatos del ítem
 
 [`entropia_metadata()`](https://humalab.github.io/EntropIA-R/reference/entropia_metadata.md)
-parses the JSON inside `items.metadata` into tidy rows: the
-`__entropia_file_metadata` fields become proper columns
-(`original_name`, `original_path`, `imported_at` as a `POSIXct`), and
-any remaining top-level keys become list-columns. Items without metadata
-get a row with `NA`s rather than disappearing:
+parsea el JSON de `items.metadata`: campos de `__entropia_file_metadata`
+a columnas (`original_name`, `original_path`, `imported_at` como
+`POSIXct`). Ítems sin metadata quedan con `NA`, no desaparecen.
 
 ``` r
 
@@ -199,17 +170,14 @@ entropia_metadata(con)
 #> # ℹ 2 more variables: extra_metadata <list>, page_count <list>
 ```
 
-Pass `parse = FALSE` to see the raw JSON text instead.
-
-## Cleaning up
+`parse = FALSE` devuelve el JSON crudo.
 
 ``` r
 
 entropia_disconnect(con)
 ```
 
-Next:
-[`vignette("text")`](https://humalab.github.io/EntropIA-R/articles/text.md)
-for text extraction and metadata, or
-[`vignette("dplyr")`](https://humalab.github.io/EntropIA-R/articles/dplyr.md)
-for composing lazy queries.
+Siguiente:
+[`vignette("text")`](https://humalab.github.io/EntropIA-R/articles/text.md).
+English:
+[`vignette("corpus.en")`](https://humalab.github.io/EntropIA-R/articles/corpus.en.md).

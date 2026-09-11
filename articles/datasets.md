@@ -1,24 +1,21 @@
-# Reproducible analysis datasets
+# Datasets de análisis reproducibles
 
-## Why provenance?
+*Versión en español.* English:
+[`vignette("datasets.en")`](https://humalab.github.io/EntropIA-R/articles/datasets.en.md).
 
-A research corpus changes over time: EntropIA keeps syncing, the schema
-evolves, and a “just filter and collect” workflow makes it impossible to
-say later *which* data produced a result. `entropiaR` solves this at the
-boundary where a query becomes a dataset:
+## Para qué sirve la procedencia
+
+El corpus cambia: EntropIA sincroniza, el esquema evoluciona. Un
+`filter` + `collect` suelto no dice *qué* datos produjeron un resultado.
 [`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
-records exactly what went in.
+sella esa frontera.
 
 ``` r
 
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
 ```
 
-## Building a dataset
-
-[`entropia_analysis_dataset()`](https://humalab.github.io/EntropIA-R/reference/entropia_analysis_dataset.md)
-takes a connection, applies filter expressions to the corpus, collects
-it, and stamps provenance:
+## Armar un dataset
 
 ``` r
 
@@ -44,12 +41,9 @@ ds
 #> #   text <chr>
 ```
 
-The result is a tibble with class `entropia_dataset`, plus an
-`entropia_prov` attribute (version 2 sidecar) recording the schema
-version, the schema hash, the source-file snapshot digest, a canonical
-digest of the collected rows, the resolved SQL, the selection recipe,
-the source path, the filter labels, the package version, a build
-timestamp, and the R version.
+El tibble lleva `entropia_prov` (sidecar v2): versión de esquema, hash
+de esquema, digest del archivo fuente, digest canónico de filas, SQL
+resuelto, receta de selección, ruta, filtros, versiones y `built_at`.
 
 ``` r
 
@@ -63,12 +57,11 @@ entropia_provenance(ds)
 #>   source path:    /home/runner/work/_temp/Library/entropiaR/extdata/entropia-example.sqlite
 #>   filters:        asset_type == "pdf"
 #>   package:        0.0.0.9000
-#>   built at:       2026-09-11T17:36:12.490Z
+#>   built at:       2026-09-11T17:53:43.668Z
 #>   R version:      R version 4.6.1 (2026-06-24)
 ```
 
-Multiple filters compose, and they push down to SQL before the collect.
-`unit = "item"` collapses to one row per document; `text = FALSE` skips
+`unit = "item"` colapsa a una fila por documento; `text = FALSE` omite
 OCR:
 
 ``` r
@@ -81,17 +74,15 @@ entropia_analysis_dataset(con, unit = "item", text = FALSE, name = "items_only")
 #> [1] 9
 ```
 
-## Determinism
+## Determinismo
 
-Identical inputs produce identical datasets. Rows are arranged on a
-stable item/asset key before collecting, so row order never depends on
-the physical layout of the database:
+Misma entrada → mismas filas (orden `item_id` + `asset_id`):
 
 ``` r
 
 a <- entropia_analysis_dataset(con, asset_type == "image")
 b <- entropia_analysis_dataset(con, asset_type == "image")
-identical(as.data.frame(a), as.data.frame(b)) # data bytes identical
+identical(as.data.frame(a), as.data.frame(b))
 #> [1] FALSE
 identical(
   entropia_provenance(a)[["dataset_sha256"]],
@@ -100,21 +91,15 @@ identical(
 #> [1] TRUE
 ```
 
-Only `built_at` differs between builds. Structural identity
-(`schema_hash`) and data identity (`dataset_sha256`) are separate
-claims: an UPDATE that changes rows leaves `schema_hash` intact but
-changes the data digest, and reading
+Solo `built_at` cambia entre builds. `schema_hash` es identidad
+estructural; `dataset_sha256` es identidad de datos. Sobre un objeto
+*derivado*,
 [`entropia_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_provenance.md)
-on a *derived* object re-computes the current digest, marks
-`scope = "derived"`, and keeps the origin digest and SQL under `origin`
-instead of claiming the original query reproduces transformed rows.
+recalcula el digest, marca `scope = "derived"` y guarda origen en
+`origin` — no afirma que el SQL original reproduzca las filas
+transformadas.
 
-## Provenance sidecars
-
-[`entropia_write_provenance()`](https://humalab.github.io/EntropIA-R/reference/entropia_write_provenance.md)
-writes the provenance as a JSON sidecar, so a dataset and its
-`-prov.json` file travel together and survive email, archives, and other
-people’s machines:
+## Sidecar JSON
 
 ``` r
 
@@ -133,18 +118,15 @@ readLines(prov_path)[1:9]
 #> [9] "  \"query\": \"SELECT\\n  `item_id`,\\n  `item_title`,\\n  `collection_id`,\\n  `metadata`,\\n  `item_created_at`,\\n  `item_updated_at`,\\n  `collection_name`,\\n  `collection_description`,\\n  `collection_created_at`,\\n  `collection_updated_at`,\\n  `asset_id`,\\n  `asset_path`,\\n  `asset_type`,\\n  `asset_size`,\\n  `asset_created_at`,\\n  `asset_sort_index`,\\n  `parent_asset_id`,\\n  `page_number`,\\n  COALESCE(`text_ext`, `text_trx`) AS `text`\\nFROM (\\n  SELECT\\n    `items`.`id` AS `item_id`,\\n    `title` AS `item_title`,\\n    `collection_id`,\\n    `metadata`,\\n    `items`.`created_at` AS `item_created_at`,\\n    `items`.`updated_at` AS `item_updated_at`,\\n    `name` AS `collection_name`,\\n    `description` AS `collection_description`,\\n    `collections`.`created_at` AS `collection_created_at`,\\n    `collections`.`updated_at` AS `collection_updated_at`,\\n    `assets`.`id` AS `asset_id`,\\n    `path` AS `asset_path`,\\n    `type` AS `asset_type`,\\n    `size` AS `asset_size`,\\n    `assets`.`created_at` AS `asset_created_at`,\\n    `sort_index` AS `asset_sort_index`,\\n    `parent_asset_id`,\\n    `page_number`,\\n    `extractions`.`text_content` AS `text_ext`,\\n    `transcriptions`.`text_content` AS `text_trx`\\n  FROM `items`\\n  LEFT JOIN `collections`\\n    ON (`items`.`collection_id` = `collections`.`id`)\\n  LEFT JOIN `assets`\\n    ON (`items`.`id` = `assets`.`item_id`)\\n  LEFT JOIN `extractions`\\n    ON (`assets`.`id` = `extractions`.`asset_id`)\\n  LEFT JOIN `transcriptions`\\n    ON (`assets`.`id` = `transcriptions`.`asset_id`)\\n) AS `q01`\\nWHERE (`asset_type` = 'pdf')\\nORDER BY `item_id`, `asset_id`\","
 ```
 
-## Exporting
+## Exportar
 
-[`entropia_export()`](https://humalab.github.io/EntropIA-R/reference/entropia_export.md)
-writes a dataset or a lazy query to disk. Delimited formats (csv/tsv)
-are *streamed* for lazy inputs — they fetch in chunks and never collect
-the whole result — and the output is deterministically ordered. JSON,
-RDS, parquet and arrow are whole-file formats.
+CSV/TSV perezosos se *streamean*. JSON/RDS/parquet/arrow son archivo
+completo. CSV se escribe en UTF-8 real.
 
 ``` r
 
 csv_path <- tempfile(fileext = ".csv")
-entropia_export(entropia_corpus(con), csv_path) # lazy input, streamed
+entropia_export(entropia_corpus(con), csv_path)
 read.csv(csv_path) |> nrow()
 #> [1] 5
 ```
@@ -152,30 +134,15 @@ read.csv(csv_path) |> nrow()
 ``` r
 
 rds_path <- tempfile(fileext = ".rds")
-entropia_export(ds, rds_path, format = "rds") # class + provenance intact
+entropia_export(ds, rds_path, format = "rds")
 back <- readRDS(rds_path)
 class(back)
 #> [1] "entropia_dataset" "tbl_df"           "tbl"              "data.frame"
 ```
 
-``` r
+## Flujo recomendado
 
-json_path <- tempfile(fileext = ".json")
-entropia_export(entropia_collect(entropia_corpus(con)), json_path, format = "json")
-jsonlite::fromJSON(json_path) |> nrow()
-#> [1] 5
-```
-
-parquet/arrow are available when the `arrow` package is installed (it is
-a Suggests dependency, so `entropia_export` fails with clear guidance
-rather than a load error when it is not).
-
-## Recommended workflow
-
-For anything that will take a while, snapshot the database first, then
-build datasets against the snapshot. The provenance then records the
-*snapshot* as the source, so the analysis is immune to writes landing in
-the meantime:
+Snapshot primero; la procedencia registra *ese* archivo:
 
 ``` r
 
@@ -188,15 +155,12 @@ entropia_provenance(stable)[["source_path"]] == snap
 entropia_disconnect(snap_con)
 ```
 
-## Cleaning up
-
 ``` r
 
 entropia_disconnect(con)
 ```
 
-Next:
-[`vignette("analysis")`](https://humalab.github.io/EntropIA-R/articles/analysis.md)
-for a complete end-to-end analysis, or
-[`vignette("administration")`](https://humalab.github.io/EntropIA-R/articles/administration.md)
-for the safety model around the database.
+Siguiente:
+[`vignette("analysis")`](https://humalab.github.io/EntropIA-R/articles/analysis.md).
+English:
+[`vignette("datasets.en")`](https://humalab.github.io/EntropIA-R/articles/datasets.en.md).
