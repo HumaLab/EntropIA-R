@@ -139,15 +139,13 @@ test_that("invalid flags and policies are rejected before file access", {
       args <- list(path = tempfile())
       args[[arg]] <- value
       expect_error(do.call(entropia_connect, args),
-        class = "entropia_error_invalid_argument"
-      )
+        class = "entropia_error_invalid_argument")
     }
   }
   for (policy in list("w", NA_character_, c("warn", "allow"), 1)) {
     withr::with_options(list(entropiaR.schema_policy = policy), {
       expect_error(entropia_connect(tempfile(), validate = FALSE),
-        class = "entropia_error_invalid_argument"
-      )
+        class = "entropia_error_invalid_argument")
     })
   }
 })

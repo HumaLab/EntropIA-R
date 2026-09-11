@@ -700,7 +700,7 @@ seed_core <- function(con, entity_unit = c("ms", "seconds")) {
   dbWriteTable(con, "collections", data.frame(
     id = COLL_1,
     name = "Archivo de prueba",
-    description = "Colecci<U+00F3>n de referencia para tests",
+    description = "Colección de referencia para tests",
     created_at = ms(0), updated_at = ms(3600),
     stringsAsFactors = FALSE
   ), append = TRUE, row.names = FALSE)
@@ -723,7 +723,7 @@ seed_core <- function(con, entity_unit = c("ms", "seconds")) {
 
   dbWriteTable(con, "items", data.frame(
     id = c(ITEM_1, ITEM_2, ITEM_3),
-    title = c("Manifiesto de la huelga", "Carta al sindicato", "Fotograf<U+00ED>a de la marcha"),
+    title = c("Manifiesto de la huelga", "Carta al sindicato", "Fotografía de la marcha"),
     collection_id = COLL_1,
     metadata = c(as.character(meta1), as.character(meta2), NA_character_),
     created_at = c(ms(60), ms(180), ms(300)),
@@ -886,12 +886,12 @@ seed_full_rest <- function(con, llm_target_type = TRUE) {
 
   # transcription for the audio asset
   segments <- jsonlite::toJSON(list(
-    list(start_ms = 0L, end_ms = 2500L, text = "Compa<U+00F1>eros"),
+    list(start_ms = 0L, end_ms = 2500L, text = "Compañeros"),
     list(start_ms = 2500L, end_ms = 5000L, text = "a la huelga")
   ), auto_unbox = TRUE)
   dbWriteTable(con, "transcriptions", data.frame(
     id = TRX_AUDIO, asset_id = ASSET_AUDIO,
-    text_content = "Compa<U+00F1>eros, a la huelga",
+    text_content = "Compañeros, a la huelga",
     language = "es", duration_ms = 60000L, model = "whisper-1",
     segments = as.character(segments), confidence = 0.95,
     created_at = ms(500),
@@ -938,7 +938,7 @@ seed_research <- function(con, entity_unit = "ms") {
     id = c(ENT_1, ENT_2, ENT_3, ENT_DEL),
     item_id = c(ITEM_1, ITEM_1, ITEM_2, ITEM_1),
     entity_type = c("person", "place", "organization", "person"),
-    value = c("Juan P<U+00E9>rez", "Plaza de Mayo", "Sindicato Ferroviario", "Persona Borrada"),
+    value = c("Juan Pérez", "Plaza de Mayo", "Sindicato Ferroviario", "Persona Borrada"),
     start_offset = c(0L, 12L, 5L, 0L),
     end_offset = c(10L, 24L, 26L, 14L),
     confidence = c(0.97, 0.93, 0.9, 0.5),
@@ -954,7 +954,7 @@ seed_research <- function(con, entity_unit = "ms") {
 
   dbWriteTable(con, "triples", data.frame(
     id = TRIPLE_1, item_id = ITEM_1,
-    subject = "Juan P<U+00E9>rez", predicate = "participo_en", object = "la huelga",
+    subject = "Juan Pérez", predicate = "participo_en", object = "la huelga",
     created_at = ts_entity(640), asset_id = NA_character_,
     stringsAsFactors = FALSE
   ), append = TRUE, row.names = FALSE)
@@ -1012,7 +1012,7 @@ seed_ai <- function(con, llm_target_type = TRUE) {
     conversation_id = CONV_1,
     sort_index = c(0L, 1L),
     role = c("user", "assistant"),
-    content = c("<U+00BF>Que paso en la huelga?", "Hubo una huelga general en 1920."),
+    content = c("¿Que paso en la huelga?", "Hubo una huelga general en 1920."),
     sources = c(NA_character_, as.character(sources_json)),
     model = c(NA_character_, "entropia-rag"),
     created_at = c(ms(730), ms(740)),

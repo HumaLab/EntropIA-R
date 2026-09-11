@@ -138,7 +138,7 @@ test_that("segments array parses to a data.frame list-column", {
     expect_true(is.data.frame(seg))
     expect_named(seg, c("start_ms", "end_ms", "text"))
     expect_equal(nrow(seg), 2L)
-    expect_equal(seg$text, c("Compa<U+00F1>eros", "a la huelga"))
+    expect_equal(seg$text, c("Compañeros", "a la huelga"))
   })
 })
 
@@ -281,19 +281,16 @@ test_that("typing follows aliases but not transformed timestamp expressions", {
     disabled <- entropia_collect(base, schema = c(created_at = "raw"))
     expect_false(inherits(disabled$created_at, "POSIXct"))
     expect_error(entropia_collect(base, schema = c(no_such_column = "json")),
-      class = "entropia_error_invalid_argument"
-    )
+      class = "entropia_error_invalid_argument")
     expect_error(entropia_collect(base, schema = c("json")),
-      class = "entropia_error_invalid_argument"
-    )
+      class = "entropia_error_invalid_argument")
   })
 })
 
 test_that("raw SQL does not acquire a contract from output names or literals", {
   with_collect_con("full", function(con) {
     query <- dplyr::tbl(con, dbplyr::sql(
-      "SELECT 'FROM items' AS metadata, 12 AS created_at"
-    ))
+      "SELECT 'FROM items' AS metadata, 12 AS created_at"))
     out <- entropia_collect(query)
     expect_identical(out$metadata, "FROM items")
     expect_false(inherits(out$created_at, "POSIXct"))

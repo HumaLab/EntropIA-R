@@ -245,7 +245,7 @@ ent_export_list_scalar <- function(z) {
 # columns (including integer64) untouched.
 #
 # Embedding BLOB columns (4096-byte f32 vectors) produce long strings per row
-# under the space-join representation <U+2014> a thousand such rows produce ~10 MB of
+# under the space-join representation -- a thousand such rows produce ~10 MB of
 # serialised bytes, which is manageable for occasional exports but not for
 # streaming the full embedding table. Accessors exclude the `embedding` column
 # by default (select with `any_of("embedding")`), and direct collect+export

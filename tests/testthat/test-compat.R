@@ -102,8 +102,7 @@ test_that("absent core tables fail even without migrations", {
   for (policy in c("warn", "error")) {
     withr::with_options(list(entropiaR.schema_policy = policy), {
       expect_error(entropia_connect(":memory:", quiet = TRUE),
-        class = "entropia_error_schema_incompatible"
-      )
+        class = "entropia_error_schema_incompatible")
     })
   }
   withr::with_options(list(entropiaR.schema_policy = "allow"), {

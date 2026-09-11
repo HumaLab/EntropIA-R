@@ -170,7 +170,7 @@ entropia_temporal_profile <- function(x, date_var, unit = "month", by = NULL) {
 
 # Words in a character scalar: runs of non-whitespace tokens. Empty/whitespace
 # text is 0 words; NA is NA (the caller's NA policy). Punctuation stays
-# attached to its token, so "Compa<U+00F1>eros," counts as one word.
+# attached to its token, so "Companeros," counts as one word.
 ent_n_words <- function(z) {
   if (is.na(z)) {
     return(NA_integer_)

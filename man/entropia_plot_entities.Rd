@@ -46,7 +46,7 @@ selects up to \code{top} rows per group/facet combination. Ties use input order.
 \examples{
 freq <- data.frame(
   entity_type = c("person", "organization", "place"),
-  value = c("Juan P<U+00E9>rez", "CGT", "Mar del Plata"),
+  value = c("Juan P\u00e9rez", "CGT", "Mar del Plata"),
   n = c(4L, 3L, 2L)
 )
 if (requireNamespace("ggplot2", quietly = TRUE)) {
