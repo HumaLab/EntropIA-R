@@ -332,15 +332,19 @@ test_that("study ID selection and inclusive date bounds preserve the universe", 
   with_corpus_con("full", function(con) {
     empty <- entropiaR:::ent_study_query(con, collection_ids = character())
     expect_equal(nrow(dplyr::collect(empty)), 0L)
-    selected <- entropia_corpus(con, text = FALSE, collection_ids = CORPUS_COLL_1,
-      item_ids = CORPUS_ITEM_2)
+    selected <- entropia_corpus(con,
+      text = FALSE, collection_ids = CORPUS_COLL_1,
+      item_ids = CORPUS_ITEM_2
+    )
     expect_true(all(dplyr::collect(selected)$item_id == CORPUS_ITEM_2))
     day <- entropiaR:::ent_study_query(con,
-      date_range = as.Date(c("2026-01-15", "2026-01-15")))
+      date_range = as.Date(c("2026-01-15", "2026-01-15"))
+    )
     typed <- entropia_collect(day, schema = entropiaR:::ent_corpus_contract())
     expect_equal(nrow(typed), 5L)
     expect_s3_class(typed$item_created_at, "POSIXct")
     expect_error(entropiaR:::ent_study_query(con, date_var = "metadata"),
-      class = "entropia_error_invalid_argument")
+      class = "entropia_error_invalid_argument"
+    )
   })
 })
