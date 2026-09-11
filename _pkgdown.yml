@@ -4,8 +4,8 @@ template:
   bootstrap: 5
 
 articles:
-- title: Using entropiaR
-  desc: "End-to-end workflows: connect, explore, extract, query, analyze, and share."
+- title: Usar entropiaR
+  desc: "Recorridos en español: conectar, explorar, analizar y compartir."
   contents:
   - connect
   - corpus
@@ -17,6 +17,19 @@ articles:
   - analysis
   - dashboard
   - administration
+- title: Using entropiaR (English)
+  desc: "Same workflows in English."
+  contents:
+  - connect.en
+  - corpus.en
+  - text.en
+  - dplyr.en
+  - eda.en
+  - visualize.en
+  - datasets.en
+  - analysis.en
+  - dashboard.en
+  - administration.en
 
 reference:
 - title: Connection & administration

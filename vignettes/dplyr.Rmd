@@ -1,8 +1,8 @@
 ---
-title: "Lazy queries with dplyr"
+title: "Consultas perezosas con dplyr"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Lazy queries with dplyr}
+  %\VignetteIndexEntry{Consultas perezosas con dplyr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,12 +13,13 @@ library(entropiaR)
 library(dplyr)
 ```
 
-# Everything is a lazy table
+*Versión en español.* English: `vignette("dplyr.en")`.
 
-Every accessor returns a `tbl_sql` backed by SQLite. That means you can compose
-the whole `dplyr` grammar — `filter`, `select`, `mutate`, `arrange`,
-`group_by`, `summarise`, `left_join` — and the *entire query* is translated to
-SQL and executed by SQLite. Nothing is loaded into R until you `collect()`.
+# Todo es una tabla perezosa
+
+Cada accesor es un `tbl_sql`. Podés componer `filter`, `select`, `mutate`,
+`arrange`, `group_by`, `summarise`, `left_join` y **toda** la consulta se
+traduce a SQL. Nada entra a R hasta `collect()` / `entropia_collect()`.
 
 ```{r}
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
@@ -29,13 +30,12 @@ entropia_items(con) |>
   collect()
 ```
 
-The `entropiaR` package deliberately defines *no* custom verbs. `dplyr` works
-because the accessors are plain `tbl_sql` — zero magic, and you can read dbplyr
-documentation for the full verb vocabulary.
+El paquete no define verbos propios. dplyr funciona porque los accesores son
+`tbl_sql` planos.
 
-# Filters and selection push down
+# Los filtros bajan a SQLite
 
-This never pulls the `items` table into memory:
+Esto no baja la tabla `items` a memoria:
 
 ```{r}
 q <- entropia_items(con) |>
@@ -43,14 +43,9 @@ q <- entropia_items(con) |>
   select(id, title, created_at)
 ```
 
-You can inspect the generated SQL to confirm the work stays on SQLite:
-
 ```{r}
 dbplyr::sql_render(q)
 ```
-
-tidyselect works natively too — the `select()` above could have been written
-with helpers like `starts_with()`:
 
 ```{r}
 entropia_items(con) |>
@@ -58,10 +53,7 @@ entropia_items(con) |>
   collect()
 ```
 
-# Joins across accessors
-
-Because every accessor is a `tbl_sql`, you can join them directly. Entities
-join to items for context:
+# Joins entre accesores
 
 ```{r}
 entropia_entities(con) |>
@@ -70,11 +62,10 @@ entropia_entities(con) |>
   collect()
 ```
 
-Note that `entropia_entities()` excludes soft-deleted rows by default
-(`source = 'manual_deleted'`), and `min_confidence` filters on confidence — both
-push down to SQL.
+`entropia_entities()` excluye borrados lógicos (`source = 'manual_deleted'`)
+salvo que pidas lo contrario.
 
-# Grouped summaries
+# Resúmenes agrupados
 
 ```{r}
 entropia_assets(con) |>
@@ -84,51 +75,38 @@ entropia_assets(con) |>
   collect()
 ```
 
-# Parameter-safe full-text search
+# Búsqueda full-text segura
 
-`entropia_search()` wraps SQLite's FTS5 index and is injection-safe: your query
-text is escaped via `dbQuoteString` before it is spliced into `MATCH`. Results
-come back ranked by BM25.
+`entropia_search()` usa FTS5; el texto se escapa con `dbQuoteString`. Ranking
+BM25.
 
 ```{r}
 entropia_search(con, "huelga") |> collect()
 ```
 
-`index = "chunks"` searches the RAG chunk index instead:
-
 ```{r}
 entropia_search(con, "huelga", index = "chunks") |> collect()
 ```
 
-Multi-word queries are AND-ed, `limit` truncates the ranked result, and the
-query itself is never interpolated into SQL.
+# Collect aplica el contrato
 
-# Collecting applies the column contract
-
-`entropia_collect()` is `collect()` plus the package's column contract:
-millisecond timestamps become `POSIXct`, JSON-in-TEXT columns become
-list-columns, and embedding BLOBs stay `raw` (and are not selected unless you
-opt in).
+Timestamps en ms → `POSIXct`; JSON → list-columns.
 
 ```{r}
 items <- entropia_items(con) |> entropia_collect()
 items$created_at
 ```
 
-Rename keeps the type of the *source* column. A new expression that reuses a
-timestamp name does **not** get converted:
+`rename` conserva el tipo de la columna **origen**. Una expresión nueva que
+reutiliza el nombre de un timestamp **no** se convierte:
 
 ```{r}
 class(entropia_collect(rename(entropia_items(con), imported = created_at))$imported)
 class(entropia_collect(mutate(entropia_items(con), created_at = 1))$created_at)
 ```
 
-Joins have no automatic contract — pass `schema =` when you need typed
-columns on a joined query (see `?entropia_collect`).
-
-The pure timestamp helpers back this: `entropia_datetime()` converts
-milliseconds, `entropia_datetime_s()` seconds, and `entropia_datetime_auto()`
-uses a magnitude guard for columns whose units have drifted over time:
+Los joins no tienen contrato automático: pasá `schema =` (ver
+`?entropia_collect`).
 
 ```{r}
 entropia_datetime(1768478400000)
@@ -136,11 +114,8 @@ entropia_datetime_s(1768478400)
 entropia_datetime_auto(c(1768478400000, 1768478400))
 ```
 
-# Cleaning up
-
 ```{r}
 entropia_disconnect(con)
 ```
 
-Next: `vignette("eda")` for SQL-side inventory, or `vignette("datasets")` for
-reproducible analysis datasets.
+Siguiente: `vignette("eda")`. English: `vignette("dplyr.en")`.

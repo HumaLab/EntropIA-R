@@ -1,0 +1,140 @@
+---
+title: "Exploratory analysis of an EntropIA corpus"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploratory analysis of an EntropIA corpus (English)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4)
+library(entropiaR)
+library(dplyr)
+```
+
+*English version.* Spanish: `vignette("eda")`.
+
+Start with a snapshot, then one shared overview. Do not collect the full
+corpus until a table of counts tells you the universe is the one you want.
+
+```{r}
+con <- entropia_connect(system.file(
+  "extdata", "entropia-example.sqlite",
+  package = "entropiaR"
+))
+```
+
+# Inventory without loading text
+
+`entropia_overview()` aggregates in SQLite. It never materialises OCR text,
+JSON metadata or embedding BLOBs.
+
+```{r}
+eda <- entropia_overview(con)
+names(eda)
+eda$counts
+eda$collections
+eda$asset_types
+```
+
+`counts` uses explicit units (`item`, `asset`, `collection`). `n` in
+`collections` is the number of *rows in the study query* (assets plus items
+without an asset), not a synonym for `n_items`.
+
+# One universe, many tables
+
+Every table in `eda` uses the same selection. Filter by asset type or drop
+PDF page assets without rewriting joins:
+
+```{r}
+pdfs <- entropia_overview(con, asset_types = "pdf", page_assets = FALSE)
+pdfs$counts
+pdfs$selection
+```
+
+An empty ID vector selects nothing (it does not fall back to “all”):
+
+```{r}
+entropia_overview(con, collection_ids = character())$counts
+```
+
+# Quality: numerators, denominators, status
+
+```{r}
+eda$quality
+```
+
+Read `status` before `pct`:
+
+- `ok` — the rate is defined;
+- `empty` — eligible rows exist but the field/layer is empty;
+- `no_data` — no rows in the denominator;
+- `not_applicable` — the metric does not apply to that group (e.g. OCR on
+  audio, depending on eligibility);
+- `invalid` — JSON that does not parse.
+
+`metadata_coverage` is *presence* of metadata text. `metadata_validity` is
+JSON syntax, not “the document has an author and a date”.
+
+# Entities and topics: occurrence vs prevalence
+
+```{r}
+eda$entities
+eda$topics
+```
+
+`n` is the number of rows (mentions). `n_items` is distinct items. `pct` is
+`n_items / total` where `total` is the number of items in the universe —
+items with no entity still sit in the denominator.
+
+Soft-deleted entities (`source = "manual_deleted"`) stay out unless you pass
+that source explicitly.
+
+# Temporal profile and exclusions
+
+```{r}
+eda$temporal
+attr(eda$temporal, "exclusions")
+```
+
+Buckets are UTC month starts of the chosen `date_var` (default
+`item_created_at`). That column is an *operational* timestamp (created /
+imported), not necessarily the date of the historical document.
+
+# Profile a collected tibble
+
+Overview stays on SQL. Local distributions need a collected table:
+
+```{r}
+lengths <- entropia_text(con) |>
+  entropia_collect() |>
+  entropia_document_lengths()
+entropia_profile(lengths, columns = c("n_chars", "n_words"))
+```
+
+`entropia_profile()` returns `structure`, `missing`, `numeric`,
+`categorical`, `duplicates` and `sampling`. Numeric ID columns are described
+but not treated as scientific measurements in correlation plots (see
+`vignette("visualize")`).
+
+Sampling is opt-in and does not change `.Random.seed`:
+
+```{r}
+set.seed(1)
+before <- .Random.seed
+entropia_profile(lengths, sample_n = 2, seed = 99)$sampling$n
+identical(.Random.seed, before)
+```
+
+# Hand-off
+
+The same `eda` object feeds ggplot helpers, the Shiny dashboard and
+`entropia_report()` — do not recompute a different filter per panel.
+
+```{r}
+entropia_disconnect(con)
+```
+
+Next: `vignette("visualize")`, or `vignette("analysis")` for a full
+snapshot → dataset → export loop.

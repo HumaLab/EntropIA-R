@@ -1,8 +1,8 @@
 ---
-title: "A complete reproducible analysis"
+title: "Un análisis reproducible de punta a punta"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{A complete reproducible analysis}
+  %\VignetteIndexEntry{Un análisis reproducible de punta a punta}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,28 +13,28 @@ library(entropiaR)
 library(dplyr)
 ```
 
-This vignette walks one end-to-end analysis: snapshot the database, build a
-provenance-stamped dataset, profile it, and export — everything documented so
-the result can be reproduced later.
+*Versión en español.* English: `vignette("analysis.en")`.
 
-# 1. Snapshot, then connect
+Recorrido: snapshot → overview → dataset con procedencia → perfiles →
+gráficos → exportar.
 
-The database may be live under EntropIA. Before analysis, take a snapshot with
-`entropia_copy()` and run against *that*, so the analysis is immune to writes
-landing mid-run and the provenance records a stable source.
+# 1. Snapshot y conexión
+
+Si EntropIA puede estar abierta, copiá primero con `entropia_copy()` y
+analizá *esa* copia.
 
 ```{r}
 con <- entropia_connect(system.file("extdata", "entropia-example.sqlite", package = "entropiaR"))
 snap <- tempfile(fileext = ".sqlite")
 entropia_copy(con, snap)
 snap_con <- entropia_connect(snap)
-entropia_disconnect(con) # original connection no longer needed
+entropia_disconnect(con)
 ```
 
-# 2. Inventory the snapshot
+# 2. Inventario del snapshot
 
-`entropia_overview()` is the cheap first pass: counts, quality and entity
-prevalence without collecting OCR text.
+`entropia_overview()` es el primer paso barato: recuentos y calidad sin bajar
+OCR.
 
 ```{r}
 eda <- entropia_overview(snap_con)
@@ -42,11 +42,9 @@ eda$counts
 eda$collections
 ```
 
-# 3. Build the analysis dataset
+# 3. Dataset de análisis
 
-`entropia_analysis_dataset()` applies filters to the corpus, collects it, and
-stamps provenance v2. This is the boundary: everything after it is ordinary
-tibble work.
+`entropia_analysis_dataset()` filtra el corpus, colecta y sella procedencia v2.
 
 ```{r}
 corpus <- entropia_analysis_dataset(snap_con, name = "corpus_full")
@@ -57,11 +55,9 @@ corpus
 entropia_provenance(corpus)
 ```
 
-# 4. Temporal profile
+# 4. Perfil temporal
 
-When were assets created? `entropia_temporal_profile()` buckets a date column.
-Collect the asset accessor directly — `entropia_collect()` types its
-millisecond timestamps to `POSIXct`, which the profiler requires:
+Colectá el accesor: `entropia_collect()` tipa ms a `POSIXct`.
 
 ```{r}
 assets <- entropia_assets(snap_con) |> entropia_collect()
@@ -69,10 +65,7 @@ temporal <- entropia_temporal_profile(assets, created_at, unit = "second")
 temporal
 ```
 
-# 5. Document lengths
-
-`entropia_document_lengths()` appends character and word counts per document to
-any tibble carrying a text column:
+# 5. Longitudes de documento
 
 ```{r}
 texts <- entropia_text(snap_con) |> entropia_collect()
@@ -80,23 +73,20 @@ lengths <- entropia_document_lengths(texts)
 lengths |> select(id, n_chars, n_words)
 ```
 
-Empty text counts as 0; `NA` text stays `NA`.
+Texto vacío cuenta 0; `NA` sigue `NA`.
 
-# 6. Entities
+# 6. Entidades
 
-`entropia_entities()` excludes soft-deleted rows by default and surfaces
-provenance (source model) per entity. `entropia_entity_frequency()` tallies
-them by type:
+Por defecto se ocultan filas `manual_deleted`.
 
 ```{r}
 entities <- entropia_entities(snap_con) |> entropia_collect()
 entropia_entity_frequency(entities)
 ```
 
-# 7. Topics
+# 7. Temas
 
-Topics are normalized UPPERCASE names. Join `item_topics` to `topics`, then
-tally:
+Nombres normalizados a MAYÚSCULAS. Unir `item_topics` con `topics`:
 
 ```{r}
 item_topics <- entropia_item_topics(snap_con) |> entropia_collect()
@@ -104,29 +94,22 @@ topics <- entropia_topics(snap_con) |> entropia_collect()
 entropia_topic_frequency(left_join(item_topics, topics, by = c("topic_id" = "id")))
 ```
 
-# 8. Collections side by side
+# 8. Colecciones lado a lado
 
-`entropia_compare_collections()` groups by `collection_id` when that column
-exists, and keeps `collection_name` as a label:
+Agrupa por `collection_id` cuando existe; el nombre es etiqueta.
 
 ```{r}
 entropia_compare_collections(corpus)
 ```
 
-# 9. Corpus quality
-
-`entropia_corpus_quality()` reports OCR coverage, transcription presence,
-and empty texts per asset type, plus metadata coverage per collection:
+# 9. Calidad del corpus
 
 ```{r}
 quality <- entropia_corpus_quality(snap_con)
 quality
 ```
 
-# 10. Visualize
-
-`entropia_plot_*` helpers wrap the analysis summaries in ggplot2 (Suggests) and
-return ordinary `ggplot` objects you can extend:
+# 10. Visualizar
 
 ```{r}
 entropia_plot_temporal(temporal)
@@ -141,10 +124,9 @@ entropia_plot_coverage(quality)
 entropia_plot_collections(eda$collections)
 ```
 
-# 11. Export with provenance
+# 11. Exportar con procedencia
 
-The dataset exports as-is (RDS keeps class and provenance; CSV is streamed
-for lazy inputs). Always write the provenance sidecar alongside:
+RDS conserva clase y sello; CSV perezoso se streamea.
 
 ```{r}
 export_path <- tempfile(fileext = ".csv")
@@ -156,19 +138,14 @@ prov_path <- tempfile(fileext = "-prov.json")
 entropia_write_provenance(corpus, prov_path)
 ```
 
-The RDS round-trips with its provenance intact:
-
 ```{r}
 back <- readRDS(rds_path)
 entropia_provenance(back)[["name"]]
 ```
 
-# Cleanup
-
 ```{r}
 entropia_disconnect(snap_con)
 ```
 
-That is the loop: snapshot → overview → stamped dataset → analyze → export
-with a sidecar. See `vignette("eda")` and `vignette("dashboard")` for the
-shared tables and the local app.
+Siguiente: `vignette("eda")` y `vignette("dashboard")`.
+English: `vignette("analysis.en")`.

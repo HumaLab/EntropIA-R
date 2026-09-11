@@ -1,8 +1,8 @@
 ---
-title: "Graficar resúmenes de EntropIA"
+title: "Plotting EntropIA summaries"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Graficar resúmenes de EntropIA}
+  %\VignetteIndexEntry{Plotting EntropIA summaries (English)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,10 +12,11 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height
 library(entropiaR)
 ```
 
-*Versión en español.* English: `vignette("visualize.en")`.
+*English version.* Spanish: `vignette("visualize")`.
 
-Los helpers de gráfico consumen **tibbles ya resumidos**. No consultan SQLite.
-ggplot2 está en Suggests.
+Plot helpers consume **already-summarised tibbles**. They never query SQLite.
+ggplot2 is in Suggests: install it to plot; the rest of the package works
+without it.
 
 ```{r}
 con <- entropia_connect(system.file(
@@ -25,36 +26,38 @@ con <- entropia_connect(system.file(
 eda <- entropia_overview(con)
 ```
 
-# Colecciones y cobertura
+# Collections and coverage
 
 ```{r}
 entropia_plot_collections(eda$collections)
 entropia_plot_coverage(eda$quality, metric = "ocr_coverage")
 ```
 
-La cobertura usa `group` como etiqueta y `group_id` si existe: dos colecciones
-llamadas “Archivo” siguen siendo dos barras. `no_data` / `not_applicable` se
-anotan, no se dibujan como 0%.
+Coverage uses `group` as the axis label and `group_id` when present, so two
+collections named “Archivo” stay two bars. `status` of `no_data` /
+`not_applicable` is annotated rather than drawn as 0%.
 
-# Entidades y temas
+# Entities and topics
 
 ```{r}
 entropia_plot_entities(eda$entities)
 entropia_plot_topics(eda$topics)
 ```
 
-`top` deja las filas más frecuentes. `top_by = "group"` (solo entidades) toma
-el top-N *dentro de cada grupo*.
+`top` keeps the most frequent rows. `top_by = "group"` (entities only) takes
+the top-N *inside each group* instead of globally.
 
-# Series temporales
+# Time series
 
-El temporal de overview usa la columna `date`:
+Overview temporal data uses a column named `date`:
 
 ```{r}
 entropia_plot_temporal(eda$temporal, date_var = "date")
 ```
 
-Un perfil con `by` exige `group` si quedan varias columnas candidatas:
+A profile built with `entropia_temporal_profile(..., by = collection_name)`
+must pass `group` (or the helper errors when several leftover columns could
+be the series):
 
 ```{r}
 items <- entropia_collect(entropia_items(con))
@@ -62,7 +65,7 @@ by_title <- entropia_temporal_profile(items, created_at, unit = "day")
 entropia_plot_temporal(by_title)
 ```
 
-# Longitudes y faltantes
+# Lengths and missingness
 
 ```{r}
 lengths <- entropia_document_lengths(entropia_collect(entropia_text(con)))
@@ -73,9 +76,11 @@ prof <- entropia_profile(lengths, columns = c("n_chars", "n_words"))
 entropia_plot_missing(prof$missing)
 ```
 
-Una entrada vacía dibuja “Sin datos…” en lugar de fallar.
+Empty input draws a “Sin datos…” annotation rather than crashing.
 
-# Extender y guardar
+# Extend and save
+
+Every helper returns a plain `ggplot`:
 
 ```{r}
 p <- entropia_plot_entities(eda$entities) +
@@ -89,4 +94,4 @@ file.exists(tmp)
 entropia_disconnect(con)
 ```
 
-Siguiente: `vignette("dashboard")`. English: `vignette("visualize.en")`.
+Next: `vignette("dashboard")` to put the same tables in a local app.

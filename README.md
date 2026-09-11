@@ -133,7 +133,11 @@ corpus, overview, export) funciona sin ellos.
 
 ## Documentación
 
-Artículos (vignettes), en orden de uso:
+El **español es el idioma principal** (este README y `vignette("connect")`,
+etc.). El inglés es la versión secundaria: [README.en.md](README.en.md) y
+`vignette("connect.en")`, etc.
+
+Artículos, en orden de uso:
 
 1. `vignette("connect")` — abrir, validar, snapshot
 2. `vignette("corpus")` — colecciones, ítems, assets
